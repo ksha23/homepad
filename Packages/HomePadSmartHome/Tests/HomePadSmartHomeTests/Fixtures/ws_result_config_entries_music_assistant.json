@@ -1,0 +1,29 @@
+{
+ "id": 31,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "created_at": 1760900000.0,
+   "entry_id": "01JA0000000000000000000001",
+   "domain": "music_assistant",
+   "modified_at": 1760900000.0,
+   "title": "Music Assistant",
+   "source": "hassio",
+   "state": "loaded",
+   "supports_options": false,
+   "supports_remove_device": false,
+   "supports_unload": true,
+   "supports_reconfigure": false,
+   "supported_subentry_types": {},
+   "pref_disable_new_entities": false,
+   "pref_disable_polling": false,
+   "disabled_by": null,
+   "reason": null,
+   "error_reason_translation_domain": null,
+   "error_reason_translation_key": null,
+   "error_reason_translation_placeholders": null,
+   "num_subentries": 0
+  }
+ ]
+}

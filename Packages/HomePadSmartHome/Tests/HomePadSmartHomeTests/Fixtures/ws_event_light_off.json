@@ -1,0 +1,66 @@
+{
+ "id": 2,
+ "type": "event",
+ "event": {
+  "event_type": "state_changed",
+  "data": {
+   "entity_id": "light.kitchen",
+   "old_state": {
+    "entity_id": "light.kitchen",
+    "state": "on",
+    "attributes": {
+     "friendly_name": "Kitchen Ceiling",
+     "brightness": 178,
+     "color_temp_kelvin": 3000,
+     "hs_color": [
+      30.0,
+      40.0
+     ],
+     "color_mode": "color_temp",
+     "supported_color_modes": [
+      "color_temp",
+      "hs"
+     ],
+     "supported_features": 40
+    },
+    "last_changed": "2026-10-20T14:03:11.123456+00:00",
+    "last_updated": "2026-10-20T14:03:11.123456+00:00",
+    "context": {
+     "id": "01JCTX0001",
+     "user_id": null,
+     "parent_id": null
+    }
+   },
+   "new_state": {
+    "entity_id": "light.kitchen",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Kitchen Ceiling",
+     "brightness": null,
+     "color_temp_kelvin": null,
+     "hs_color": null,
+     "color_mode": "color_temp",
+     "supported_color_modes": [
+      "color_temp",
+      "hs"
+     ],
+     "supported_features": 40
+    },
+    "last_changed": "2026-10-20T14:05:00.000001+00:00",
+    "last_updated": "2026-10-20T14:05:00.000001+00:00",
+    "context": {
+     "id": "01JCTX0001",
+     "user_id": null,
+     "parent_id": null
+    }
+   }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2026-10-20T14:05:00.000001+00:00",
+  "context": {
+   "id": "01JCTX0902",
+   "user_id": null,
+   "parent_id": null
+  }
+ }
+}

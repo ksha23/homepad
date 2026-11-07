@@ -1,0 +1,47 @@
+{
+  "data": [
+    {
+      "id": "l.wXEf8fr",
+      "type": "library-albums",
+      "href": "/v1/me/library/albums/l.wXEf8fr",
+      "attributes": {
+        "artistName": "Miles Davis",
+        "artwork": {"width": 1200, "height": 1200, "url": "https://is1-ssl.mzstatic.com/image/thumb/Music/v4/kind-of-blue/{w}x{h}bb.jpg"},
+        "dateAdded": "2026-10-30T20:11:05Z",
+        "genreNames": ["Jazz"],
+        "name": "Kind of Blue",
+        "playParams": {"id": "l.wXEf8fr", "kind": "album", "isLibrary": true},
+        "releaseDate": "1959-08-17",
+        "trackCount": 5
+      },
+      "relationships": {
+        "catalog": {"href": "/v1/me/library/albums/l.wXEf8fr/catalog", "data": [{"id": "268443092", "type": "albums", "href": "/v1/catalog/us/albums/268443092"}]}
+      }
+    },
+    {
+      "id": "l.GarageDemo",
+      "type": "library-albums",
+      "attributes": {
+        "artistName": "Kyle",
+        "dateAdded": "2026-11-02T08:00:00Z",
+        "genreNames": [],
+        "name": "Garage Demos",
+        "playParams": {"id": "l.GarageDemo", "kind": "album", "isLibrary": true},
+        "trackCount": 4
+      },
+      "relationships": {"catalog": {"href": "/v1/me/library/albums/l.GarageDemo/catalog", "data": []}}
+    },
+    {
+      "id": "l.RAM2013",
+      "type": "library-albums",
+      "attributes": {
+        "artistName": "Daft Punk",
+        "dateAdded": "2025-01-20T10:00:00Z",
+        "name": "Random Access Memories",
+        "playParams": {"id": "l.RAM2013", "kind": "album", "isLibrary": true},
+        "trackCount": 13
+      },
+      "relationships": {"catalog": {"data": [{"id": "617154241", "type": "albums"}]}}
+    }
+  ]
+}

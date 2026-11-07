@@ -1,0 +1,39 @@
+{
+ "id": 41,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": {"id": "01JCTX0101", "parent_id": null, "user_id": "abc123"},
+  "response": {
+   "artists": [
+    {"media_type": "artist", "uri": "apple_music://artist/159260351", "name": "Taylor Swift", "version": "",
+     "image": "http://homeassistant.local:8095/imageproxy?path=artist.jpg&provider=apple_music", "favorite": true,
+     "explicit": null, "fanart_image": null}
+   ],
+   "albums": [
+    {"media_type": "album", "uri": "apple_music://album/1650841512", "name": "Midnights", "version": "",
+     "image": "http://homeassistant.local:8095/imageproxy?path=midnights.jpg&provider=apple_music", "favorite": false,
+     "explicit": false, "discart_image": null,
+     "artists": [{"media_type": "artist", "uri": "apple_music://artist/159260351", "name": "Taylor Swift", "version": "", "image": null}]}
+   ],
+   "tracks": [
+    {"media_type": "track", "uri": "apple_music://track/1650841515", "name": "Anti-Hero", "version": "", "image": null,
+     "favorite": false, "explicit": false,
+     "artists": [{"media_type": "artist", "uri": "apple_music://artist/159260351", "name": "Taylor Swift", "version": "", "image": null}],
+     "album": {"media_type": "album", "uri": "apple_music://album/1650841512", "name": "Midnights", "version": "", "image": null}},
+    {"media_type": "track", "uri": "spotify://track/5ya2gsaIhTkAuWYEMB0nw5", "name": "Shake It Off", "version": "Taylor's Version",
+     "image": null, "favorite": true, "explicit": false,
+     "artists": [{"media_type": "artist", "uri": "spotify://artist/06HL4z0CvFAxyc27GXpf02", "name": "Taylor Swift", "version": "", "image": null}]}
+   ],
+   "playlists": [
+    {"media_type": "playlist", "uri": "spotify://playlist/37i9dQZF1DX5KpP2LN299J", "name": "This Is Taylor Swift", "version": "",
+     "image": null, "favorite": false, "explicit": null}
+   ],
+   "radio": [],
+   "audiobooks": [],
+   "podcasts": [
+    {"media_type": "podcast", "uri": "podcast_feed://podcast/1", "name": "Swiftie Talk", "version": "", "image": null}
+   ]
+  }
+ }
+}

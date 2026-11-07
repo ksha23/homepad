@@ -1,0 +1,55 @@
+{
+ "id": 4,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "id": "dev_kyles_iphone",
+   "name": "Kyle’s iPhone",
+   "name_by_user": null,
+   "area_id": null,
+   "manufacturer": "Apple",
+   "model": "iPhone 17 Pro"
+  },
+  {
+   "id": "dev_sams_iphone",
+   "name": "Sam's iPhone",
+   "name_by_user": null,
+   "area_id": null,
+   "manufacturer": "Apple",
+   "model": "iPhone 16"
+  },
+  {
+   "id": "dev_kyles_watch",
+   "name": "Kyle’s Apple Watch",
+   "name_by_user": null,
+   "area_id": null,
+   "manufacturer": "Apple",
+   "model": "Apple Watch Series 11"
+  },
+  {
+   "id": "dev_old_ipad",
+   "name": "Old iPad",
+   "name_by_user": null,
+   "area_id": null,
+   "manufacturer": "Apple",
+   "model": "iPad Air"
+  },
+  {
+   "id": "dev_kyles_ipad",
+   "name": "Kyle’s iPad",
+   "name_by_user": "Kitchen iPad",
+   "area_id": null,
+   "manufacturer": "Apple",
+   "model": "iPad16,3"
+  },
+  {
+   "id": "dev_jordan",
+   "name": "Jordan",
+   "name_by_user": null,
+   "area_id": null,
+   "manufacturer": "Life360",
+   "model": null
+  }
+ ]
+}

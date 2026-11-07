@@ -1,0 +1,21 @@
+{
+ "id": 42,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": {"id": "01JCTX0102", "parent_id": null, "user_id": "abc123"},
+  "response": {
+   "items": [
+    {"media_type": "playlist", "uri": "library://playlist/12", "name": "Dinner Party", "version": "", "image": null,
+     "favorite": true, "explicit": null},
+    {"media_type": "playlist", "uri": "spotify://playlist/37i9dQZF1DXbcPC6Vvqudd", "name": "Night Rider", "version": "",
+     "image": "https://i.scdn.co/image/ab67706f00000002", "favorite": false, "explicit": null},
+    {"name": "Broken entry without a URI"}
+   ],
+   "limit": 25,
+   "offset": 0,
+   "order_by": "last_played_desc",
+   "media_type": "playlist"
+  }
+ }
+}

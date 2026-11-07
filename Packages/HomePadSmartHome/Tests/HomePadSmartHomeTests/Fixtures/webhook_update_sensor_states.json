@@ -1,0 +1,16 @@
+{
+ "presence": {
+  "success": true
+ },
+ "proximity": {
+  "success": false,
+  "error": {
+   "code": "not_registered",
+   "message": "sensor proximity is not registered"
+  }
+ },
+ "battery": {
+  "success": true,
+  "is_disabled": true
+ }
+}

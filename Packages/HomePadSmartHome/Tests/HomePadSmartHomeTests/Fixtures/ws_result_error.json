@@ -1,0 +1,9 @@
+{
+ "id": 12,
+ "type": "result",
+ "success": false,
+ "error": {
+  "code": "service_validation_error",
+  "message": "Entity lock.garage is not available"
+ }
+}

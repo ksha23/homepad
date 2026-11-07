@@ -1,0 +1,12 @@
+{
+ "location_name": "Maple Street",
+ "version": "2026.10.2",
+ "unit_system": {
+  "length": "mi",
+  "mass": "lb",
+  "temperature": "°F",
+  "volume": "gal"
+ },
+ "time_zone": "America/Chicago",
+ "state": "RUNNING"
+}

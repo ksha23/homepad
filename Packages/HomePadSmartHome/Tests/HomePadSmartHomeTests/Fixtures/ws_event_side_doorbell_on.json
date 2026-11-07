@@ -1,0 +1,47 @@
+{
+ "id": 2,
+ "type": "event",
+ "event": {
+  "event_type": "state_changed",
+  "data": {
+   "entity_id": "binary_sensor.side_doorbell",
+   "old_state": {
+    "entity_id": "binary_sensor.side_doorbell",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Side Doorbell",
+     "device_class": "doorbell"
+    },
+    "last_changed": "2026-10-20T14:03:11.123456+00:00",
+    "last_updated": "2026-10-20T14:03:11.123456+00:00",
+    "context": {
+     "id": "01JCTX0020",
+     "user_id": null,
+     "parent_id": null
+    }
+   },
+   "new_state": {
+    "entity_id": "binary_sensor.side_doorbell",
+    "state": "on",
+    "attributes": {
+     "friendly_name": "Side Doorbell",
+     "device_class": "doorbell"
+    },
+    "last_changed": "2026-10-20T14:05:00.000001+00:00",
+    "last_updated": "2026-10-20T14:05:00.000001+00:00",
+    "context": {
+     "id": "01JCTX0020",
+     "user_id": null,
+     "parent_id": null
+    }
+   }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2026-10-20T14:05:00.000001+00:00",
+  "context": {
+   "id": "01JCTX0902",
+   "user_id": null,
+   "parent_id": null
+  }
+ }
+}

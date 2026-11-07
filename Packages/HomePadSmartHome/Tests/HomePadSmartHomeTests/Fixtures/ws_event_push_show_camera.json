@@ -1,0 +1,10 @@
+{
+ "id": 7,
+ "type": "event",
+ "event": {
+  "message": "kiosk_show_camera",
+  "data": {
+   "entity_id": "camera.front_door"
+  }
+ }
+}

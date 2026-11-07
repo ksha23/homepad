@@ -1,0 +1,503 @@
+[
+ {
+  "entity_id": "light.kitchen",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Kitchen Ceiling",
+   "brightness": 178,
+   "color_temp_kelvin": 3000,
+   "hs_color": [
+    30.0,
+    40.0
+   ],
+   "color_mode": "color_temp",
+   "supported_color_modes": [
+    "color_temp",
+    "hs"
+   ],
+   "supported_features": 40
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0001",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "light.porch",
+  "state": "unavailable",
+  "attributes": {
+   "friendly_name": "Porch Light",
+   "supported_color_modes": [
+    "onoff"
+   ]
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0002",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "switch.coffee",
+  "state": "off",
+  "attributes": {
+   "friendly_name": "Coffee Maker"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0003",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "input_boolean.guest_mode",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Guest Mode"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0004",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "fan.bedroom",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Bedroom Fan",
+   "percentage": 50,
+   "supported_features": 1
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0005",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "climate.hallway",
+  "state": "cool",
+  "attributes": {
+   "friendly_name": "Hallway",
+   "temperature": 22,
+   "current_temperature": 23.5,
+   "current_humidity": 41,
+   "hvac_modes": [
+    "off",
+    "heat",
+    "cool",
+    "heat_cool"
+   ],
+   "supported_features": 385
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0006",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "climate.upstairs",
+  "state": "heat_cool",
+  "attributes": {
+   "friendly_name": "Upstairs",
+   "temperature": null,
+   "target_temp_low": 20,
+   "target_temp_high": 24,
+   "current_temperature": 21,
+   "hvac_modes": [
+    "off",
+    "heat_cool"
+   ],
+   "supported_features": 386
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0007",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "lock.front_door",
+  "state": "locked",
+  "attributes": {
+   "friendly_name": "Front Door",
+   "supported_features": 1
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0008",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "cover.living_blinds",
+  "state": "open",
+  "attributes": {
+   "friendly_name": "Living Room Blinds",
+   "current_position": 60,
+   "device_class": "blind",
+   "supported_features": 15
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0009",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "cover.garage_door",
+  "state": "closed",
+  "attributes": {
+   "friendly_name": "Garage Door",
+   "device_class": "garage",
+   "supported_features": 3
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0010",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "camera.front_door",
+  "state": "idle",
+  "attributes": {
+   "friendly_name": "Front Door Camera",
+   "access_token": "abc123",
+   "supported_features": 2,
+   "entity_picture": "/api/camera_proxy/camera.front_door?token=abc123"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0011",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "camera.backyard",
+  "state": "recording",
+  "attributes": {
+   "friendly_name": "Backyard",
+   "access_token": "def456",
+   "supported_features": 0
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0012",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "media_player.living_room",
+  "state": "playing",
+  "attributes": {
+   "friendly_name": "Living Room Speaker",
+   "media_title": "Clair de Lune",
+   "media_artist": "Claude Debussy",
+   "volume_level": 0.3,
+   "supported_features": 20
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0013",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.living_temperature",
+  "state": "21.6",
+  "attributes": {
+   "friendly_name": "Living Room Temperature",
+   "unit_of_measurement": "°C",
+   "device_class": "temperature",
+   "state_class": "measurement"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0014",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.living_humidity",
+  "state": "44",
+  "attributes": {
+   "friendly_name": "Living Room Humidity",
+   "unit_of_measurement": "%",
+   "device_class": "humidity"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0015",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.phone_battery",
+  "state": "87",
+  "attributes": {
+   "friendly_name": "Phone Battery",
+   "unit_of_measurement": "%",
+   "device_class": "battery"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0016",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.weather_summary",
+  "state": "Partly cloudy",
+  "attributes": {
+   "friendly_name": "Weather Summary"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0017",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "binary_sensor.front_door_contact",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Front Door Contact",
+   "device_class": "door"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0018",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "binary_sensor.hall_motion",
+  "state": "off",
+  "attributes": {
+   "friendly_name": "Hall Motion",
+   "device_class": "motion"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0019",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "binary_sensor.side_doorbell",
+  "state": "off",
+  "attributes": {
+   "friendly_name": "Side Doorbell",
+   "device_class": "doorbell"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0020",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "alarm_control_panel.home",
+  "state": "armed_away",
+  "attributes": {
+   "friendly_name": "Home Alarm",
+   "code_arm_required": false,
+   "supported_features": 63
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0021",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "vacuum.roomba",
+  "state": "docked",
+  "attributes": {
+   "friendly_name": "Roomba",
+   "battery_level": 92,
+   "supported_features": 14204
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0022",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "scene.movie_time",
+  "state": "2026-10-19T20:00:00.000000+00:00",
+  "attributes": {
+   "friendly_name": "Movie Time",
+   "icon": "mdi:movie-open"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0023",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "script.good_night",
+  "state": "off",
+  "attributes": {
+   "friendly_name": "Good Night"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0024",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "event.front_doorbell",
+  "state": "2026-10-20T13:59:00.000+00:00",
+  "attributes": {
+   "friendly_name": "Front Doorbell",
+   "device_class": "doorbell",
+   "event_types": [
+    "ring"
+   ],
+   "event_type": "ring"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0025",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "event.hallway_button",
+  "state": "2026-10-20T12:00:00.000+00:00",
+  "attributes": {
+   "friendly_name": "Hallway Button",
+   "device_class": "button",
+   "event_types": [
+    "press"
+   ]
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0026",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "automation.lights_on",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Lights On At Sunset"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0027",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sun.sun",
+  "state": "above_horizon",
+  "attributes": {
+   "friendly_name": "Sun"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0028",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "light.hidden_strip",
+  "state": "on",
+  "attributes": {
+   "friendly_name": "Hidden Strip",
+   "brightness": 255,
+   "supported_color_modes": [
+    "brightness"
+   ]
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0029",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.cpu_temp",
+  "state": "45",
+  "attributes": {
+   "friendly_name": "CPU Temperature",
+   "unit_of_measurement": "°C",
+   "device_class": "temperature"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JCTX0030",
+   "user_id": null,
+   "parent_id": null
+  }
+ }
+]

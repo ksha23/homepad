@@ -1,0 +1,39 @@
+{
+ "id": 3,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "area_id": "living_room",
+   "name": "Living Room",
+   "aliases": [],
+   "floor_id": null,
+   "icon": null,
+   "picture": null
+  },
+  {
+   "area_id": "kitchen",
+   "name": "Kitchen",
+   "aliases": [],
+   "floor_id": null,
+   "icon": null,
+   "picture": null
+  },
+  {
+   "area_id": "entryway",
+   "name": "Entryway",
+   "aliases": [],
+   "floor_id": null,
+   "icon": null,
+   "picture": null
+  },
+  {
+   "area_id": "garage",
+   "name": "Garage",
+   "aliases": [],
+   "floor_id": null,
+   "icon": null,
+   "picture": null
+  }
+ ]
+}

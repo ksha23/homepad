@@ -1,0 +1,8 @@
+{
+ "id": 34,
+ "type": "event",
+ "event": {
+  "type": "answer",
+  "answer": "v=0\r\no=- 7311852290618531843 1730800000 IN IP4 0.0.0.0\r\ns=-\r\nt=0 0\r\na=fingerprint:sha-256 4A:AD:B9:B1:3F:82:18:3B:54:02:12:DF:3E:5D:49:6B:19:E5:7C:AB:4E:7A:1B:2F:9C:40:11:B2:00:5D:3E:F1\r\na=group:BUNDLE 0 1\r\na=extmap-allow-mixed\r\na=msid-semantic: WMS\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\nc=IN IP4 0.0.0.0\r\na=setup:active\r\na=mid:0\r\na=ice-ufrag:fakeufrag\r\na=ice-pwd:fakepasswordfakepasswordfake\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10;useinbandfec=1\r\na=ssrc:1823409342 cname:go2rtc\r\na=sendrecv\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\nc=IN IP4 0.0.0.0\r\na=setup:active\r\na=mid:1\r\na=ice-ufrag:fakeufrag\r\na=ice-pwd:fakepasswordfakepasswordfake\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\na=ssrc:2981734523 cname:go2rtc\r\na=sendonly\r\n"
+ }
+}

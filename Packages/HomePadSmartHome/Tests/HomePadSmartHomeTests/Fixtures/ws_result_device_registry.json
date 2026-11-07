@@ -1,0 +1,45 @@
+{
+ "id": 4,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "id": "dev_doorbell",
+   "name": "Video Doorbell",
+   "name_by_user": null,
+   "area_id": "entryway",
+   "manufacturer": "Reolink"
+  },
+  {
+   "id": "dev_porch",
+   "name": "Porch Bulb",
+   "name_by_user": "Porch",
+   "area_id": "entryway",
+   "manufacturer": "Hue"
+  },
+  {
+   "id": "dev_lock",
+   "name": "Smart Lock",
+   "name_by_user": null,
+   "area_id": "entryway"
+  },
+  {
+   "id": "dev_side",
+   "name": "Side Bell",
+   "name_by_user": null,
+   "area_id": "garage"
+  },
+  {
+   "id": "dev_garage",
+   "name": "Garage Opener",
+   "name_by_user": null,
+   "area_id": "garage"
+  },
+  {
+   "id": "dev_backyard",
+   "name": "Backyard Cam",
+   "name_by_user": null,
+   "area_id": null
+  }
+ ]
+}

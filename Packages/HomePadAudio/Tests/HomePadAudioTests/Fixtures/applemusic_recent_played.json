@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "id": "1440857781",
+      "type": "albums",
+      "href": "/v1/catalog/us/albums/1440857781",
+      "attributes": {
+        "artistName": "Fleetwood Mac",
+        "artwork": {"width": 3000, "height": 3000, "url": "https://is1-ssl.mzstatic.com/image/thumb/Music/rumours/{w}x{h}bb.jpg"},
+        "name": "Rumours",
+        "playParams": {"id": "1440857781", "kind": "album"},
+        "trackCount": 11
+      }
+    },
+    {
+      "id": "p.ZOAXAMZF4KMD6ob",
+      "type": "library-playlists",
+      "href": "/v1/me/library/playlists/p.ZOAXAMZF4KMD6ob",
+      "attributes": {
+        "canEdit": true,
+        "name": "Road Trip",
+        "playParams": {"id": "p.ZOAXAMZF4KMD6ob", "kind": "playlist", "isLibrary": true}
+      }
+    },
+    {
+      "id": "ra.985484166",
+      "type": "stations",
+      "href": "/v1/catalog/us/stations/ra.985484166",
+      "attributes": {
+        "artwork": {"width": 1080, "height": 1080, "url": "https://is1-ssl.mzstatic.com/image/thumb/Features/chill/{w}x{h}sr.jpg"},
+        "isLive": false,
+        "name": "Chill Station",
+        "playParams": {"id": "ra.985484166", "kind": "radioStation", "format": "stream", "stationHash": "CgkIBRoFG3ex5Q"}
+      }
+    },
+    {
+      "id": "ra.u-a8d6f3c3a5a35b9ecab8e2b5d6e1c3f6",
+      "type": "stations",
+      "href": "/v1/catalog/us/stations/ra.u-a8d6f3c3a5a35b9ecab8e2b5d6e1c3f6",
+      "attributes": {
+        "isLive": false,
+        "name": "Kyle's Station",
+        "playParams": {"id": "ra.u-a8d6f3c3a5a35b9ecab8e2b5d6e1c3f6", "kind": "radioStation", "format": "tracks"}
+      }
+    },
+    {
+      "id": "976439548",
+      "type": "apple-curators",
+      "attributes": {"name": "Apple Music Chill"}
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+ "id": 32,
+ "type": "result",
+ "success": true,
+ "result": {
+  "frontend_stream_types": ["hls"]
+ }
+}

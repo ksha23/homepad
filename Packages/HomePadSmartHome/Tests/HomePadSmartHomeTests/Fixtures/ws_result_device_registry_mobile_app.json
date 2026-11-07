@@ -1,0 +1,33 @@
+{
+ "id": 12,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "id": "dev_phone",
+   "name": "Kyle's iPhone",
+   "name_by_user": null,
+   "manufacturer": "Apple",
+   "model": "iPhone17,1",
+   "identifiers": [["mobile_app", "phone-device-id"]],
+   "config_entries": ["entry_phone"],
+   "primary_config_entry": "entry_phone"
+  },
+  {
+   "id": "dev_homepad",
+   "name": "Kitchen HomePad",
+   "name_by_user": null,
+   "manufacturer": "Apple",
+   "model": "iPad16,3",
+   "identifiers": [["mobile_app", "test-device"]],
+   "config_entries": ["entry_homepad"],
+   "primary_config_entry": "entry_homepad"
+  },
+  {
+   "id": "dev_lock",
+   "name": "Smart Lock",
+   "identifiers": [["zwave_js", "3245146787-12"]],
+   "config_entries": ["entry_zwave"]
+  }
+ ]
+}

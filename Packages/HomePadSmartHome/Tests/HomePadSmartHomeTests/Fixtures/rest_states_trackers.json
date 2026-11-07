@@ -1,0 +1,250 @@
+[
+ {
+  "entity_id": "zone.home",
+  "state": "2",
+  "attributes": {
+   "latitude": 43.0747,
+   "longitude": -89.3842,
+   "radius": 100,
+   "passive": false,
+   "persons": [
+    "person.kyle",
+    "person.sam"
+   ],
+   "editable": true,
+   "icon": "mdi:home",
+   "friendly_name": "Maple Street"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0001",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "zone.work",
+  "state": "0",
+  "attributes": {
+   "latitude": 43.0766,
+   "longitude": -89.4125,
+   "radius": 150,
+   "passive": false,
+   "persons": [],
+   "editable": true,
+   "icon": "mdi:briefcase",
+   "friendly_name": "Work"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0002",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "person.kyle",
+  "state": "home",
+  "attributes": {
+   "editable": true,
+   "id": "kyle",
+   "device_trackers": [
+    "device_tracker.kyles_iphone",
+    "device_tracker.kyles_ipad"
+   ],
+   "latitude": 43.0748,
+   "longitude": -89.3841,
+   "gps_accuracy": 12,
+   "source": "device_tracker.kyles_iphone",
+   "user_id": "u_kyle",
+   "friendly_name": "Kyle"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0003",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.kyles_iphone",
+  "state": "home",
+  "attributes": {
+   "source_type": "gps",
+   "battery": 82,
+   "latitude": 43.0748,
+   "longitude": -89.3841,
+   "gps_accuracy": 12,
+   "account_fetch_interval": 5,
+   "battery_status": "NotCharging",
+   "device_name": "iPhone 17 Pro",
+   "device_status": "online",
+   "low_power_mode": false,
+   "owner_fullname": "Kyle Example",
+   "friendly_name": "Kyle’s iPhone"
+  },
+  "last_changed": "2026-10-20T13:40:00.000000+00:00",
+  "last_updated": "2026-10-20T14:01:30.000000+00:00",
+  "context": {
+   "id": "01JFMY0004",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.sams_iphone",
+  "state": "Work",
+  "attributes": {
+   "source_type": "gps",
+   "battery": 34,
+   "latitude": 43.0767,
+   "longitude": -89.4123,
+   "gps_accuracy": 25,
+   "account_fetch_interval": 15,
+   "battery_status": "Charging",
+   "device_name": "iPhone 16",
+   "device_status": "online",
+   "low_power_mode": true,
+   "owner_fullname": "Sam Rivera",
+   "friendly_name": "Sam's iPhone"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0005",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.kyles_watch",
+  "state": "unavailable",
+  "attributes": {
+   "source_type": "gps",
+   "friendly_name": "Kyle’s Apple Watch"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0006",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.kyles_ipad",
+  "state": "not_home",
+  "attributes": {
+   "source_type": "gps",
+   "latitude": 43.07,
+   "longitude": -89.4,
+   "gps_accuracy": 35,
+   "altitude": 270,
+   "course": -1,
+   "speed": 0,
+   "vertical_accuracy": 8,
+   "friendly_name": "Kyle’s iPad"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T13:55:00.000000+00:00",
+  "context": {
+   "id": "01JFMY0007",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.kyles_ipad_battery_level",
+  "state": "62",
+  "attributes": {
+   "unit_of_measurement": "%",
+   "device_class": "battery",
+   "state_class": "measurement",
+   "icon": "mdi:battery-60",
+   "friendly_name": "Kyle’s iPad Battery Level"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0008",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "sensor.kyles_ipad_battery_state",
+  "state": "Charging",
+  "attributes": {
+   "icon": "mdi:battery-charging",
+   "friendly_name": "Kyle’s iPad Battery State"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0009",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.jordans_phone",
+  "state": "not_home",
+  "attributes": {
+   "source_type": "gps",
+   "latitude": 43.061,
+   "longitude": -89.401,
+   "gps_accuracy": 20,
+   "battery_level": 51,
+   "friendly_name": "Jordan's Phone"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0010",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.living_room_tv",
+  "state": "home",
+  "attributes": {
+   "source_type": "router",
+   "ip": "192.0.2.40",
+   "mac": "00:00:5E:00:53:01",
+   "host_name": "living-room-tv",
+   "friendly_name": "Living Room TV"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0011",
+   "user_id": null,
+   "parent_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.old_ipad",
+  "state": "not_home",
+  "attributes": {
+   "source_type": "gps",
+   "latitude": 43.08,
+   "longitude": -89.39,
+   "gps_accuracy": 65,
+   "device_name": "iPad Air",
+   "device_status": "offline",
+   "account_fetch_interval": 30,
+   "friendly_name": "Old iPad"
+  },
+  "last_changed": "2026-10-20T14:03:11.123456+00:00",
+  "last_updated": "2026-10-20T14:03:11.123456+00:00",
+  "context": {
+   "id": "01JFMY0012",
+   "user_id": null,
+   "parent_id": null
+  }
+ }
+]

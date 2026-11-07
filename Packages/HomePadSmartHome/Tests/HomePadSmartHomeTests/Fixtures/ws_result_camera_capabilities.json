@@ -1,0 +1,9 @@
+{
+ "id": 31,
+ "type": "result",
+ "success": true,
+ "result": {
+  "frontend_stream_types": ["hls", "web_rtc"],
+  "two_way_audio": true
+ }
+}

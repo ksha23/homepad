@@ -1,0 +1,36 @@
+{
+ "id": 43,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": {"id": "01JCTX0103", "parent_id": null, "user_id": "abc123"},
+  "response": {
+   "media_player.kitchen": {
+    "queue_id": "ap5c3a1b2c3d4e",
+    "active": true,
+    "name": "Kitchen",
+    "items": 12,
+    "shuffle_enabled": false,
+    "repeat_mode": "all",
+    "current_index": 3,
+    "elapsed_time": 64,
+    "current_item": {
+     "queue_item_id": "q-4",
+     "name": "Taylor Swift - Anti-Hero",
+     "duration": 200,
+     "media_item": {"media_type": "track", "uri": "apple_music://track/1650841515", "name": "Anti-Hero", "version": "",
+                    "image": null, "favorite": false, "explicit": false,
+                    "artists": [{"media_type": "artist", "uri": "apple_music://artist/159260351", "name": "Taylor Swift", "version": "", "image": null}]},
+     "stream_details": {"provider": "apple_music", "item_id": "1650841515", "content_type": "aac", "sample_rate": 44100, "bit_depth": 16}
+    },
+    "next_item": {
+     "queue_item_id": "q-5",
+     "name": "Radio Paradise",
+     "duration": null,
+     "media_item": null,
+     "stream_title": "Khruangbin - August 10"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,51 @@
+{
+  "data": [
+    {
+      "id": "p.ZOAXAMZF4KMD6ob",
+      "type": "library-playlists",
+      "href": "/v1/me/library/playlists/p.ZOAXAMZF4KMD6ob",
+      "attributes": {
+        "canEdit": true,
+        "dateAdded": "2026-09-14T18:02:11Z",
+        "hasCatalog": false,
+        "isPublic": false,
+        "name": "Road Trip",
+        "playParams": {"id": "p.ZOAXAMZF4KMD6ob", "kind": "playlist", "isLibrary": true}
+      },
+      "relationships": {"catalog": {"href": "/v1/me/library/playlists/p.ZOAXAMZF4KMD6ob/catalog", "data": []}}
+    },
+    {
+      "id": "p.vMO5kRQiX1xGMr",
+      "type": "library-playlists",
+      "href": "/v1/me/library/playlists/p.vMO5kRQiX1xGMr",
+      "attributes": {
+        "artwork": {"width": null, "height": null, "url": "https://is1-ssl.mzstatic.com/image/thumb/Features/chill/{w}x{h}cc.jpg"},
+        "canEdit": false,
+        "dateAdded": "2026-05-02T09:30:00Z",
+        "hasCatalog": true,
+        "isPublic": false,
+        "name": "Pure Chill",
+        "playParams": {"id": "p.vMO5kRQiX1xGMr", "kind": "playlist", "isLibrary": true, "globalId": "pl.ce62a7a7f1a14a1aa8b0b04d5ad6ee08"}
+      },
+      "relationships": {
+        "catalog": {
+          "href": "/v1/me/library/playlists/p.vMO5kRQiX1xGMr/catalog",
+          "data": [{"id": "pl.ce62a7a7f1a14a1aa8b0b04d5ad6ee08", "type": "playlists", "href": "/v1/catalog/us/playlists/pl.ce62a7a7f1a14a1aa8b0b04d5ad6ee08"}]
+        }
+      }
+    },
+    {
+      "id": "p.PublicShared01",
+      "type": "library-playlists",
+      "attributes": {
+        "canEdit": true,
+        "dateAdded": "2026-10-01T12:00:00Z",
+        "hasCatalog": true,
+        "isPublic": true,
+        "name": "Dinner Party",
+        "playParams": {"id": "p.PublicShared01", "kind": "playlist", "isLibrary": true, "globalId": "pl.u-8aAVXq7tbGZ1oY"}
+      }
+    }
+  ],
+  "meta": {"total": 3}
+}

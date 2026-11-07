@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "id": "6-27s5hU6azhJY",
+      "type": "personal-recommendation",
+      "href": "/v1/me/recommendations/6-27s5hU6azhJY",
+      "attributes": {
+        "isGroupRecommendation": false,
+        "kind": "music-recommendations",
+        "nextUpdateDate": "2026-11-06T07:00:00Z",
+        "resourceTypes": ["playlists"],
+        "title": {"stringForDisplay": "Made for You"}
+      },
+      "relationships": {
+        "contents": {
+          "href": "/v1/me/recommendations/6-27s5hU6azhJY/contents",
+          "data": [
+            {
+              "id": "pl.pm-20e9f373919119ed9d2a4c09d29b3b16",
+              "type": "playlists",
+              "href": "/v1/catalog/us/playlists/pl.pm-20e9f373919119ed9d2a4c09d29b3b16",
+              "attributes": {
+                "artwork": {"width": 1080, "height": 1080, "url": "https://is1-ssl.mzstatic.com/image/thumb/favorites-mix/{w}x{h}SC.jpg"},
+                "curatorName": "Apple Music for Kyle",
+                "name": "Favorites Mix",
+                "playParams": {"id": "pl.pm-20e9f373919119ed9d2a4c09d29b3b16", "kind": "playlist"},
+                "playlistType": "personal-mix"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6-27s5hU6azhJZ",
+      "type": "personal-recommendation",
+      "attributes": {
+        "isGroupRecommendation": false,
+        "kind": "music-recommendations",
+        "resourceTypes": ["albums"],
+        "title": {"stringForDisplay": "New Releases for You"}
+      },
+      "relationships": {
+        "contents": {
+          "data": [
+            {"id": "1785123456", "type": "albums", "attributes": {"artistName": "Mara Vale", "name": "Static Bloom", "playParams": {"id": "1785123456", "kind": "album"}}},
+            {"id": "1785123457", "type": "albums", "attributes": {"artistName": "Harbor Lights", "name": "Low Tide", "playParams": {"id": "1785123457", "kind": "album"}}}
+          ]
+        }
+      }
+    },
+    {
+      "id": "6-Empty",
+      "type": "personal-recommendation",
+      "attributes": {"title": {"stringForDisplay": "Nothing Yet"}, "kind": "unknown"},
+      "relationships": {"contents": {"data": []}}
+    }
+  ]
+}

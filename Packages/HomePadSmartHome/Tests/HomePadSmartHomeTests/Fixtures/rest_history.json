@@ -1,0 +1,25 @@
+[
+ [
+  {
+   "entity_id": "sensor.living_temperature",
+   "state": "20.9",
+   "attributes": {
+    "unit_of_measurement": "°C"
+   },
+   "last_changed": "2026-10-19T14:00:00+00:00",
+   "last_updated": "2026-10-19T14:00:00+00:00"
+  },
+  {
+   "state": "21.2",
+   "last_changed": "2026-10-19T18:30:00.512000+00:00"
+  },
+  {
+   "state": "unavailable",
+   "last_changed": "2026-10-19T19:00:00+00:00"
+  },
+  {
+   "state": "21.6",
+   "last_changed": "2026-10-20T14:03:11.123456+00:00"
+  }
+ ]
+]

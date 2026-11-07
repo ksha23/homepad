@@ -1,0 +1,19 @@
+{
+ "id": 11,
+ "type": "result",
+ "success": true,
+ "result": {
+  "title": "Home",
+  "views": [
+   {
+    "title": "Kitchen",
+    "path": "kitchen",
+    "cards": []
+   },
+   {
+    "title": "Cameras",
+    "cards": []
+   }
+  ]
+ }
+}

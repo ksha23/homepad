@@ -1,0 +1,51 @@
+{
+ "id": 32,
+ "type": "result",
+ "success": true,
+ "result": [
+  {
+   "created_at": 1760900000.0,
+   "entry_id": "entry_icloud_kyle",
+   "domain": "icloud",
+   "modified_at": 1760900000.0,
+   "title": "kyle@example.com",
+   "source": "user",
+   "state": "loaded",
+   "supports_options": true,
+   "supports_remove_device": false,
+   "supports_unload": true,
+   "supports_reconfigure": false,
+   "supported_subentry_types": {},
+   "pref_disable_new_entities": false,
+   "pref_disable_polling": false,
+   "disabled_by": null,
+   "reason": null,
+   "error_reason_translation_domain": null,
+   "error_reason_translation_key": null,
+   "error_reason_translation_placeholders": null,
+   "num_subentries": 0
+  },
+  {
+   "created_at": 1760900000.0,
+   "entry_id": "entry_icloud_sam",
+   "domain": "icloud",
+   "modified_at": 1760900000.0,
+   "title": "sam@example.com",
+   "source": "user",
+   "state": "loaded",
+   "supports_options": true,
+   "supports_remove_device": false,
+   "supports_unload": true,
+   "supports_reconfigure": false,
+   "supported_subentry_types": {},
+   "pref_disable_new_entities": false,
+   "pref_disable_polling": false,
+   "disabled_by": null,
+   "reason": null,
+   "error_reason_translation_domain": null,
+   "error_reason_translation_key": null,
+   "error_reason_translation_placeholders": null,
+   "num_subentries": 0
+  }
+ ]
+}

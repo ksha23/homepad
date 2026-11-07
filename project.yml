@@ -1,0 +1,268 @@
+# XcodeGen spec. This file is the source of truth for HomePad.xcodeproj.
+# After editing it run `make project`. Do not hand-edit the generated project.
+name: HomePad
+
+options:
+  bundleIdPrefix: com.ksha23
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+  groupSortPosition: top
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: 35UB6472YK
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+packages:
+  HomePadCore: { path: Packages/HomePadCore }
+  HomePadUI: { path: Packages/HomePadUI }
+  HomePadShell: { path: Packages/HomePadShell }
+  HomePadFaces: { path: Packages/HomePadFaces }
+  HomePadAssistant: { path: Packages/HomePadAssistant }
+  HomePadSmartHome: { path: Packages/HomePadSmartHome }
+  HomePadAudio: { path: Packages/HomePadAudio }
+  HomePadPresence: { path: Packages/HomePadPresence }
+  HomePadKitchen: { path: Packages/HomePadKitchen }
+  HomePadPersonal: { path: Packages/HomePadPersonal }
+  HomePadConnect: { path: Packages/HomePadConnect }
+  HomePadComms: { path: Packages/HomePadComms }
+  HomePadShareKit: { path: Packages/HomePadConnect/ShareKit }
+  HomePadCameraLab: { path: Packages/HomePadCameraLab }
+
+targets:
+  HomePad:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+      - path: App/Resources
+    dependencies:
+      - package: HomePadCore
+      - package: HomePadUI
+      - package: HomePadShell
+      - package: HomePadFaces
+      - package: HomePadAssistant
+      - package: HomePadSmartHome
+      - package: HomePadAudio
+      - package: HomePadPresence
+      - package: HomePadKitchen
+      - package: HomePadPersonal
+      - package: HomePadConnect
+      - package: HomePadComms
+      - package: HomePadCameraLab
+      - target: HomePadWidgets
+      - target: HomePadShare
+      - target: HomePadWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ksha23.homepad
+        PRODUCT_NAME: HomePad
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: HomePad
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIBackgroundModes:
+          - audio
+          - bluetooth-central
+          - fetch
+          - processing
+          - remote-notification
+        # Background work's two launches (HomePadCore's BackgroundWork+System.swift): every task shares them.
+        BGTaskSchedulerPermittedIdentifiers:
+          - $(PRODUCT_BUNDLE_IDENTIFIER).background.refresh
+          - $(PRODUCT_BUNDLE_IDENTIFIER).background.processing
+        NSSupportsLiveActivities: true
+        NSCameraUsageDescription: HomePad uses the cameras to notice when someone is nearby, recognize household members on this device, make video calls, and power camera features you turn on. Video never leaves the iPad unless you start a call or enable Security Camera mode.
+        NSMicrophoneUsageDescription: HomePad listens for your voice requests, intercom messages and alarm sounds such as smoke detectors.
+        NSSpeechRecognitionUsageDescription: HomePad turns your voice requests into text on this device.
+        NSHomeKitUsageDescription: HomePad shows and controls your Apple Home accessories, scenes and cameras.
+        NSCalendarsFullAccessUsageDescription: HomePad shows your upcoming events and lets you add new ones by voice. On iPhone, it shows the calendars you choose on your HomePads while they recognize you, and saves the events you add there, over your home network only.
+        NSRemindersFullAccessUsageDescription: HomePad shows your reminders and grocery lists and adds items by voice. On iPhone, it shows the lists you choose on your HomePads while they recognize you, and saves what you add or check off there, over your home network only.
+        NSPhotoLibraryUsageDescription: HomePad shows your photo library, favorites and shared albums in the Photos app, the Photo widget and the Photos face. On iPhone, it shows your photos on the HomePads you choose while they recognize you, over your home network only.
+        NSBluetoothAlwaysUsageDescription: HomePad uses Bluetooth so a HomePad that recognizes you can wake HomePad on your iPhone and show your photos and calendars. Nothing personal goes over Bluetooth.
+        NSPhotoLibraryAddUsageDescription: HomePad saves photos and videos from Messages to your photo library when you tap Save to Photos.
+        PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
+        NSLocationWhenInUseUsageDescription: HomePad uses your location for local weather.
+        NSLocalNetworkUsageDescription: HomePad finds Home Assistant, other HomePads and AirPlay speakers on your network.
+        NSBonjourServices:
+          - _homepad._tcp
+          - _home-assistant._tcp
+          - _airplay._tcp
+          - _raop._tcp
+        NSAppleMusicUsageDescription: HomePad plays Apple Music from your library and the catalog.
+        NSMotionUsageDescription: HomePad reads your AirPods head motion so you can nod or shake your head to answer yes or no prompts.
+        NSFaceIDUsageDescription: HomePad uses Face ID to unlock settings for household admins.
+        NSAlarmKitUsageDescription: HomePad uses alarms so your wake-up alarms and kitchen timers ring even when the app is in the background.
+        NSUserActivityTypes:
+          - com.ksha23.homepad.recipe
+          - com.ksha23.homepad.nowplaying
+          - com.ksha23.homepad.assistant
+          - com.ksha23.homepad.camera
+        CFBundleURLTypes:
+          - CFBundleURLName: com.ksha23.homepad
+            CFBundleURLSchemes:
+              - homepad
+        LSApplicationQueriesSchemes:
+          - findmy
+          - shortcuts
+          - music
+          - spotify
+          - homeassistant
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: App/HomePad.entitlements
+      properties:
+        com.apple.developer.homekit: true
+        com.apple.developer.weatherkit: true
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.ksha23.homepad
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        com.apple.security.application-groups:
+          - group.com.ksha23.homepad
+        aps-environment: development
+
+  HomePadWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Extensions/HomePadWidgets
+    dependencies:
+      - package: HomePadCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ksha23.homepad.widgets
+        PRODUCT_NAME: HomePadWidgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+    info:
+      path: Extensions/HomePadWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: HomePad Widgets
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Extensions/HomePadWidgets/HomePadWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ksha23.homepad
+
+  HomePadShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Extensions/HomePadShare
+    dependencies:
+      - package: HomePadShareKit
+      - package: HomePadUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ksha23.homepad.share
+        PRODUCT_NAME: HomePadShare
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+    info:
+      path: Extensions/HomePadShare/Info.plist
+      properties:
+        CFBundleDisplayName: Send to HomePad
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+    entitlements:
+      path: Extensions/HomePadShare/HomePadShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ksha23.homepad
+
+  HomePadWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Watch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ksha23.homepad.watchkitapp
+        PRODUCT_NAME: HomePadWatch
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: Watch/Info.plist
+      properties:
+        CFBundleDisplayName: HomePad
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.ksha23.homepad
+        NSMicrophoneUsageDescription: HomePad records short intercom messages on your watch and sends them to your HomePads through your iPhone.
+
+  HomePadUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: HomePad
+    settings:
+      base:
+        TEST_TARGET_NAME: HomePad
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ksha23.homepad.uitests
+
+schemes:
+  HomePad:
+    build:
+      targets:
+        HomePad: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - HomePadUITests
+    archive:
+      config: Release

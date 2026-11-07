@@ -1,0 +1,1226 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04AA3E396B6422014D15483D /* HomePadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBBFE7FF742050FBF03BFDB /* HomePadApp.swift */; };
+		05CBCC9A74B6F8DF255DBE0A /* PhotoViewerDismissUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5280108F484B62D76042DCF9 /* PhotoViewerDismissUITests.swift */; };
+		1B92A168CF30268AC53AD98B /* AppIntentsPackages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A06257777A523AC9D170D8C /* AppIntentsPackages.swift */; };
+		1BCECA6BCDCC3CF27C0734EF /* CommsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FBF234820FD19E116871D6 /* CommsUITests.swift */; };
+		1D73389E07DF38DBBE8369DF /* SheetHeaderUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4981DA9924F17FB658C656B0 /* SheetHeaderUITests.swift */; };
+		1F04D6BAB4554C87741976A7 /* PhotoDismissUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99381BFAB24E76C039A9FDE3 /* PhotoDismissUITests.swift */; };
+		1FFD0D274A0162CCD8971CDD /* AccessoryControlUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924393A8D1F2D8A052755985 /* AccessoryControlUITests.swift */; };
+		23083DCC21A93FC56C0D4C80 /* ShareComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51BB94FB250E43FF1EE5D5C /* ShareComposeView.swift */; };
+		2A071850F80DD645B7CA1F25 /* WatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 307D4D038B79DED9C016E09B /* WatchLink.swift */; };
+		2D459511AEB0AD533E34DC3B /* FacesAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E2EC21E65D5C77BA39ACCC9 /* FacesAppUITests.swift */; };
+		34E093C966E233F46CBC16E5 /* HomePadUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5FE66F0EA6E5F649F431969C /* HomePadUI */; };
+		357CF9A875C1DB5D64DEB6D2 /* HomePadAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 47FB9CFF1F6E28B5B210406E /* HomePadAudio */; };
+		38A72C57F0B9E51598E41CAD /* TimerLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23350156ED19840EEEB226D5 /* TimerLiveActivityWidget.swift */; };
+		39998FB6F42C9D91571BFEA8 /* HomePadConnect in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEAED059D57EB9904A3F067 /* HomePadConnect */; };
+		39F936A9A8DCA2C5800D53C8 /* SettingsDialogUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5D64009A498AC67E756FDA /* SettingsDialogUITests.swift */; };
+		3CA4F910348F407567452698 /* HomePadWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F56F137368255E778A2DFA /* HomePadWatchApp.swift */; };
+		3DD823FA386AB451B15C7746 /* FaceEditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3830C80E9A1B0FE054D3B3BE /* FaceEditUITests.swift */; };
+		3E73A3BF83CC5FDE0D380AD6 /* HomePadWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 915BB581134F84A9459E2272 /* HomePadWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		442271EBADA7F0E843086DE7 /* HomePadPersonal in Frameworks */ = {isa = PBXBuildFile; productRef = 3399B3A544C0A88ADEA848DD /* HomePadPersonal */; };
+		4AC448E506F69C62ABEA4814 /* HomePadSmartHome in Frameworks */ = {isa = PBXBuildFile; productRef = DD00B6C77DE7B026579320E4 /* HomePadSmartHome */; };
+		4B72FE01059721F682284AD6 /* WatchRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0550821AE8B7F00E407995A7 /* WatchRecorder.swift */; };
+		4F9889411D5642D4597DE431 /* AppZoomUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E950A23F4DA01DB1AA757AA /* AppZoomUITests.swift */; };
+		4F9D979A88149E8D6BB12914 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6120FB663C1E42B7C7EB3E83 /* Assets.xcassets */; };
+		516391750BB6273C197E9411 /* HomeScenesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F157DEAF3289FCABBC050BD8 /* HomeScenesUITests.swift */; };
+		58887FB49DB5F1AAD3DF97B4 /* AppStateRestoreUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E690A7341AFD36B4480D55FC /* AppStateRestoreUITests.swift */; };
+		5AE169CC512A295A644B4A87 /* Modules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF1D714F3B7D17AFD2C33EA /* Modules.swift */; };
+		5ECB7B9E5816FFC6320CB033 /* HomeScreenUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D1D4B96C171BB1E816F113 /* HomeScreenUITests.swift */; };
+		5FA859D485972859CD357DE3 /* HomePadKitchen in Frameworks */ = {isa = PBXBuildFile; productRef = A5E86C688A1EF0F9469FDF38 /* HomePadKitchen */; };
+		7481ACADDF58750B05DABBEE /* FaceHoldUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39A6DF51A71AFFD08B168DD /* FaceHoldUITests.swift */; };
+		7510D96D8BE916E13D588474 /* ShareComposeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CC197E62B0F3651DBDD0187 /* ShareComposeModel.swift */; };
+		7A0FDCE6C15AD3A707D13582 /* HomePadUI in Frameworks */ = {isa = PBXBuildFile; productRef = 86974E1D01A0CF57EE496FF0 /* HomePadUI */; };
+		7E72ED800C24521757085ECD /* HomePadCore in Frameworks */ = {isa = PBXBuildFile; productRef = 489F29D4C4B39B129EF9669D /* HomePadCore */; };
+		8152D614C1D6C2235F768E07 /* HomePadCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9850B1E0907BF4448A534DB3 /* HomePadCore */; };
+		877E654359F6F7A8EB72DDD6 /* HomePadWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3EEC1A7DA22B0FB8225838 /* HomePadWidgetsBundle.swift */; };
+		90D418AF981D749EC9CEEEE6 /* TimersHomeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65A15D0640D23AD72EAC2FB /* TimersHomeWidget.swift */; };
+		992499AAF09323FE910FD817 /* WatchIntercomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CCE87E743AC9ABFC66BDA3 /* WatchIntercomView.swift */; };
+		9A5BFE67D85F6DC92CC06C9B /* HomePadFaces in Frameworks */ = {isa = PBXBuildFile; productRef = B25C6E37915D8C4E839EE990 /* HomePadFaces */; };
+		9FB89709398E422B209E2B19 /* HomeWidgetZoomUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0205E61BABE019B3832A8864 /* HomeWidgetZoomUITests.swift */; };
+		A114971B8FF16982F2C446C3 /* HomePadAssistant in Frameworks */ = {isa = PBXBuildFile; productRef = 635C0F6C2445D7C13404440D /* HomePadAssistant */; };
+		A2C6B0CD9E01DE2E4EAE5166 /* FacesPerfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFA14A337FDB910BA0A6B81 /* FacesPerfUITests.swift */; };
+		A68F03AE4661AB92EC8F7BE7 /* TimerWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E339B81D2C12F13466AAF83A /* TimerWidgetViews.swift */; };
+		A810E4478014441D0B5C496A /* HomePadWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C22E0687DB1527764DFB0ACB /* HomePadWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B17CF545D4ECEA891C37C34B /* BoardComposerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1163BFDF941422A0B2CA658B /* BoardComposerUITests.swift */; };
+		B567DC93D189E724F50536F7 /* HomeScreenScrollPerfTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD45C315470F3FFF24C9F20 /* HomeScreenScrollPerfTests.swift */; };
+		B9886AA3F30E5D140A7D17B6 /* FacePagingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D486F0BE0A60A4FF454EA7 /* FacePagingUITests.swift */; };
+		BB3FE721E326929079C22EC7 /* HomePadShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B1388869AE95218CF03B6301 /* HomePadShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BED8C2D6053BB3FCBDB707E4 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4654DB10164D9F1D8C0CB02 /* ShareViewController.swift */; };
+		C015F319BCFC87708D75BA45 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9422968E696E51FEC70B41D1 /* WidgetKit.framework */; };
+		C5F915A2C2D268F3BFF20EE4 /* HomePadPresence in Frameworks */ = {isa = PBXBuildFile; productRef = D1A8C0FF4EF5A88054EB71DD /* HomePadPresence */; };
+		CB5B6F1F812778C3E25A4756 /* HomePadShareKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2F8EB4619F64AAC30082C97E /* HomePadShareKit */; };
+		CE0872B27F15FC08B2A5CFC7 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0967B56EF4F6DB88D5A937 /* WatchProtocol.swift */; };
+		CFB1614BF494816CBD2DA35E /* HomePadShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136ABC1C869928DDEFDF0D4 /* HomePadShortcuts.swift */; };
+		D7B57D0A2B156029A7CD973D /* HomePadComms in Frameworks */ = {isa = PBXBuildFile; productRef = 336A95FFEE6666E2E30D5B6A /* HomePadComms */; };
+		D972EC4D8BA1D569FB6F7C0E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF54F10EE0AC3C86F12E4CA /* SwiftUI.framework */; };
+		DB34165AC69787EA20C9F8F3 /* SwipeDownToDismissUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCABC740C1DBDA41887DF478 /* SwipeDownToDismissUITests.swift */; };
+		DB76426146BB43B869CB3489 /* ReadmeShotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBFCAB0501EC01BA03DE403C /* ReadmeShotsUITests.swift */; };
+		E07A540A64A17E60B11448F6 /* HomePadShell in Frameworks */ = {isa = PBXBuildFile; productRef = 4B42C1860B3566FB2CA73CAE /* HomePadShell */; };
+		E23D3C5196CFC21E8EE9FC91 /* CoverHomeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC04BD9C3828C91E8F1FD5D /* CoverHomeUITests.swift */; };
+		E7358774E48CC25C1F49940B /* MusicMiniPlayerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FAC23C975AD761E9B3B55B /* MusicMiniPlayerUITests.swift */; };
+		E9650D7480AC41C7907863AB /* WatchGlanceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF20F9A2D571DA7D49A7652A /* WatchGlanceViews.swift */; };
+		EBB6A10DCE2C4CA08364FF2D /* WidgetStackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768BCDFDD5E735BFE3DF5B8A /* WidgetStackUITests.swift */; };
+		EC65E3386B5D0FC29C730D2A /* FaceWidgetUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C91BC6D8EEED7FEC9E301 /* FaceWidgetUITests.swift */; };
+		EEDF2ADC524B6224CB479921 /* HomePadCameraLab in Frameworks */ = {isa = PBXBuildFile; productRef = 90FACE08025EAAA1288EC9B0 /* HomePadCameraLab */; };
+		F467B384073FC518528F1282 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 857DA697DB610557BAB8D565 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CAB2F7151A1A272C5806D83D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40E674CEF2571D89A0799664 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F45A093808E3271E4420296D;
+			remoteInfo = HomePad;
+		};
+		CB92457970A6F3F2B555F12B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40E674CEF2571D89A0799664 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3505EAE6BAC880BA4617CEEB;
+			remoteInfo = HomePadShare;
+		};
+		D745211B2E967453779AEE16 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40E674CEF2571D89A0799664 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E7EFAFF311605A7853E8227;
+			remoteInfo = HomePadWidgets;
+		};
+		FA9D714AEE58ADE623679122 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40E674CEF2571D89A0799664 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6FB2E096745E25237EE3FA72;
+			remoteInfo = HomePadWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		14EE7E83EC7CE058D12DC954 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				3E73A3BF83CC5FDE0D380AD6 /* HomePadWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7BD313E1BC8025E9BE5B357D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A810E4478014441D0B5C496A /* HomePadWidgets.appex in Embed Foundation Extensions */,
+				BB3FE721E326929079C22EC7 /* HomePadShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0205E61BABE019B3832A8864 /* HomeWidgetZoomUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetZoomUITests.swift; sourceTree = "<group>"; };
+		0550821AE8B7F00E407995A7 /* WatchRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRecorder.swift; sourceTree = "<group>"; };
+		06FAC23C975AD761E9B3B55B /* MusicMiniPlayerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicMiniPlayerUITests.swift; sourceTree = "<group>"; };
+		09075A35398C132F24C3D5F5 /* HomePadWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HomePadWidgets.entitlements; sourceTree = "<group>"; };
+		0952B37EEBDBF8A154A80786 /* HomePadUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadUI; path = Packages/HomePadUI; sourceTree = SOURCE_ROOT; };
+		0CB594802DB64108548B34B8 /* HomePadPresence */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadPresence; path = Packages/HomePadPresence; sourceTree = SOURCE_ROOT; };
+		0CC197E62B0F3651DBDD0187 /* ShareComposeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareComposeModel.swift; sourceTree = "<group>"; };
+		1163BFDF941422A0B2CA658B /* BoardComposerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardComposerUITests.swift; sourceTree = "<group>"; };
+		198963CA3287337D7E1D42CD /* HomePadSmartHome */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadSmartHome; path = Packages/HomePadSmartHome; sourceTree = SOURCE_ROOT; };
+		1DF1D714F3B7D17AFD2C33EA /* Modules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modules.swift; sourceTree = "<group>"; };
+		1E5D64009A498AC67E756FDA /* SettingsDialogUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDialogUITests.swift; sourceTree = "<group>"; };
+		23350156ED19840EEEB226D5 /* TimerLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLiveActivityWidget.swift; sourceTree = "<group>"; };
+		307D4D038B79DED9C016E09B /* WatchLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLink.swift; sourceTree = "<group>"; };
+		30F692BB05B6ECB29F5229A5 /* HomePad.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomePad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		31B49DD11ED7D50F1EC293E6 /* HomePadKitchen */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadKitchen; path = Packages/HomePadKitchen; sourceTree = SOURCE_ROOT; };
+		37F56F137368255E778A2DFA /* HomePadWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePadWatchApp.swift; sourceTree = "<group>"; };
+		3830C80E9A1B0FE054D3B3BE /* FaceEditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceEditUITests.swift; sourceTree = "<group>"; };
+		3B8D605AA9CF5D94F76A4FB9 /* HomePadFaces */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadFaces; path = Packages/HomePadFaces; sourceTree = SOURCE_ROOT; };
+		3E3EEC1A7DA22B0FB8225838 /* HomePadWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePadWidgetsBundle.swift; sourceTree = "<group>"; };
+		45CCE87E743AC9ABFC66BDA3 /* WatchIntercomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchIntercomView.swift; sourceTree = "<group>"; };
+		4981DA9924F17FB658C656B0 /* SheetHeaderUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetHeaderUITests.swift; sourceTree = "<group>"; };
+		4CBBFE7FF742050FBF03BFDB /* HomePadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePadApp.swift; sourceTree = "<group>"; };
+		4FA1527FBB95647F387E0FF2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5280108F484B62D76042DCF9 /* PhotoViewerDismissUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewerDismissUITests.swift; sourceTree = "<group>"; };
+		59D486F0BE0A60A4FF454EA7 /* FacePagingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacePagingUITests.swift; sourceTree = "<group>"; };
+		5AD45C315470F3FFF24C9F20 /* HomeScreenScrollPerfTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenScrollPerfTests.swift; sourceTree = "<group>"; };
+		6120FB663C1E42B7C7EB3E83 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		61D1D4B96C171BB1E816F113 /* HomeScreenUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenUITests.swift; sourceTree = "<group>"; };
+		6A06257777A523AC9D170D8C /* AppIntentsPackages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntentsPackages.swift; sourceTree = "<group>"; };
+		6F4AB02AC348AA4A4A822164 /* ShareKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShareKit; path = Packages/HomePadConnect/ShareKit; sourceTree = SOURCE_ROOT; };
+		6FC04BD9C3828C91E8F1FD5D /* CoverHomeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverHomeUITests.swift; sourceTree = "<group>"; };
+		70F7702342C48C0971F03D4B /* HomePadAudio */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadAudio; path = Packages/HomePadAudio; sourceTree = SOURCE_ROOT; };
+		768BCDFDD5E735BFE3DF5B8A /* WidgetStackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStackUITests.swift; sourceTree = "<group>"; };
+		7C0DF1E173E3A8D75222DBD3 /* HomePadAssistant */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadAssistant; path = Packages/HomePadAssistant; sourceTree = SOURCE_ROOT; };
+		7EFFBA1F9CBD2CAFD3AB9D74 /* HomePadConnect */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadConnect; path = Packages/HomePadConnect; sourceTree = SOURCE_ROOT; };
+		857DA697DB610557BAB8D565 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		864C5593CF3DDB7D9993E0BE /* HomePadCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadCore; path = Packages/HomePadCore; sourceTree = SOURCE_ROOT; };
+		8CF54F10EE0AC3C86F12E4CA /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		8E8FBCFE1DC69CFB10A76701 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8E950A23F4DA01DB1AA757AA /* AppZoomUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppZoomUITests.swift; sourceTree = "<group>"; };
+		915BB581134F84A9459E2272 /* HomePadWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HomePadWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		924393A8D1F2D8A052755985 /* AccessoryControlUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryControlUITests.swift; sourceTree = "<group>"; };
+		9422968E696E51FEC70B41D1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		99381BFAB24E76C039A9FDE3 /* PhotoDismissUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoDismissUITests.swift; sourceTree = "<group>"; };
+		9E0967B56EF4F6DB88D5A937 /* WatchProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
+		9E2EC21E65D5C77BA39ACCC9 /* FacesAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacesAppUITests.swift; sourceTree = "<group>"; };
+		9F0C91BC6D8EEED7FEC9E301 /* FaceWidgetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceWidgetUITests.swift; sourceTree = "<group>"; };
+		A51BB94FB250E43FF1EE5D5C /* ShareComposeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareComposeView.swift; sourceTree = "<group>"; };
+		A7B0AA2757CC6FD50614E599 /* HomePadShell */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadShell; path = Packages/HomePadShell; sourceTree = SOURCE_ROOT; };
+		ADFA14A337FDB910BA0A6B81 /* FacesPerfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacesPerfUITests.swift; sourceTree = "<group>"; };
+		B1388869AE95218CF03B6301 /* HomePadShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HomePadShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4A4F76ED227AAE2DC036353 /* HomePadPersonal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadPersonal; path = Packages/HomePadPersonal; sourceTree = SOURCE_ROOT; };
+		BD126A53431FA2C464DC682D /* HomePadUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomePadUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C22E0687DB1527764DFB0ACB /* HomePadWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HomePadWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4654DB10164D9F1D8C0CB02 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		CF20F9A2D571DA7D49A7652A /* WatchGlanceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchGlanceViews.swift; sourceTree = "<group>"; };
+		DBFCAB0501EC01BA03DE403C /* ReadmeShotsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadmeShotsUITests.swift; sourceTree = "<group>"; };
+		E339B81D2C12F13466AAF83A /* TimerWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWidgetViews.swift; sourceTree = "<group>"; };
+		E39A6DF51A71AFFD08B168DD /* FaceHoldUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceHoldUITests.swift; sourceTree = "<group>"; };
+		E65A15D0640D23AD72EAC2FB /* TimersHomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimersHomeWidget.swift; sourceTree = "<group>"; };
+		E690A7341AFD36B4480D55FC /* AppStateRestoreUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateRestoreUITests.swift; sourceTree = "<group>"; };
+		EB93EB84EF3AF37785EB644C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		EDEDC81783E346B646637E4A /* HomePadCameraLab */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadCameraLab; path = Packages/HomePadCameraLab; sourceTree = SOURCE_ROOT; };
+		F136ABC1C869928DDEFDF0D4 /* HomePadShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePadShortcuts.swift; sourceTree = "<group>"; };
+		F157DEAF3289FCABBC050BD8 /* HomeScenesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScenesUITests.swift; sourceTree = "<group>"; };
+		F2FBF234820FD19E116871D6 /* CommsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommsUITests.swift; sourceTree = "<group>"; };
+		F44ECF4F696C754BB8BF2746 /* HomePadComms */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HomePadComms; path = Packages/HomePadComms; sourceTree = SOURCE_ROOT; };
+		FCABC740C1DBDA41887DF478 /* SwipeDownToDismissUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeDownToDismissUITests.swift; sourceTree = "<group>"; };
+		FE42DAC78661B5D5BB2BC846 /* HomePadShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HomePadShare.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		755ED95CCFE7D4B587545C63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8152D614C1D6C2235F768E07 /* HomePadCore in Frameworks */,
+				C015F319BCFC87708D75BA45 /* WidgetKit.framework in Frameworks */,
+				D972EC4D8BA1D569FB6F7C0E /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		86848B1EB735F54C3660C451 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB5B6F1F812778C3E25A4756 /* HomePadShareKit in Frameworks */,
+				34E093C966E233F46CBC16E5 /* HomePadUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97CC0FF73318734AA2230B4A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E72ED800C24521757085ECD /* HomePadCore in Frameworks */,
+				7A0FDCE6C15AD3A707D13582 /* HomePadUI in Frameworks */,
+				E07A540A64A17E60B11448F6 /* HomePadShell in Frameworks */,
+				9A5BFE67D85F6DC92CC06C9B /* HomePadFaces in Frameworks */,
+				A114971B8FF16982F2C446C3 /* HomePadAssistant in Frameworks */,
+				4AC448E506F69C62ABEA4814 /* HomePadSmartHome in Frameworks */,
+				357CF9A875C1DB5D64DEB6D2 /* HomePadAudio in Frameworks */,
+				C5F915A2C2D268F3BFF20EE4 /* HomePadPresence in Frameworks */,
+				5FA859D485972859CD357DE3 /* HomePadKitchen in Frameworks */,
+				442271EBADA7F0E843086DE7 /* HomePadPersonal in Frameworks */,
+				39998FB6F42C9D91571BFEA8 /* HomePadConnect in Frameworks */,
+				D7B57D0A2B156029A7CD973D /* HomePadComms in Frameworks */,
+				EEDF2ADC524B6224CB479921 /* HomePadCameraLab in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		210FB61E7E6305B133821554 = {
+			isa = PBXGroup;
+			children = (
+				BC74E3AA55A08E1E5597A2DD /* App */,
+				D3485C00FDBA1F9F8A27CE80 /* Extensions */,
+				2FD0A6FDE590FC46BF6C7A52 /* Packages */,
+				CDA2589CCE788DF74386D372 /* UITests */,
+				3C9CD25764352B21ABE684B3 /* Watch */,
+				C7DC0BDD9CBBFADD7645D061 /* Frameworks */,
+				32627B0038D8DE8A5E1347B4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2FD0A6FDE590FC46BF6C7A52 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				7C0DF1E173E3A8D75222DBD3 /* HomePadAssistant */,
+				70F7702342C48C0971F03D4B /* HomePadAudio */,
+				EDEDC81783E346B646637E4A /* HomePadCameraLab */,
+				F44ECF4F696C754BB8BF2746 /* HomePadComms */,
+				7EFFBA1F9CBD2CAFD3AB9D74 /* HomePadConnect */,
+				864C5593CF3DDB7D9993E0BE /* HomePadCore */,
+				3B8D605AA9CF5D94F76A4FB9 /* HomePadFaces */,
+				31B49DD11ED7D50F1EC293E6 /* HomePadKitchen */,
+				B4A4F76ED227AAE2DC036353 /* HomePadPersonal */,
+				0CB594802DB64108548B34B8 /* HomePadPresence */,
+				A7B0AA2757CC6FD50614E599 /* HomePadShell */,
+				198963CA3287337D7E1D42CD /* HomePadSmartHome */,
+				0952B37EEBDBF8A154A80786 /* HomePadUI */,
+				6F4AB02AC348AA4A4A822164 /* ShareKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		32627B0038D8DE8A5E1347B4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				30F692BB05B6ECB29F5229A5 /* HomePad.app */,
+				B1388869AE95218CF03B6301 /* HomePadShare.appex */,
+				BD126A53431FA2C464DC682D /* HomePadUITests.xctest */,
+				915BB581134F84A9459E2272 /* HomePadWatch.app */,
+				C22E0687DB1527764DFB0ACB /* HomePadWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3C9CD25764352B21ABE684B3 /* Watch */ = {
+			isa = PBXGroup;
+			children = (
+				88BC41225A8CF1DE16BB27BF /* Resources */,
+				85CBC6F235EBAB3E2D4E1589 /* Views */,
+				37F56F137368255E778A2DFA /* HomePadWatchApp.swift */,
+				8E8FBCFE1DC69CFB10A76701 /* Info.plist */,
+				307D4D038B79DED9C016E09B /* WatchLink.swift */,
+				9E0967B56EF4F6DB88D5A937 /* WatchProtocol.swift */,
+				0550821AE8B7F00E407995A7 /* WatchRecorder.swift */,
+			);
+			path = Watch;
+			sourceTree = "<group>";
+		};
+		6F1D2646C848B0657CE607AA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				6A06257777A523AC9D170D8C /* AppIntentsPackages.swift */,
+				4CBBFE7FF742050FBF03BFDB /* HomePadApp.swift */,
+				F136ABC1C869928DDEFDF0D4 /* HomePadShortcuts.swift */,
+				1DF1D714F3B7D17AFD2C33EA /* Modules.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		85CBC6F235EBAB3E2D4E1589 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CF20F9A2D571DA7D49A7652A /* WatchGlanceViews.swift */,
+				45CCE87E743AC9ABFC66BDA3 /* WatchIntercomView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		88BC41225A8CF1DE16BB27BF /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				857DA697DB610557BAB8D565 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		96704F2F336AD3EE500E507A /* HomePadShare */ = {
+			isa = PBXGroup;
+			children = (
+				FE42DAC78661B5D5BB2BC846 /* HomePadShare.entitlements */,
+				4FA1527FBB95647F387E0FF2 /* Info.plist */,
+				0CC197E62B0F3651DBDD0187 /* ShareComposeModel.swift */,
+				A51BB94FB250E43FF1EE5D5C /* ShareComposeView.swift */,
+				C4654DB10164D9F1D8C0CB02 /* ShareViewController.swift */,
+			);
+			path = HomePadShare;
+			sourceTree = "<group>";
+		};
+		BC74E3AA55A08E1E5597A2DD /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EAC698B8ED9660E8713AD426 /* Resources */,
+				6F1D2646C848B0657CE607AA /* Sources */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		BCAE17E5665381FF58B7A561 /* HomePadWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				09075A35398C132F24C3D5F5 /* HomePadWidgets.entitlements */,
+				3E3EEC1A7DA22B0FB8225838 /* HomePadWidgetsBundle.swift */,
+				EB93EB84EF3AF37785EB644C /* Info.plist */,
+				23350156ED19840EEEB226D5 /* TimerLiveActivityWidget.swift */,
+				E65A15D0640D23AD72EAC2FB /* TimersHomeWidget.swift */,
+				E339B81D2C12F13466AAF83A /* TimerWidgetViews.swift */,
+			);
+			path = HomePadWidgets;
+			sourceTree = "<group>";
+		};
+		C7DC0BDD9CBBFADD7645D061 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8CF54F10EE0AC3C86F12E4CA /* SwiftUI.framework */,
+				9422968E696E51FEC70B41D1 /* WidgetKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CDA2589CCE788DF74386D372 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				924393A8D1F2D8A052755985 /* AccessoryControlUITests.swift */,
+				E690A7341AFD36B4480D55FC /* AppStateRestoreUITests.swift */,
+				8E950A23F4DA01DB1AA757AA /* AppZoomUITests.swift */,
+				1163BFDF941422A0B2CA658B /* BoardComposerUITests.swift */,
+				F2FBF234820FD19E116871D6 /* CommsUITests.swift */,
+				6FC04BD9C3828C91E8F1FD5D /* CoverHomeUITests.swift */,
+				3830C80E9A1B0FE054D3B3BE /* FaceEditUITests.swift */,
+				E39A6DF51A71AFFD08B168DD /* FaceHoldUITests.swift */,
+				59D486F0BE0A60A4FF454EA7 /* FacePagingUITests.swift */,
+				9E2EC21E65D5C77BA39ACCC9 /* FacesAppUITests.swift */,
+				ADFA14A337FDB910BA0A6B81 /* FacesPerfUITests.swift */,
+				9F0C91BC6D8EEED7FEC9E301 /* FaceWidgetUITests.swift */,
+				F157DEAF3289FCABBC050BD8 /* HomeScenesUITests.swift */,
+				5AD45C315470F3FFF24C9F20 /* HomeScreenScrollPerfTests.swift */,
+				61D1D4B96C171BB1E816F113 /* HomeScreenUITests.swift */,
+				0205E61BABE019B3832A8864 /* HomeWidgetZoomUITests.swift */,
+				06FAC23C975AD761E9B3B55B /* MusicMiniPlayerUITests.swift */,
+				99381BFAB24E76C039A9FDE3 /* PhotoDismissUITests.swift */,
+				5280108F484B62D76042DCF9 /* PhotoViewerDismissUITests.swift */,
+				DBFCAB0501EC01BA03DE403C /* ReadmeShotsUITests.swift */,
+				1E5D64009A498AC67E756FDA /* SettingsDialogUITests.swift */,
+				4981DA9924F17FB658C656B0 /* SheetHeaderUITests.swift */,
+				FCABC740C1DBDA41887DF478 /* SwipeDownToDismissUITests.swift */,
+				768BCDFDD5E735BFE3DF5B8A /* WidgetStackUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		D3485C00FDBA1F9F8A27CE80 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				96704F2F336AD3EE500E507A /* HomePadShare */,
+				BCAE17E5665381FF58B7A561 /* HomePadWidgets */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		EAC698B8ED9660E8713AD426 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				6120FB663C1E42B7C7EB3E83 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		03B5D0601286F7D39669FE69 /* HomePadUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 04D3079491FDB39FEEAAFB15 /* Build configuration list for PBXNativeTarget "HomePadUITests" */;
+			buildPhases = (
+				05F8BFA195E66799CC647854 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				88C18047CF511C8FDEDA0E5E /* PBXTargetDependency */,
+			);
+			name = HomePadUITests;
+			packageProductDependencies = (
+			);
+			productName = HomePadUITests;
+			productReference = BD126A53431FA2C464DC682D /* HomePadUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		3505EAE6BAC880BA4617CEEB /* HomePadShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 68227156A9DE1EC20CDAA0E5 /* Build configuration list for PBXNativeTarget "HomePadShare" */;
+			buildPhases = (
+				6856468B87B0B1E72597802A /* Sources */,
+				86848B1EB735F54C3660C451 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HomePadShare;
+			packageProductDependencies = (
+				2F8EB4619F64AAC30082C97E /* HomePadShareKit */,
+				5FE66F0EA6E5F649F431969C /* HomePadUI */,
+			);
+			productName = HomePadShare;
+			productReference = B1388869AE95218CF03B6301 /* HomePadShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		6E7EFAFF311605A7853E8227 /* HomePadWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 04320EDF6CD80AF9572C2DCB /* Build configuration list for PBXNativeTarget "HomePadWidgets" */;
+			buildPhases = (
+				4FDCF172C479C56BBB1D73B1 /* Sources */,
+				755ED95CCFE7D4B587545C63 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HomePadWidgets;
+			packageProductDependencies = (
+				9850B1E0907BF4448A534DB3 /* HomePadCore */,
+			);
+			productName = HomePadWidgets;
+			productReference = C22E0687DB1527764DFB0ACB /* HomePadWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		6FB2E096745E25237EE3FA72 /* HomePadWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 463A04B9A3E458D8301F4783 /* Build configuration list for PBXNativeTarget "HomePadWatch" */;
+			buildPhases = (
+				7248A355912233D0ADF465FE /* Sources */,
+				0875FEA144591245A1A68B1D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HomePadWatch;
+			packageProductDependencies = (
+			);
+			productName = HomePadWatch;
+			productReference = 915BB581134F84A9459E2272 /* HomePadWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F45A093808E3271E4420296D /* HomePad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE42A2B1858BC1ED09C786D3 /* Build configuration list for PBXNativeTarget "HomePad" */;
+			buildPhases = (
+				2290320C6D6E71A64C6C857F /* Sources */,
+				ECF182D5DD72595978E08C1E /* Resources */,
+				97CC0FF73318734AA2230B4A /* Frameworks */,
+				7BD313E1BC8025E9BE5B357D /* Embed Foundation Extensions */,
+				14EE7E83EC7CE058D12DC954 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF3F55104A5695B2961C8091 /* PBXTargetDependency */,
+				3C350AA02C2A29BCC80B1DED /* PBXTargetDependency */,
+				AA194A818FF97DED8ABA5A96 /* PBXTargetDependency */,
+			);
+			name = HomePad;
+			packageProductDependencies = (
+				489F29D4C4B39B129EF9669D /* HomePadCore */,
+				86974E1D01A0CF57EE496FF0 /* HomePadUI */,
+				4B42C1860B3566FB2CA73CAE /* HomePadShell */,
+				B25C6E37915D8C4E839EE990 /* HomePadFaces */,
+				635C0F6C2445D7C13404440D /* HomePadAssistant */,
+				DD00B6C77DE7B026579320E4 /* HomePadSmartHome */,
+				47FB9CFF1F6E28B5B210406E /* HomePadAudio */,
+				D1A8C0FF4EF5A88054EB71DD /* HomePadPresence */,
+				A5E86C688A1EF0F9469FDF38 /* HomePadKitchen */,
+				3399B3A544C0A88ADEA848DD /* HomePadPersonal */,
+				2FEAED059D57EB9904A3F067 /* HomePadConnect */,
+				336A95FFEE6666E2E30D5B6A /* HomePadComms */,
+				90FACE08025EAAA1288EC9B0 /* HomePadCameraLab */,
+			);
+			productName = HomePad;
+			productReference = 30F692BB05B6ECB29F5229A5 /* HomePad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		40E674CEF2571D89A0799664 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					03B5D0601286F7D39669FE69 = {
+						DevelopmentTeam = 35UB6472YK;
+						ProvisioningStyle = Automatic;
+						TestTargetID = F45A093808E3271E4420296D;
+					};
+					3505EAE6BAC880BA4617CEEB = {
+						DevelopmentTeam = 35UB6472YK;
+						ProvisioningStyle = Automatic;
+					};
+					6E7EFAFF311605A7853E8227 = {
+						DevelopmentTeam = 35UB6472YK;
+						ProvisioningStyle = Automatic;
+					};
+					6FB2E096745E25237EE3FA72 = {
+						DevelopmentTeam = 35UB6472YK;
+						ProvisioningStyle = Automatic;
+					};
+					F45A093808E3271E4420296D = {
+						DevelopmentTeam = 35UB6472YK;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 36DCB183C71A1E29511C3CE5 /* Build configuration list for PBXProject "HomePad" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 210FB61E7E6305B133821554;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				924771323862FE485D5C188D /* XCLocalSwiftPackageReference "Packages/HomePadAssistant" */,
+				C5C6353520190F558CD51AAF /* XCLocalSwiftPackageReference "Packages/HomePadAudio" */,
+				48EA89E31FABFC5A36BB9BA6 /* XCLocalSwiftPackageReference "Packages/HomePadCameraLab" */,
+				8DF62D2B00EF2F81B2952A72 /* XCLocalSwiftPackageReference "Packages/HomePadComms" */,
+				98A4B459C319156CB1595CDA /* XCLocalSwiftPackageReference "Packages/HomePadConnect" */,
+				D00BA1A04EAED0835BBF46FE /* XCLocalSwiftPackageReference "Packages/HomePadCore" */,
+				BF87E488DECCFF736AF00691 /* XCLocalSwiftPackageReference "Packages/HomePadFaces" */,
+				62D20AD891E64DC0C4BD3102 /* XCLocalSwiftPackageReference "Packages/HomePadKitchen" */,
+				A5560263BE67E31A42E777B3 /* XCLocalSwiftPackageReference "Packages/HomePadPersonal" */,
+				569CB81C3335CFD6059FCB80 /* XCLocalSwiftPackageReference "Packages/HomePadPresence" */,
+				806DB59E3A93DD0372BA5F23 /* XCLocalSwiftPackageReference "Packages/HomePadConnect/ShareKit" */,
+				BDCD42D33E34581DADFF6DF2 /* XCLocalSwiftPackageReference "Packages/HomePadShell" */,
+				B14327C58553CC4347E18650 /* XCLocalSwiftPackageReference "Packages/HomePadSmartHome" */,
+				D3EA7671BAB0090D0EE59B42 /* XCLocalSwiftPackageReference "Packages/HomePadUI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 32627B0038D8DE8A5E1347B4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F45A093808E3271E4420296D /* HomePad */,
+				6E7EFAFF311605A7853E8227 /* HomePadWidgets */,
+				3505EAE6BAC880BA4617CEEB /* HomePadShare */,
+				6FB2E096745E25237EE3FA72 /* HomePadWatch */,
+				03B5D0601286F7D39669FE69 /* HomePadUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0875FEA144591245A1A68B1D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F467B384073FC518528F1282 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ECF182D5DD72595978E08C1E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4F9D979A88149E8D6BB12914 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		05F8BFA195E66799CC647854 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1FFD0D274A0162CCD8971CDD /* AccessoryControlUITests.swift in Sources */,
+				58887FB49DB5F1AAD3DF97B4 /* AppStateRestoreUITests.swift in Sources */,
+				4F9889411D5642D4597DE431 /* AppZoomUITests.swift in Sources */,
+				B17CF545D4ECEA891C37C34B /* BoardComposerUITests.swift in Sources */,
+				1BCECA6BCDCC3CF27C0734EF /* CommsUITests.swift in Sources */,
+				E23D3C5196CFC21E8EE9FC91 /* CoverHomeUITests.swift in Sources */,
+				3DD823FA386AB451B15C7746 /* FaceEditUITests.swift in Sources */,
+				7481ACADDF58750B05DABBEE /* FaceHoldUITests.swift in Sources */,
+				B9886AA3F30E5D140A7D17B6 /* FacePagingUITests.swift in Sources */,
+				EC65E3386B5D0FC29C730D2A /* FaceWidgetUITests.swift in Sources */,
+				2D459511AEB0AD533E34DC3B /* FacesAppUITests.swift in Sources */,
+				A2C6B0CD9E01DE2E4EAE5166 /* FacesPerfUITests.swift in Sources */,
+				516391750BB6273C197E9411 /* HomeScenesUITests.swift in Sources */,
+				B567DC93D189E724F50536F7 /* HomeScreenScrollPerfTests.swift in Sources */,
+				5ECB7B9E5816FFC6320CB033 /* HomeScreenUITests.swift in Sources */,
+				9FB89709398E422B209E2B19 /* HomeWidgetZoomUITests.swift in Sources */,
+				E7358774E48CC25C1F49940B /* MusicMiniPlayerUITests.swift in Sources */,
+				1F04D6BAB4554C87741976A7 /* PhotoDismissUITests.swift in Sources */,
+				05CBCC9A74B6F8DF255DBE0A /* PhotoViewerDismissUITests.swift in Sources */,
+				DB76426146BB43B869CB3489 /* ReadmeShotsUITests.swift in Sources */,
+				39F936A9A8DCA2C5800D53C8 /* SettingsDialogUITests.swift in Sources */,
+				1D73389E07DF38DBBE8369DF /* SheetHeaderUITests.swift in Sources */,
+				DB34165AC69787EA20C9F8F3 /* SwipeDownToDismissUITests.swift in Sources */,
+				EBB6A10DCE2C4CA08364FF2D /* WidgetStackUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2290320C6D6E71A64C6C857F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B92A168CF30268AC53AD98B /* AppIntentsPackages.swift in Sources */,
+				04AA3E396B6422014D15483D /* HomePadApp.swift in Sources */,
+				CFB1614BF494816CBD2DA35E /* HomePadShortcuts.swift in Sources */,
+				5AE169CC512A295A644B4A87 /* Modules.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4FDCF172C479C56BBB1D73B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				877E654359F6F7A8EB72DDD6 /* HomePadWidgetsBundle.swift in Sources */,
+				38A72C57F0B9E51598E41CAD /* TimerLiveActivityWidget.swift in Sources */,
+				A68F03AE4661AB92EC8F7BE7 /* TimerWidgetViews.swift in Sources */,
+				90D418AF981D749EC9CEEEE6 /* TimersHomeWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6856468B87B0B1E72597802A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7510D96D8BE916E13D588474 /* ShareComposeModel.swift in Sources */,
+				23083DCC21A93FC56C0D4C80 /* ShareComposeView.swift in Sources */,
+				BED8C2D6053BB3FCBDB707E4 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7248A355912233D0ADF465FE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3CA4F910348F407567452698 /* HomePadWatchApp.swift in Sources */,
+				E9650D7480AC41C7907863AB /* WatchGlanceViews.swift in Sources */,
+				992499AAF09323FE910FD817 /* WatchIntercomView.swift in Sources */,
+				2A071850F80DD645B7CA1F25 /* WatchLink.swift in Sources */,
+				CE0872B27F15FC08B2A5CFC7 /* WatchProtocol.swift in Sources */,
+				4B72FE01059721F682284AD6 /* WatchRecorder.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3C350AA02C2A29BCC80B1DED /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3505EAE6BAC880BA4617CEEB /* HomePadShare */;
+			targetProxy = CB92457970A6F3F2B555F12B /* PBXContainerItemProxy */;
+		};
+		88C18047CF511C8FDEDA0E5E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F45A093808E3271E4420296D /* HomePad */;
+			targetProxy = CAB2F7151A1A272C5806D83D /* PBXContainerItemProxy */;
+		};
+		AA194A818FF97DED8ABA5A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6FB2E096745E25237EE3FA72 /* HomePadWatch */;
+			targetProxy = FA9D714AEE58ADE623679122 /* PBXContainerItemProxy */;
+		};
+		AF3F55104A5695B2961C8091 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E7EFAFF311605A7853E8227 /* HomePadWidgets */;
+			targetProxy = D745211B2E967453779AEE16 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2352DA1BAA4E387672565503 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/HomePad.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad;
+				PRODUCT_NAME = HomePad;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		65F39964DF55C12583C84572 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extensions/HomePadWidgets/HomePadWidgets.entitlements;
+				INFOPLIST_FILE = Extensions/HomePadWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.widgets;
+				PRODUCT_NAME = HomePadWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6D033B939EB29A857D50A82D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 35UB6472YK;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6E9B2BFCAF12CFB7306B1FDC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HomePad;
+			};
+			name = Release;
+		};
+		75C137888CFF95DA12FCAAF1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.watchkitapp;
+				PRODUCT_NAME = HomePadWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		89B36937CBB32F04FA783B53 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extensions/HomePadShare/HomePadShare.entitlements;
+				INFOPLIST_FILE = Extensions/HomePadShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.share;
+				PRODUCT_NAME = HomePadShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A5787F0278B2C35721F2E0DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extensions/HomePadShare/HomePadShare.entitlements;
+				INFOPLIST_FILE = Extensions/HomePadShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.share;
+				PRODUCT_NAME = HomePadShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C3821DC96474B24621204C45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extensions/HomePadWidgets/HomePadWidgets.entitlements;
+				INFOPLIST_FILE = Extensions/HomePadWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.widgets;
+				PRODUCT_NAME = HomePadWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CFB2A2CCE72BB051613B096A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 35UB6472YK;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		EA62921B281EBE3E84841BC4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/HomePad.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad;
+				PRODUCT_NAME = HomePad;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FB41C5DF8F908A403D168B29 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HomePad;
+			};
+			name = Debug;
+		};
+		FD3A13AEBE685559581799E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ksha23.homepad.watchkitapp;
+				PRODUCT_NAME = HomePadWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		04320EDF6CD80AF9572C2DCB /* Build configuration list for PBXNativeTarget "HomePadWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3821DC96474B24621204C45 /* Debug */,
+				65F39964DF55C12583C84572 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		04D3079491FDB39FEEAAFB15 /* Build configuration list for PBXNativeTarget "HomePadUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB41C5DF8F908A403D168B29 /* Debug */,
+				6E9B2BFCAF12CFB7306B1FDC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		36DCB183C71A1E29511C3CE5 /* Build configuration list for PBXProject "HomePad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6D033B939EB29A857D50A82D /* Debug */,
+				CFB2A2CCE72BB051613B096A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		463A04B9A3E458D8301F4783 /* Build configuration list for PBXNativeTarget "HomePadWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3A13AEBE685559581799E8 /* Debug */,
+				75C137888CFF95DA12FCAAF1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		68227156A9DE1EC20CDAA0E5 /* Build configuration list for PBXNativeTarget "HomePadShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A5787F0278B2C35721F2E0DF /* Debug */,
+				89B36937CBB32F04FA783B53 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FE42A2B1858BC1ED09C786D3 /* Build configuration list for PBXNativeTarget "HomePad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EA62921B281EBE3E84841BC4 /* Debug */,
+				2352DA1BAA4E387672565503 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		48EA89E31FABFC5A36BB9BA6 /* XCLocalSwiftPackageReference "Packages/HomePadCameraLab" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadCameraLab;
+		};
+		569CB81C3335CFD6059FCB80 /* XCLocalSwiftPackageReference "Packages/HomePadPresence" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadPresence;
+		};
+		62D20AD891E64DC0C4BD3102 /* XCLocalSwiftPackageReference "Packages/HomePadKitchen" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadKitchen;
+		};
+		806DB59E3A93DD0372BA5F23 /* XCLocalSwiftPackageReference "Packages/HomePadConnect/ShareKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadConnect/ShareKit;
+		};
+		8DF62D2B00EF2F81B2952A72 /* XCLocalSwiftPackageReference "Packages/HomePadComms" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadComms;
+		};
+		924771323862FE485D5C188D /* XCLocalSwiftPackageReference "Packages/HomePadAssistant" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadAssistant;
+		};
+		98A4B459C319156CB1595CDA /* XCLocalSwiftPackageReference "Packages/HomePadConnect" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadConnect;
+		};
+		A5560263BE67E31A42E777B3 /* XCLocalSwiftPackageReference "Packages/HomePadPersonal" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadPersonal;
+		};
+		B14327C58553CC4347E18650 /* XCLocalSwiftPackageReference "Packages/HomePadSmartHome" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadSmartHome;
+		};
+		BDCD42D33E34581DADFF6DF2 /* XCLocalSwiftPackageReference "Packages/HomePadShell" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadShell;
+		};
+		BF87E488DECCFF736AF00691 /* XCLocalSwiftPackageReference "Packages/HomePadFaces" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadFaces;
+		};
+		C5C6353520190F558CD51AAF /* XCLocalSwiftPackageReference "Packages/HomePadAudio" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadAudio;
+		};
+		D00BA1A04EAED0835BBF46FE /* XCLocalSwiftPackageReference "Packages/HomePadCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadCore;
+		};
+		D3EA7671BAB0090D0EE59B42 /* XCLocalSwiftPackageReference "Packages/HomePadUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomePadUI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2F8EB4619F64AAC30082C97E /* HomePadShareKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadShareKit;
+		};
+		2FEAED059D57EB9904A3F067 /* HomePadConnect */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadConnect;
+		};
+		336A95FFEE6666E2E30D5B6A /* HomePadComms */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadComms;
+		};
+		3399B3A544C0A88ADEA848DD /* HomePadPersonal */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadPersonal;
+		};
+		47FB9CFF1F6E28B5B210406E /* HomePadAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadAudio;
+		};
+		489F29D4C4B39B129EF9669D /* HomePadCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadCore;
+		};
+		4B42C1860B3566FB2CA73CAE /* HomePadShell */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadShell;
+		};
+		5FE66F0EA6E5F649F431969C /* HomePadUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadUI;
+		};
+		635C0F6C2445D7C13404440D /* HomePadAssistant */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadAssistant;
+		};
+		86974E1D01A0CF57EE496FF0 /* HomePadUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadUI;
+		};
+		90FACE08025EAAA1288EC9B0 /* HomePadCameraLab */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadCameraLab;
+		};
+		9850B1E0907BF4448A534DB3 /* HomePadCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadCore;
+		};
+		A5E86C688A1EF0F9469FDF38 /* HomePadKitchen */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadKitchen;
+		};
+		B25C6E37915D8C4E839EE990 /* HomePadFaces */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadFaces;
+		};
+		D1A8C0FF4EF5A88054EB71DD /* HomePadPresence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadPresence;
+		};
+		DD00B6C77DE7B026579320E4 /* HomePadSmartHome */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomePadSmartHome;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 40E674CEF2571D89A0799664 /* Project object */;
+}

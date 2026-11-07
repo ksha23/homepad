@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).background.refresh</string>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).background.processing</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>HomePad</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.ksha23.homepad</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>homepad</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>findmy</string>
+		<string>shortcuts</string>
+		<string>music</string>
+		<string>spotify</string>
+		<string>homeassistant</string>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>HomePad uses alarms so your wake-up alarms and kitchen timers ring even when the app is in the background.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>HomePad plays Apple Music from your library and the catalog.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>HomePad uses Bluetooth so a HomePad that recognizes you can wake HomePad on your iPhone and show your photos and calendars. Nothing personal goes over Bluetooth.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_homepad._tcp</string>
+		<string>_home-assistant._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
+	</array>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>HomePad shows your upcoming events and lets you add new ones by voice. On iPhone, it shows the calendars you choose on your HomePads while they recognize you, and saves the events you add there, over your home network only.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>HomePad uses the cameras to notice when someone is nearby, recognize household members on this device, make video calls, and power camera features you turn on. Video never leaves the iPad unless you start a call or enable Security Camera mode.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>HomePad uses Face ID to unlock settings for household admins.</string>
+	<key>NSHomeKitUsageDescription</key>
+	<string>HomePad shows and controls your Apple Home accessories, scenes and cameras.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>HomePad finds Home Assistant, other HomePads and AirPlay speakers on your network.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>HomePad uses your location for local weather.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>HomePad listens for your voice requests, intercom messages and alarm sounds such as smoke detectors.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>HomePad reads your AirPods head motion so you can nod or shake your head to answer yes or no prompts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HomePad saves photos and videos from Messages to your photo library when you tap Save to Photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HomePad shows your photo library, favorites and shared albums in the Photos app, the Photo widget and the Photos face. On iPhone, it shows your photos on the HomePads you choose while they recognize you, over your home network only.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>HomePad shows your reminders and grocery lists and adds items by voice. On iPhone, it shows the lists you choose on your HomePads while they recognize you, and saves what you add or check off there, over your home network only.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>HomePad turns your voice requests into text on this device.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.ksha23.homepad.recipe</string>
+		<string>com.ksha23.homepad.nowplaying</string>
+		<string>com.ksha23.homepad.assistant</string>
+		<string>com.ksha23.homepad.camera</string>
+	</array>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>bluetooth-central</string>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
+</plist>

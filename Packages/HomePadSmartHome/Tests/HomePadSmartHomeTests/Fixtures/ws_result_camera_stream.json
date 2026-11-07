@@ -1,0 +1,8 @@
+{
+ "id": 9,
+ "type": "result",
+ "success": true,
+ "result": {
+  "url": "/api/hls/7f3a9c/master_playlist.m3u8"
+ }
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "5B1D6E2A-6F0C-4C55-9C1E-3A8E2B7D0001",
+    "title": "Butternut Squash Soup",
+    "summary": "A silky autumn soup with apple, a little cream and crisp sage.",
+    "source": "Home Cookbook",
+    "prepTime": 600,
+    "cookTime": 1500,
+    "totalTime": 2100,
+    "servings": 4,
+    "yieldText": "4 servings",
+    "ingredients": [
+      "2 tablespoons olive oil",
+      "1 medium yellow onion, chopped",
+      "2 cloves garlic, minced",
+      "1 butternut squash (about 3 lb), peeled and cubed",
+      "1 medium apple, peeled and chopped",
+      "4 cups vegetable broth",
+      "1 teaspoon kosher salt",
+      "1/2 teaspoon ground black pepper",
+      "1/4 teaspoon ground nutmeg",
+      "1/2 cup heavy cream",
+      "6 fresh sage leaves, for garnish"
+    ],
+    "sections": [
+      {
+        "steps": [
+          "Heat 2 tablespoons olive oil in a large pot over medium heat. Add the onion and cook until soft, 5 to 7 minutes.",
+          "Stir in the garlic and cook for 30 seconds, until fragrant.",
+          "Add the squash, apple, 4 cups vegetable broth, 1 teaspoon salt and 1/2 teaspoon pepper. Bring to a boil.",
+          "Lower the heat, cover and simmer until the squash is very tender, 15 to 20 minutes.",
+          "Blend the soup until smooth with an immersion blender, or in batches in a countertop blender.",
+          "Stir in 1/2 cup heavy cream and the nutmeg. Warm through for 2 minutes, then taste and adjust the seasoning.",
+          "Fry the sage leaves in a little oil for 1 minute until crisp, and scatter them over each bowl."
+        ]
+      }
+    ],
+    "tags": ["Soup", "Vegetarian", "Autumn"],
+    "isPinned": true,
+    "addedAt": "2026-10-13T09:00:00Z"
+  },
+  {
+    "id": "5B1D6E2A-6F0C-4C55-9C1E-3A8E2B7D0002",
+    "title": "Brioche French Toast",
+    "summary": "Custardy in the middle and crisp at the edges.",
+    "source": "Home Cookbook",
+    "prepTime": 300,
+    "cookTime": 900,
+    "totalTime": 1200,
+    "servings": 4,
+    "yieldText": "4 servings",
+    "ingredients": [
+      "4 large eggs",
+      "1 cup half-and-half",
+      "2 tablespoons brown sugar",
+      "1 teaspoon vanilla extract",
+      "1/2 teaspoon ground cinnamon",
+      "1 pinch salt",
+      "8 slices day-old brioche",
+      "2 tablespoons butter",
+      "Maple syrup, for serving",
+      "Fresh berries, for serving"
+    ],
+    "sections": [
+      {
+        "steps": [
+          "Set up an assembly line. Lay out the bread and grab a shallow bowl that fits one or two slices.",
+          "Whisk the eggs, 1 cup half-and-half, 2 tablespoons brown sugar, the vanilla, cinnamon and salt until smooth.",
+          "Heat a large skillet over medium heat and melt 1 tablespoon butter.",
+          "Dip each slice into the custard and soak for about 5 seconds on each side. Let any excess drip off.",
+          "Cook the slices until golden brown, 2 to 3 minutes per side. Add more butter between batches.",
+          "Serve warm with maple syrup and fresh berries."
+        ]
+      }
+    ],
+    "tags": ["Breakfast"],
+    "isPinned": false,
+    "addedAt": "2026-10-12T09:00:00Z"
+  }
+]

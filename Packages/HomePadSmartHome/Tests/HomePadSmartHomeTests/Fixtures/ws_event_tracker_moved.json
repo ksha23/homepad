@@ -1,0 +1,67 @@
+{
+ "id": 2,
+ "type": "event",
+ "event": {
+  "event_type": "state_changed",
+  "data": {
+   "entity_id": "device_tracker.kyles_iphone",
+   "old_state": {
+    "entity_id": "device_tracker.kyles_iphone",
+    "state": "home",
+    "attributes": {
+     "source_type": "gps",
+     "battery": 82,
+     "latitude": 43.0748,
+     "longitude": -89.3841,
+     "gps_accuracy": 12,
+     "account_fetch_interval": 5,
+     "battery_status": "NotCharging",
+     "device_name": "iPhone 17 Pro",
+     "device_status": "online",
+     "low_power_mode": false,
+     "owner_fullname": "Kyle Example",
+     "friendly_name": "Kyle’s iPhone"
+    },
+    "last_changed": "2026-10-20T13:40:00.000000+00:00",
+    "last_updated": "2026-10-20T14:01:30.000000+00:00",
+    "context": {
+     "id": "01JFMY0004",
+     "user_id": null,
+     "parent_id": null
+    }
+   },
+   "new_state": {
+    "entity_id": "device_tracker.kyles_iphone",
+    "state": "Work",
+    "attributes": {
+     "source_type": "gps",
+     "battery": 79,
+     "latitude": 43.0765,
+     "longitude": -89.4126,
+     "gps_accuracy": 18,
+     "account_fetch_interval": 5,
+     "battery_status": "NotCharging",
+     "device_name": "iPhone 17 Pro",
+     "device_status": "online",
+     "low_power_mode": false,
+     "owner_fullname": "Kyle Example",
+     "friendly_name": "Kyle’s iPhone"
+    },
+    "last_changed": "2026-10-20T14:20:00.000000+00:00",
+    "last_updated": "2026-10-20T14:20:00.000000+00:00",
+    "context": {
+     "id": "01JFMY0904",
+     "user_id": null,
+     "parent_id": null
+    }
+   }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2026-10-20T14:20:00.000000+00:00",
+  "context": {
+   "id": "01JFMY0904",
+   "user_id": null,
+   "parent_id": null
+  }
+ }
+}
