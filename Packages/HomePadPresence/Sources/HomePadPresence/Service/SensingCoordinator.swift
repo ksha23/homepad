@@ -8,6 +8,8 @@ import HomePadCore
 final class SensingCoordinator {
     let analyzer = FrameAnalyzer()
     private let queue = DispatchQueue(label: "com.homepad.presence.analysis", qos: .utility)
+    /// The recognition models load here, beside the analysis queue (`warmUpRecognition`).
+    private let warmUpQueue = DispatchQueue(label: "com.homepad.presence.warmup", qos: .utility)
     private let script: SimulatedPresenceScript?
     private let capture: CaptureCoordinator?
     private(set) var backend: (any SensingBackend)?
@@ -64,13 +66,15 @@ final class SensingCoordinator {
         release()
     }
 
-    /// Loads the recognition models on the analysis queue before anyone arrives,
-    /// then reports the seconds it took on the main actor.
-    func warmUpRecognition(hands: Bool, completion: @escaping @MainActor (TimeInterval) -> Void) {
-        let analyzer = self.analyzer
-        queue.async {
-            let seconds = analyzer.warmUp(hands: hands)
-            Task { @MainActor in completion(seconds) }
+    /// Loads the recognition models before anyone arrives, on a queue of its
+    /// own, then reports how long each took on the main actor. On the analysis
+    /// queue the load held up the camera's first frame: 73 s on the 11-inch
+    /// after a cold boot (1 to 3 s on other launches), with no presence,
+    /// distance or recognition until it finished.
+    func warmUpRecognition(hands: Bool, completion: @escaping @MainActor (RecognitionWarmUp) -> Void) {
+        warmUpQueue.async {
+            let report = FrameAnalyzer.warmUpModels(hands: hands)
+            Task { @MainActor in completion(report) }
         }
     }
 

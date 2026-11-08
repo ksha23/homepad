@@ -77,7 +77,12 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
-        UILaunchScreen: {}
+        # The launch screen: the icon on a background that follows the iPad's
+        # appearance (LaunchBackground is light gray in Light, black in Dark).
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchIcon
+          UIImageRespectsSafeAreaInsets: false
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIStatusBarHidden: true

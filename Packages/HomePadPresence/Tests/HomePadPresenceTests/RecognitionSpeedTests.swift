@@ -9,8 +9,16 @@ import Testing
     @Test func warmUpRunsOnABlankCameraFrame() throws {
         let buffer = try #require(FaceEmbedder.blankFrame(width: 640, height: 480))
         #expect(CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
-        let seconds = FrameAnalyzer().warmUp(hands: true)
-        #expect(seconds >= 0)
+        let report = FrameAnalyzer.warmUpModels(hands: true)
+        #expect(report.hands != nil)
+        #expect(report.total >= report.featurePrint)
+        #expect(report.description.contains("feature print"))
+    }
+
+    @Test func noHandsLeavesHandPoseOutOfTheReport() {
+        let report = FrameAnalyzer.warmUpModels(hands: false)
+        #expect(report.hands == nil)
+        #expect(!report.description.contains("hands"))
     }
 }
 

@@ -94,13 +94,22 @@ final class FrameAnalyzer: @unchecked Sendable {
     }
 
     /// Loads the recognition models (and hand pose when `hands` is true) before
-    /// anyone arrives. Call on the analysis queue. Returns the seconds it took.
-    func warmUp(hands: Bool) -> TimeInterval {
+    /// anyone arrives. It uses requests of its own, so it runs on a queue of
+    /// its own while the analysis queue goes on with frames. Vision keeps a
+    /// loaded model for the whole process, so the analyzer's requests find it.
+    static func warmUpModels(hands: Bool) -> RecognitionWarmUp {
+        var report = RecognitionWarmUp()
+        guard let buffer = FaceEmbedder.blankFrame(width: 640, height: 480) else { return report }
+        let detectors = VisionDetectors()
+        report.faces = timed { detectors.warmUp(on: buffer, faces: true, hands: false) }
+        if hands { report.hands = timed { detectors.warmUp(on: buffer, faces: false, hands: true) } }
+        report.featurePrint = timed { FaceEmbedder().warmUp() }
+        return report
+    }
+
+    private static func timed(_ work: () -> Void) -> TimeInterval {
         let start = Date()
-        if let buffer = FaceEmbedder.blankFrame(width: 640, height: 480) {
-            detectors.warmUp(on: buffer, hands: hands)
-        }
-        embedder.warmUp()
+        work()
         return Date().timeIntervalSince(start)
     }
 
@@ -261,5 +270,20 @@ final class FrameAnalyzer: @unchecked Sendable {
         frameTimes.removeAll { time - $0 > 2 }
         guard let first = frameTimes.first, frameTimes.count > 1, time > first else { return 0 }
         return Double(frameTimes.count - 1) / (time - first)
+    }
+}
+
+/// How long each recognition model took to load at launch, for the presence trace.
+struct RecognitionWarmUp: Sendable {
+    var faces: TimeInterval = 0
+    var hands: TimeInterval?
+    var featurePrint: TimeInterval = 0
+
+    var total: TimeInterval { faces + (hands ?? 0) + featurePrint }
+
+    var description: String {
+        let ms = { (seconds: TimeInterval) in "\(Int((seconds * 1000).rounded())) ms" }
+        let parts = ["faces \(ms(faces))"] + (hands.map { ["hands \(ms($0))"] } ?? []) + ["feature print \(ms(featurePrint))"]
+        return "\(ms(total)) (" + parts.joined(separator: ", ") + ")"
     }
 }

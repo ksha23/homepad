@@ -32,6 +32,10 @@ public final class LivePresenceService: PresenceService {
     @ObservationIgnored private var fusion = PresenceFusion()
     @ObservationIgnored private var isStarted = false
     @ObservationIgnored private var didWarmUpRecognition = false
+    /// True while the recognition models load after launch. Samples and hand
+    /// pose wait for them, so no frame stalls on the load, and presence and
+    /// distance run from the first frame.
+    @ObservationIgnored private var isWarmingUpRecognition = false
     @ObservationIgnored private var faceTrackingFailed = false
     @ObservationIgnored private var lastMotionEvent = Date.distantPast
     /// The settings the per-frame path reads.
@@ -99,8 +103,12 @@ public final class LivePresenceService: PresenceService {
         guard !didWarmUpRecognition, !capabilities.isSimulated, capabilities.hasTrueDepth || capabilities.hasFrontCamera,
               recognition.isEnabled, !recognition.templates.isEmpty else { return }
         didWarmUpRecognition = true
-        sensors.warmUpRecognition(hands: frameSettings.handGestures) { seconds in
-            PresenceTrace.trace.log("recognition warm-up took \(Int((seconds * 1000).rounded())) ms")
+        isWarmingUpRecognition = true
+        updateAnalyzerOptions()
+        sensors.warmUpRecognition(hands: frameSettings.handGestures) { [weak self] report in
+            PresenceTrace.trace.log("recognition warm-up took \(report.description)")
+            self?.isWarmingUpRecognition = false
+            self?.updateAnalyzerOptions()
         }
     }
 
@@ -301,21 +309,23 @@ public final class LivePresenceService: PresenceService {
     func updateAnalyzerOptions() {
         let settings = frameSettings
         let within = (snapshot.nearestDistanceMeters ?? .infinity) <= 2.5
-        let wantsEmbeddings = recognition.wantsEmbeddings && snapshot.isSomeonePresent
+        let wouldSample = recognition.wantsEmbeddings && snapshot.isSomeonePresent
+        let wantsEmbeddings = wouldSample && !isWarmingUpRecognition
         let now = Date()
         let interval = recognition.sampleInterval(at: now)
         let purpose = recognition.isSamplingOnlyToLearn(at: now) ? "learning" : "recognition"
         sensors.analyzer.options = AnalyzerOptions(
             sensitivity: settings.sensitivity,
-            detectHands: settings.handGestures && snapshot.isSomeonePresent && within,
+            detectHands: settings.handGestures && snapshot.isSomeonePresent && within && !isWarmingUpRecognition,
             wantsEmbeddings: wantsEmbeddings,
             embeddingInterval: interval,
             embeddingsNeedDepth: capabilities.hasTrueDepth && settings.useTrueDepth,
             isTracing: PresenceTrace.trace.isEnabled,
             depthSignatureInterval: recognition.wantsDepthSignatures ? recognition.depthIdentity.policy.sampleInterval : nil
         )
-        PresenceTrace.trace.logIfChanged("cadence", wantsEmbeddings
-            ? "\(purpose) samples every \(PresenceTrace.format(interval)) s" : "recognition sampling off")
+        let cadence = wantsEmbeddings ? "\(purpose) samples every \(PresenceTrace.format(interval)) s"
+            : wouldSample ? "recognition waits for its models" : "recognition sampling off"
+        PresenceTrace.trace.logIfChanged("cadence", cadence)
     }
 
     /// Re-applies feature switches (sounds, head gestures).

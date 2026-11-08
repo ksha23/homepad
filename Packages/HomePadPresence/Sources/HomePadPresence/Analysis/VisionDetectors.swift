@@ -60,12 +60,15 @@ final class VisionDetectors {
         return results
     }
 
-    /// Runs the face request, and the hand pose request when `hands` is true,
-    /// once on `buffer`, so their models are loaded before the first real frame.
-    /// The scan already runs faces, but hand pose first runs on the first face
+    /// Runs the face request and the hand pose request, as asked, once on
+    /// `buffer`, so their models are loaded before the first real frame. The
+    /// scan already runs faces, but hand pose first runs on the first face
     /// tracking frame, in the same pass as the first recognition sample.
-    func warmUp(on buffer: CVPixelBuffer, hands: Bool) {
-        let requests: [VNRequest] = hands ? [faceRequest, handRequest] : [faceRequest]
+    func warmUp(on buffer: CVPixelBuffer, faces: Bool, hands: Bool) {
+        var requests: [VNRequest] = []
+        if faces { requests.append(faceRequest) }
+        if hands { requests.append(handRequest) }
+        guard !requests.isEmpty else { return }
         try? VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .right).perform(requests)
     }
 
