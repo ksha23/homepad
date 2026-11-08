@@ -23,6 +23,7 @@ struct HomeScreenHeader: View {
     let onAvatar: () -> Void
     let onShowFace: () -> Void
 
+    @Environment(AppServices.self) private var services
     @Environment(ModuleRegistry.self) private var registry
     @Environment(ShellNavigator.self) private var navigator
     /// Who the greeting is for while it shows.
@@ -76,11 +77,14 @@ struct HomeScreenHeader: View {
                     Color.clear.frame(width: 0, height: 0)
                 }
                 Button(action: onAvatar) {
+                    // A turning ring while face recognition starts after launch.
                     AvatarView(member: member, size: Theme.Size.profileButton)
+                        .startingRing(services.presence.isRecognitionStarting)
                 }
                 .buttonStyle(.plain)
                 .glassEffect(.regular.interactive(), in: Circle())
-                .accessibilityLabel("People, \(member?.name ?? "Guest")")
+                .accessibilityLabel("People, \(member?.name ?? "Guest")"
+                    + (services.presence.isRecognitionStarting ? ", face recognition is starting" : ""))
             }
         }
         // The avatar sets the row's height, so it sits `profileButtonInset` from the

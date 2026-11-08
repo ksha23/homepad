@@ -189,6 +189,10 @@ public protocol PresenceService: AnyObject {
     var isCameraSensing: Bool { get }
     /// True when the device has a TrueDepth (Face ID) camera.
     var hasTrueDepth: Bool { get }
+    /// True while face recognition loads its models after launch, when nobody
+    /// can be recognized yet and HomePad shows guest content. A few seconds on
+    /// most launches, up to a minute after the iPad was turned on.
+    var isRecognitionStarting: Bool { get }
 
     func start()
     func stop()
@@ -196,6 +200,7 @@ public protocol PresenceService: AnyObject {
 
 public extension PresenceService {
     var isCameraSensing: Bool { isRunning }
+    var isRecognitionStarting: Bool { false }
 }
 
 @MainActor

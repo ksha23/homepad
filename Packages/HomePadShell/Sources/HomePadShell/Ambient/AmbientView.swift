@@ -47,7 +47,10 @@ struct AmbientView: View {
                     // Where the Home Screen's header has it, as far from the top as
                     // from the side, and drifting with the face.
                     if showsProfileDot {
-                        ProfileDot(member: household.isPersonalContentUnlocked ? household.activeMember : nil)
+                        ProfileDot(
+                            member: household.isPersonalContentUnlocked ? household.activeMember : nil,
+                            isRecognitionStarting: services.presence.isRecognitionStarting
+                        )
                             .padding(.top, overscan + Theme.Size.profileButtonInset)
                             .padding(.trailing, overscan + Theme.Size.profileButtonInset)
                             .transition(.opacity)
@@ -120,12 +123,16 @@ struct AmbientView: View {
 /// the face, which goes to the Home Screen.
 private struct ProfileDot: View {
     let member: HouseholdMember?
+    /// Face recognition is still loading after launch: a turning ring, as on the header's avatar.
+    let isRecognitionStarting: Bool
 
     var body: some View {
         AvatarView(member: member, size: Theme.Size.profileButton)
+            .startingRing(isRecognitionStarting)
             .glassEffect(.regular, in: Circle())
             .nightModeAware()
             .allowsHitTesting(false)
-            .accessibilityLabel(member.map { "\($0.name) recognized" } ?? "Nobody recognized")
+            .accessibilityLabel(isRecognitionStarting ? "Face recognition is starting"
+                : member.map { "\($0.name) recognized" } ?? "Nobody recognized")
     }
 }

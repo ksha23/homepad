@@ -51,7 +51,12 @@ final class FrameAnalyzer: @unchecked Sendable {
     private let optionsLock = NSLock()
     private var _options = AnalyzerOptions()
 
-    private let detectors = VisionDetectors()
+    /// On the CPU from launch until `moveVisionToNeuralEngine()`.
+    private let detectors: VisionDetectors = {
+        let detectors = VisionDetectors()
+        detectors.runOnCPU(true)
+        return detectors
+    }()
     private let embedder = FaceEmbedder()
     private var motion = MotionDetector()
     /// Depth maps, movement in them and the person followed through them.
@@ -93,18 +98,36 @@ final class FrameAnalyzer: @unchecked Sendable {
         lastNearestMeters = nil
     }
 
-    /// Loads the recognition models (and hand pose when `hands` is true) before
-    /// anyone arrives. It uses requests of its own, so it runs on a queue of
-    /// its own while the analysis queue goes on with frames. Vision keeps a
-    /// loaded model for the whole process, so the analyzer's requests find it.
-    static func warmUpModels(hands: Bool) -> RecognitionWarmUp {
+    /// Loads models before anyone arrives, with requests of its own, so it
+    /// runs on a queue of its own while the analysis queue goes on with frames
+    /// on the CPU. Vision keeps a loaded model for the whole process, so the
+    /// analyzer's requests find it.
+    ///
+    /// The feature print goes first: recognition needs only it beyond the
+    /// detectors the analyzer already runs on the CPU, and it loads in under
+    /// 2 s even after a cold boot. `recognitionReady` is called once it has.
+    /// Then hand pose, then face and people detection for the Neural Engine,
+    /// the slow one after a cold boot.
+    static func warmUpModels(
+        featurePrint: Bool, detectors: Bool, hands: Bool, recognitionReady: (TimeInterval) -> Void
+    ) -> RecognitionWarmUp {
         var report = RecognitionWarmUp()
         guard let buffer = FaceEmbedder.blankFrame(width: 640, height: 480) else { return report }
-        let detectors = VisionDetectors()
-        report.faces = timed { detectors.warmUp(on: buffer, faces: true, hands: false) }
-        if hands { report.hands = timed { detectors.warmUp(on: buffer, faces: false, hands: true) } }
-        report.featurePrint = timed { FaceEmbedder().warmUp() }
+        if featurePrint {
+            report.featurePrint = timed { FaceEmbedder().warmUp() }
+            recognitionReady(report.featurePrint ?? 0)
+        }
+        let warm = VisionDetectors()
+        if hands { report.hands = timed { warm.warmUp(on: buffer, faces: false, hands: true) } }
+        if detectors { report.faces = timed { warm.warmUp(on: buffer, faces: true, hands: false) } }
         return report
+    }
+
+    /// Moves face, people and hand detection from the CPU to where Vision
+    /// chooses, once the warm-up has loaded their models there. Call on the
+    /// analysis queue.
+    func moveVisionToNeuralEngine() {
+        detectors.runOnCPU(false)
     }
 
     private static func timed(_ work: () -> Void) -> TimeInterval {
@@ -273,17 +296,20 @@ final class FrameAnalyzer: @unchecked Sendable {
     }
 }
 
-/// How long each recognition model took to load at launch, for the presence trace.
+/// How long each model took to load at launch, for the presence trace. Nil
+/// for a model this warm-up did not load.
 struct RecognitionWarmUp: Sendable {
-    var faces: TimeInterval = 0
+    var featurePrint: TimeInterval?
     var hands: TimeInterval?
-    var featurePrint: TimeInterval = 0
+    /// Face and people detection, for the Neural Engine.
+    var faces: TimeInterval?
 
-    var total: TimeInterval { faces + (hands ?? 0) + featurePrint }
+    var total: TimeInterval { (featurePrint ?? 0) + (hands ?? 0) + (faces ?? 0) }
 
     var description: String {
         let ms = { (seconds: TimeInterval) in "\(Int((seconds * 1000).rounded())) ms" }
-        let parts = ["faces \(ms(faces))"] + (hands.map { ["hands \(ms($0))"] } ?? []) + ["feature print \(ms(featurePrint))"]
+        let parts = [featurePrint.map { "feature print \(ms($0))" }, hands.map { "hands \(ms($0))" },
+                     faces.map { "faces \(ms($0))" }].compactMap { $0 }
         return "\(ms(total)) (" + parts.joined(separator: ", ") + ")"
     }
 }

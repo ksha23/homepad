@@ -8,7 +8,7 @@ import HomePadCore
 final class SensingCoordinator {
     let analyzer = FrameAnalyzer()
     private let queue = DispatchQueue(label: "com.homepad.presence.analysis", qos: .utility)
-    /// The recognition models load here, beside the analysis queue (`warmUpRecognition`).
+    /// Models load here, beside the analysis queue (`warmUp`).
     private let warmUpQueue = DispatchQueue(label: "com.homepad.presence.warmup", qos: .utility)
     private let script: SimulatedPresenceScript?
     private let capture: CaptureCoordinator?
@@ -71,9 +71,22 @@ final class SensingCoordinator {
     /// queue the load held up the camera's first frame: 73 s on the 11-inch
     /// after a cold boot (1 to 3 s on other launches), with no presence,
     /// distance or recognition until it finished.
-    func warmUpRecognition(hands: Bool, completion: @escaping @MainActor (RecognitionWarmUp) -> Void) {
+    ///
+    /// `recognitionReady` runs once the feature print has loaded. With
+    /// `detectors`, the analyzer moves its detectors from the CPU to the Neural
+    /// Engine after their models have loaded there.
+    func warmUp(
+        featurePrint: Bool, detectors: Bool, hands: Bool,
+        recognitionReady: @escaping @MainActor (TimeInterval) -> Void,
+        completion: @escaping @MainActor (RecognitionWarmUp) -> Void
+    ) {
+        let analyzer = self.analyzer
+        let queue = self.queue
         warmUpQueue.async {
-            let report = FrameAnalyzer.warmUpModels(hands: hands)
+            let report = FrameAnalyzer.warmUpModels(featurePrint: featurePrint, detectors: detectors, hands: hands) { seconds in
+                Task { @MainActor in recognitionReady(seconds) }
+            }
+            if detectors { queue.async { analyzer.moveVisionToNeuralEngine() } }
             Task { @MainActor in completion(report) }
         }
     }

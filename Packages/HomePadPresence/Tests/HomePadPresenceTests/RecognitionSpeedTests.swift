@@ -9,16 +9,28 @@ import Testing
     @Test func warmUpRunsOnABlankCameraFrame() throws {
         let buffer = try #require(FaceEmbedder.blankFrame(width: 640, height: 480))
         #expect(CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
-        let report = FrameAnalyzer.warmUpModels(hands: true)
-        #expect(report.hands != nil)
-        #expect(report.total >= report.featurePrint)
+        var readyAfter: TimeInterval?
+        let report = FrameAnalyzer.warmUpModels(featurePrint: true, detectors: true, hands: true) { readyAfter = $0 }
+        #expect(readyAfter == report.featurePrint)
+        #expect(report.hands != nil && report.faces != nil)
         #expect(report.description.contains("feature print"))
     }
 
-    @Test func noHandsLeavesHandPoseOutOfTheReport() {
-        let report = FrameAnalyzer.warmUpModels(hands: false)
-        #expect(report.hands == nil)
-        #expect(!report.description.contains("hands"))
+    @Test func detectorsAloneLeaveRecognitionOutOfTheReport() {
+        var ready = false
+        let report = FrameAnalyzer.warmUpModels(featurePrint: false, detectors: true, hands: false) { _ in ready = true }
+        #expect(!ready)
+        #expect(report.featurePrint == nil && report.hands == nil)
+        #expect(report.description.contains("faces"))
+    }
+
+    @Test func detectorsCanMoveBetweenTheCPUAndVisionsChoice() throws {
+        let buffer = try #require(FaceEmbedder.blankFrame(width: 640, height: 480))
+        let detectors = VisionDetectors()
+        detectors.runOnCPU(true)
+        detectors.warmUp(on: buffer, faces: true, hands: true)
+        detectors.runOnCPU(false)
+        detectors.warmUp(on: buffer, faces: true, hands: true)
     }
 }
 

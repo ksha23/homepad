@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreML
 import Foundation
 @preconcurrency import Vision
 
@@ -60,16 +61,38 @@ final class VisionDetectors {
         return results
     }
 
-    /// Runs the face request and the hand pose request, as asked, once on
-    /// `buffer`, so their models are loaded before the first real frame. The
-    /// scan already runs faces, but hand pose first runs on the first face
-    /// tracking frame, in the same pass as the first recognition sample.
+    /// Runs the face and people requests, and the hand pose request, as
+    /// asked, once on `buffer`, so their models are loaded before the first
+    /// real frame needs them.
     func warmUp(on buffer: CVPixelBuffer, faces: Bool, hands: Bool) {
         var requests: [VNRequest] = []
-        if faces { requests.append(faceRequest) }
+        if faces { requests += [faceRequest, humanRequest] }
         if hands { requests.append(handRequest) }
         guard !requests.isEmpty else { return }
         try? VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .right).perform(requests)
+    }
+
+    /// Runs every request on the CPU, or back where Vision chooses (the
+    /// Neural Engine). After a cold boot the 11-inch took 41 s to load face
+    /// detection for the Neural Engine, against 0.35 s on later launches,
+    /// while the CPU does not wait for the Neural Engine. So the analyzer
+    /// starts on the CPU and moves once the warm-up has loaded the models
+    /// for the Neural Engine.
+    func runOnCPU(_ onCPU: Bool) {
+        for request in [faceRequest, humanRequest, handRequest] as [VNRequest] {
+            Self.runOnCPU(onCPU, request)
+        }
+    }
+
+    /// Puts every stage of `request` on the CPU, or back where Vision chooses.
+    static func runOnCPU(_ onCPU: Bool, _ request: VNRequest) {
+        guard let stages = try? request.supportedComputeStageDevices else { return }
+        for (stage, devices) in stages {
+            let cpu = devices.first { device in
+                if case .cpu = device { true } else { false }
+            }
+            request.setComputeDevice(onCPU ? cpu : nil, for: stage)
+        }
     }
 
     /// Converts a Vision hand pose to the recognizer's user-perspective sample.

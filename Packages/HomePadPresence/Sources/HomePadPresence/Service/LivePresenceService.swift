@@ -32,10 +32,11 @@ public final class LivePresenceService: PresenceService {
     @ObservationIgnored private var fusion = PresenceFusion()
     @ObservationIgnored private var isStarted = false
     @ObservationIgnored private var didWarmUpRecognition = false
+    @ObservationIgnored private var didWarmUpDetectors = false
     /// True while the recognition models load after launch. Samples and hand
     /// pose wait for them, so no frame stalls on the load, and presence and
-    /// distance run from the first frame.
-    @ObservationIgnored private var isWarmingUpRecognition = false
+    /// distance run from the first frame. The people button shows it.
+    public private(set) var isRecognitionStarting = false
     @ObservationIgnored private var faceTrackingFailed = false
     @ObservationIgnored private var lastMotionEvent = Date.distantPast
     /// The settings the per-frame path reads.
@@ -96,19 +97,30 @@ public final class LivePresenceService: PresenceService {
         reevaluate()
     }
 
-    /// Loads the recognition models once, before anyone arrives, so the first
-    /// sample of the first visit is as fast as the rest. Also called when the
-    /// templates become readable after the iPad unlocks.
+    /// Loads models before anyone arrives: the feature print once there are
+    /// templates to match, so the first sample of the first visit is as fast
+    /// as the rest, and face, people and hand detection once a launch, so the
+    /// analyzer can move them from the CPU to the Neural Engine. Also called
+    /// when the templates become readable after the iPad unlocks.
     func warmUpRecognition() {
-        guard !didWarmUpRecognition, !capabilities.isSimulated, capabilities.hasTrueDepth || capabilities.hasFrontCamera,
-              recognition.isEnabled, !recognition.templates.isEmpty else { return }
-        didWarmUpRecognition = true
-        isWarmingUpRecognition = true
-        updateAnalyzerOptions()
-        sensors.warmUpRecognition(hands: frameSettings.handGestures) { [weak self] report in
-            PresenceTrace.trace.log("recognition warm-up took \(report.description)")
-            self?.isWarmingUpRecognition = false
+        guard !capabilities.isSimulated, capabilities.hasTrueDepth || capabilities.hasFrontCamera else { return }
+        let detectors = !didWarmUpDetectors
+        let featurePrint = !didWarmUpRecognition && recognition.isEnabled && !recognition.templates.isEmpty
+        guard detectors || featurePrint else { return }
+        didWarmUpDetectors = true
+        if featurePrint {
+            didWarmUpRecognition = true
+            isRecognitionStarting = true
+            updateAnalyzerOptions()
+        }
+        let start = Date()
+        sensors.warmUp(featurePrint: featurePrint, detectors: detectors, hands: detectors && frameSettings.handGestures) { [weak self] _ in
+            PresenceTrace.trace.log("recognition ready \(PresenceTrace.format(Date().timeIntervalSince(start))) s after its warm-up began")
+            self?.isRecognitionStarting = false
             self?.updateAnalyzerOptions()
+        } completion: { report in
+            PresenceTrace.trace.log("vision warm-up took \(report.description)"
+                + (detectors ? ", detection moved from the CPU to the Neural Engine" : ""))
         }
     }
 
@@ -310,13 +322,13 @@ public final class LivePresenceService: PresenceService {
         let settings = frameSettings
         let within = (snapshot.nearestDistanceMeters ?? .infinity) <= 2.5
         let wouldSample = recognition.wantsEmbeddings && snapshot.isSomeonePresent
-        let wantsEmbeddings = wouldSample && !isWarmingUpRecognition
+        let wantsEmbeddings = wouldSample && !isRecognitionStarting
         let now = Date()
         let interval = recognition.sampleInterval(at: now)
         let purpose = recognition.isSamplingOnlyToLearn(at: now) ? "learning" : "recognition"
         sensors.analyzer.options = AnalyzerOptions(
             sensitivity: settings.sensitivity,
-            detectHands: settings.handGestures && snapshot.isSomeonePresent && within && !isWarmingUpRecognition,
+            detectHands: settings.handGestures && snapshot.isSomeonePresent && within && !isRecognitionStarting,
             wantsEmbeddings: wantsEmbeddings,
             embeddingInterval: interval,
             embeddingsNeedDepth: capabilities.hasTrueDepth && settings.useTrueDepth,
