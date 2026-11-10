@@ -72,6 +72,8 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var lastHumanConfidence: Double?
     private var lastHumanBox: CGRect?
     private var lastNearestMeters: Double?
+    /// Frames analyzed since the backend started, for `AmbientLightMath.roomLux`.
+    private var framesSinceStart = 0
 
     /// Seconds between people counts when ARKit already tracks faces.
     private let humanCheckInterval: TimeInterval = 1
@@ -96,6 +98,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         lastHumanConfidence = nil
         lastHumanBox = nil
         lastNearestMeters = nil
+        framesSinceStart = 0
     }
 
     /// Loads models before anyone arrives, with requests of its own, so it
@@ -147,6 +150,7 @@ final class FrameAnalyzer: @unchecked Sendable {
     func startFaceTracking() {
         follower.reset()
         depth.noteAlignmentAgain()
+        framesSinceStart = 0
     }
 
     /// Follows the person through TrueDepth depth, and the face track on them,
@@ -236,8 +240,11 @@ final class FrameAnalyzer: @unchecked Sendable {
         // Between human checks the count is carried over: it holds presence, but
         // only a frame that found someone itself can help start it.
         observation.isFreshSighting = !observation.faces.isEmpty || depthMoved || (humansDue && vision.humanCount > 0)
-        observation.ambientLux = frame.brightnessValue.map(AmbientLightMath.lux(brightnessValue:))
-            ?? frame.arkitAmbientIntensity.map(AmbientLightMath.lux(arkitAmbientIntensity:))
+        observation.ambientLux = AmbientLightMath.roomLux(
+            brightnessValue: frame.brightnessValue, arkitAmbientIntensity: frame.arkitAmbientIntensity,
+            backend: backend, isFirstFrame: framesSinceStart == 0
+        )
+        framesSinceStart += 1
         lastNearestMeters = observation.nearestPersonMeters
 
         var embedding: FaceEmbeddingSample?

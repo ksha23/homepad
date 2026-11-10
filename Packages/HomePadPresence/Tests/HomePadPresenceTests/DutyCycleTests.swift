@@ -63,6 +63,9 @@ import Testing
         // A lit room scans with plain RGB, a dark one with infrared depth.
         #expect(BackendSelector.kind(for: scanning, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .normal) == .frontCamera)
         #expect(BackendSelector.kind(for: scanning, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dark) == .depthScan)
+        #expect(BackendSelector.kind(for: scanning, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dim) == .depthScan)
+        // Depth cannot measure the light, so an unknown room is measured with RGB first.
+        #expect(BackendSelector.kind(for: scanning, capabilities: trueDepth, preferTrueDepth: true, ambientLight: nil) == .frontCamera)
         // RGB-only iPads and the TrueDepth opt-out use the front camera.
         #expect(BackendSelector.kind(for: active, capabilities: rgbOnly, preferTrueDepth: true, ambientLight: .dark) == .frontCamera)
         #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: false, ambientLight: .dark) == .frontCamera)

@@ -20,6 +20,25 @@ enum AmbientLightMath {
         max(0, intensity) / 4
     }
 
+    /// The room's light from one frame, or nil when this frame cannot tell.
+    ///
+    /// Two kinds of frame cannot:
+    /// - Every depth scan frame. The TrueDepth capture session's brightness
+    ///   value stays at the camera's starting value, which reads as 283 lux in
+    ///   a dark room as well as a lit one. Taken as a reading, it sent a dark
+    ///   room's scan back to the front camera, which read the dark and sent
+    ///   it back to depth, so neither stayed long enough to see anyone.
+    /// - The first frame of each session. It carries the exposure the camera
+    ///   started with, before auto exposure settles: 283 lux in a dim room
+    ///   whose next frames read 37.
+    static func roomLux(
+        brightnessValue: Double?, arkitAmbientIntensity: Double?,
+        backend: BackendKind, isFirstFrame: Bool
+    ) -> Double? {
+        guard backend != .depthScan, !isFirstFrame else { return nil }
+        return brightnessValue.map(lux(brightnessValue:)) ?? arkitAmbientIntensity.map(lux(arkitAmbientIntensity:))
+    }
+
     /// Bucket boundaries in lux: dark, dim, normal, bright.
     static let darkBelow = 5.0
     static let dimBelow = 50.0

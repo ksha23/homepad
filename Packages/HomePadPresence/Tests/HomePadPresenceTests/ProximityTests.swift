@@ -183,4 +183,14 @@ import Testing
         #expect(AmbientLightMath.level(lux: AmbientLightMath.lux(brightnessValue: -5)) == .dark)
         #expect(AmbientLightMath.level(lux: AmbientLightMath.lux(brightnessValue: 6)) == .bright)
     }
+
+    @Test func depthScansAndFirstFramesDoNotMeasureTheRoom() {
+        // Bv 1.82 is the 283 lux every depth scan frame read, in the dark too.
+        #expect(AmbientLightMath.roomLux(brightnessValue: 1.82, arkitAmbientIntensity: nil, backend: .depthScan, isFirstFrame: false) == nil)
+        #expect(AmbientLightMath.roomLux(brightnessValue: 1.82, arkitAmbientIntensity: nil, backend: .frontCamera, isFirstFrame: true) == nil)
+        let settled = AmbientLightMath.roomLux(brightnessValue: -1.1, arkitAmbientIntensity: nil, backend: .frontCamera, isFirstFrame: false)
+        #expect(settled.map { abs($0 - 37.3) < 0.1 } == true)
+        // Face tracking falls back on ARKit's ambient intensity.
+        #expect(AmbientLightMath.roomLux(brightnessValue: nil, arkitAmbientIntensity: 1000, backend: .faceTracking, isFirstFrame: false) == 250)
+    }
 }

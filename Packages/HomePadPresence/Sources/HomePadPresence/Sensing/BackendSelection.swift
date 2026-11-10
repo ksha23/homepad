@@ -42,6 +42,10 @@ struct SensingCapabilities: Equatable, Sendable {
 /// It therefore only runs while someone is present. With nobody around the
 /// scan uses AVCapture at about 2 fps: the plain RGB stream when the room is
 /// lit, and the infrared depth stream when it is dark (RGB sees nothing then).
+/// The depth scan cannot measure the room's light (`AmbientLightMath.roomLux`),
+/// so while the light is unknown the scan starts on the front camera, which
+/// measures it within a second, and a depth scan keeps the last light it knew
+/// until face tracking reads the room again.
 enum BackendSelector {
     static func kind(
         for mode: SensingMode, capabilities: SensingCapabilities,
@@ -62,11 +66,11 @@ enum BackendSelector {
         }
     }
 
-    /// Unknown light counts as dark so the first scan can see in a dark room.
+    /// Unknown light is not dark: the front camera has to measure it first.
     private static func isDark(_ light: AmbientLight?) -> Bool {
         switch light {
-        case .none, .dark, .dim: true
-        case .normal, .bright: false
+        case .dark, .dim: true
+        case .none, .normal, .bright: false
         }
     }
 }
