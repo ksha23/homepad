@@ -117,6 +117,13 @@ struct ShellContentView: View {
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
             SystemChromeLayer(screenShowsTimers: screenShowsTimers)
+            // In the strip above the screen margin, where the status bar would be.
+            BatteryIndicator(health: kiosk.health)
+                .nightModeAware()
+                .padding(.top, 6)
+                .padding(.trailing, Theme.Spacing.screenMargin.trailing)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .ignoresSafeArea()
             PanelLayer()
             if let appID = navigator.gatedAppID {
                 RecognitionGateView(appID: appID)
