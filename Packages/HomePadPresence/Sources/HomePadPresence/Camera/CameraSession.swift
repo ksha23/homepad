@@ -197,13 +197,16 @@ extension CameraSession: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let onFrame, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let (source, fov, tracker) = stateLock.withLock { (self.source, self.fieldOfView, self.orientation) }
+        // The TrueDepth session's BrightnessValue never moves from the camera's
+        // starting value (283 lux, in a dark room too), and its exposure time
+        // and ISO read 8,640 lux in a 1 lux room, so it reports no light.
         let frame = SensorFrame(
             pixelBuffer: pixelBuffer,
             orientation: tracker?.orientation ?? .up,
             timestamp: CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds,
             source: source,
             horizontalFOVDegrees: fov,
-            brightnessValue: Self.brightnessValue(sampleBuffer)
+            brightnessValue: source == .trueDepth ? nil : Self.brightnessValue(sampleBuffer)
         )
         onFrame(frame)
     }

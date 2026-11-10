@@ -37,7 +37,8 @@ struct PresenceFusion: Sendable {
     /// Face distance over body estimate, learned while both are seen. Kept when
     /// presence ends, since it mostly depends on this camera and its framing.
     private(set) var bodyScale = 1.0
-    private var lastLuxAt: Date?
+    /// When a frame last measured the room's light.
+    private(set) var lastLuxAt: Date?
     private var lastVoiceDetection: Date?
 
     /// Last time a camera saw a person. Drives the duty cycle.

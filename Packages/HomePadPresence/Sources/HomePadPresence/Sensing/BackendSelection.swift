@@ -41,12 +41,22 @@ struct SensingCapabilities: Equatable, Sendable {
 /// camera and face mesh at 30 to 60 fps, which is too costly around the clock.
 /// It therefore only runs while someone is present. With nobody around the
 /// scan uses AVCapture at about 2 fps: the plain RGB stream when the room is
-/// lit, and the infrared depth stream when it is dark (RGB sees nothing then).
-/// The depth scan cannot measure the room's light (`AmbientLightMath.roomLux`),
-/// so while the light is unknown the scan starts on the front camera, which
-/// measures it within a second, and a depth scan keeps the last light it knew
-/// until face tracking reads the room again.
+/// lit, and the TrueDepth session with its depth stream when it is dark,
+/// since depth sees movement without light.
+///
+/// In a dark room the depth scan also runs while someone is present, slowly.
+/// ARKit's camera runs at 30 fps, so each frame gets at most 1/30 s of light:
+/// it found a face in about half its frames at 20 lux and more, and in none
+/// at 1 to 3 lux. At 2 fps each frame can take up to half a second, and on
+/// those frames Vision found a face at 1.7 m in a 1 lux room.
+///
+/// The depth scan cannot measure the light, so a reading counts for three
+/// minutes (`LivePresenceService.selectionLight`), and nil light starts a
+/// backend that measures it.
 enum BackendSelector {
+    /// The depth scan's rate, also while someone is present (see above).
+    static let depthScanFramesPerSecond = 2.0
+
     static func kind(
         for mode: SensingMode, capabilities: SensingCapabilities,
         preferTrueDepth: Bool, ambientLight: AmbientLight?
@@ -56,7 +66,7 @@ enum BackendSelector {
         let trueDepth = capabilities.hasTrueDepth && preferTrueDepth
         switch mode {
         case .active:
-            if trueDepth { return .faceTracking }
+            if trueDepth { return ambientLight == .dark ? .depthScan : .faceTracking }
             return capabilities.hasFrontCamera ? .frontCamera : nil
         case .scanning:
             if trueDepth && isDark(ambientLight) { return .depthScan }
@@ -64,6 +74,11 @@ enum BackendSelector {
         case .off, .microphoneOnly:
             return nil
         }
+    }
+
+    /// Frame rate for `kind` in a mode that asks for `framesPerSecond`.
+    static func framesPerSecond(for kind: BackendKind, mode framesPerSecond: Double) -> Double {
+        kind == .depthScan ? min(framesPerSecond, depthScanFramesPerSecond) : framesPerSecond
     }
 
     /// Unknown light is not dark: the front camera has to measure it first.

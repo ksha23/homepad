@@ -40,10 +40,11 @@ final class SensingCoordinator {
     /// camera. ARKit started while AVCapture still held the camera sent its first
     /// frame 10 s late, long enough for presence to lapse right after it was noticed.
     func apply(kind: BackendKind?, mode: SensingMode) {
-        guard let kind, let fps = mode.framesPerSecond else {
+        guard let kind, let modeRate = mode.framesPerSecond else {
             stop()
             return
         }
+        let fps = BackendSelector.framesPerSecond(for: kind, mode: modeRate)
         if let backend, backend.kind == kind {
             backend.setFrameRate(fps)
             return

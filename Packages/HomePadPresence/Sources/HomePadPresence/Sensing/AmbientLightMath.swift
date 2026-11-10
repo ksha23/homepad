@@ -20,22 +20,19 @@ enum AmbientLightMath {
         max(0, intensity) / 4
     }
 
-    /// The room's light from one frame, or nil when this frame cannot tell.
+    /// Seconds after a session's first frame before its light counts.
+    static let settlingSeconds = 2.0
+
+    /// The room's light from one frame, or nil when the frame cannot tell.
     ///
-    /// Two kinds of frame cannot:
-    /// - Every depth scan frame. The TrueDepth capture session's brightness
-    ///   value stays at the camera's starting value, which reads as 283 lux in
-    ///   a dark room as well as a lit one. Taken as a reading, it sent a dark
-    ///   room's scan back to the front camera, which read the dark and sent
-    ///   it back to depth, so neither stayed long enough to see anyone.
-    /// - The first frame of each session. It carries the exposure the camera
-    ///   started with, before auto exposure settles: 283 lux in a dim room
-    ///   whose next frames read 37.
-    static func roomLux(
-        brightnessValue: Double?, arkitAmbientIntensity: Double?,
-        backend: BackendKind, isFirstFrame: Bool
-    ) -> Double? {
-        guard backend != .depthScan, !isFirstFrame else { return nil }
+    /// The frames of a session's first `settlingSeconds` cannot. They carry
+    /// the exposure the camera started with, before auto exposure settles:
+    /// 283 lux in a dim room whose later frames read 15, for up to 1.5 s at
+    /// 2 fps. Taken as a reading in a dark room, it sent the scan from depth
+    /// to the front camera, which read the dark and sent it back, so neither
+    /// stayed long enough to see anyone.
+    static func roomLux(brightnessValue: Double?, arkitAmbientIntensity: Double?, secondsSinceFirstFrame: Double) -> Double? {
+        guard secondsSinceFirstFrame >= settlingSeconds else { return nil }
         return brightnessValue.map(lux(brightnessValue:)) ?? arkitAmbientIntensity.map(lux(arkitAmbientIntensity:))
     }
 

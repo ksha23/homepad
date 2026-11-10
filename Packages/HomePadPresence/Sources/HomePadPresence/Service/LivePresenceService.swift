@@ -43,6 +43,10 @@ public final class LivePresenceService: PresenceService {
     private var frameSettings: FrameSettings { FrameSettings(services.settings) }
     @ObservationIgnored private var transitionTask: Task<Void, Never>?
     @ObservationIgnored private var tickTask: Task<Void, Never>?
+    /// The light the running backend was chosen by (`selectionLight`).
+    @ObservationIgnored private var selectedLight: AmbientLight?
+    /// How long a light reading counts for choosing a backend.
+    private let lightReadingLifetime: TimeInterval = 3 * 60
     @ObservationIgnored var observationTasks: [Task<Void, Never>] = []
 
     private let log = Log.make("Presence")
@@ -136,10 +140,12 @@ public final class LivePresenceService: PresenceService {
         diagnostics.mode = newMode
         diagnostics.thermalState = conditions.thermalState
 
+        let light = selectionLight(at: now)
+        selectedLight = light
         let kind = BackendSelector.kind(
             for: newMode, capabilities: capabilities,
             preferTrueDepth: frameSettings.useTrueDepth && !faceTrackingFailed,
-            ambientLight: snapshot.ambientLight
+            ambientLight: light
         )
         sensors.apply(kind: kind, mode: newMode)
         if case .microphoneOnly = newMode { microphoneActivity.start() } else { microphoneActivity.stop() }
@@ -196,6 +202,7 @@ public final class LivePresenceService: PresenceService {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self else { return }
                 self.publish(self.fusion.tick(now: Date()))
+                if self.selectionLight(at: Date()) != self.selectedLight { self.reevaluate() }
             }
         }
     }
@@ -252,7 +259,6 @@ public final class LivePresenceService: PresenceService {
             recognition.noteFace(backend: analysis.backend, isPresent: snapshot.isSomeonePresent)
         }
         let wasScanning = !isActiveMode
-        let lightBefore = fusion.snapshot.ambientLight
         _ = fusion.ingest(analysis.observation)
         if analysis.observation.motion { noteMotion(analysis.backend) }
         if let embedding = analysis.embedding {
@@ -266,14 +272,25 @@ public final class LivePresenceService: PresenceService {
             services.events.post(.gesture(gesture))
         }
         publish(fusion.snapshot)
-        // A sighting wakes the full-rate path. A light change while scanning may
-        // switch between the RGB and depth scans.
-        let lightChanged = fusion.snapshot.ambientLight != lightBefore
-        if wasScanning && (analysis.observation.detectsPerson || lightChanged) {
+        // A sighting wakes the full-rate path. A light change may switch between
+        // the RGB and depth scans, or between face tracking and the depth scan.
+        let lightChanged = selectionLight(at: Date()) != selectedLight
+        if (wasScanning && analysis.observation.detectsPerson) || lightChanged {
             reevaluate()
         } else {
             updateAnalyzerOptions()
         }
+    }
+
+    /// The light the backend choice goes by: the last reading, or nil once it
+    /// is older than `lightReadingLifetime`. The depth scan cannot measure the
+    /// light, so without this a dark room's depth scan would run on after the
+    /// lamps came on. Nil starts a backend that measures it (the front camera,
+    /// or face tracking while someone is present), and a dark reading goes
+    /// back to the depth scan.
+    private func selectionLight(at now: Date) -> AmbientLight? {
+        guard let measured = fusion.lastLuxAt, now.timeIntervalSince(measured) < lightReadingLifetime else { return nil }
+        return fusion.snapshot.ambientLight
     }
 
     private func requiresLiveness(_ backend: BackendKind) -> Bool {
