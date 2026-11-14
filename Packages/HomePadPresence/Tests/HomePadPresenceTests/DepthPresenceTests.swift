@@ -204,6 +204,24 @@ struct DepthScene {
         #expect(tracker.events.contains { if case .seedMissed = $0 { true } else { false } })
     }
 
+    /// A hand or shoulder moving beside a face seen a moment ago is that
+    /// person moving. Once the face has gone unseen for a while, movement
+    /// elsewhere is someone new again.
+    @Test func movementBesideAFaceSeenJustNowKeepsThePerson() throws {
+        var tracker = DepthPersonTracker()
+        let left = CGPoint(x: 0.3, y: 0.4)
+        let right = CGPoint(x: 0.95, y: 0.4)
+        let map = scene(DepthScene.head(at: left, depth: 0.7), DepthScene.head(at: right, depth: 0.7))
+        let firstSeen = tracker.update(map, seeds: faceSeed(left, expected: 0.7), at: 0)
+        let first = try #require(firstSeen)
+        let moved = [DepthPersonTracker.Seed(point: right, expectedMeters: nil)]
+        #expect(tracker.update(map, seeds: moved, at: 0.1)?.id == first.id)
+        for step in 2...32 { tracker.update(map, seeds: [], at: Double(step) * 0.1) }
+        let later = tracker.update(map, seeds: moved, at: 3.3)
+        #expect(later != nil)
+        #expect(later?.id != first.id)
+    }
+
     /// Without depth on a frame, a face on the followed head confirms them and one elsewhere does not.
     @Test func facesWithoutDepthConfirmOnlyOnTheHead() {
         var tracker = DepthPersonTracker()
@@ -313,6 +331,20 @@ struct DepthScene {
 
 /// Should ARKit's projection put faces the other way round in the depth map
 /// on one of the iPads, the mirror that alone finds them is used after five maps.
+@Suite struct DepthFaceSeedTests {
+    /// In the dark a face found in the depth map is the only thing that
+    /// shows someone sitting still, so it starts the person.
+    @Test func aDepthFaceStartsThePersonWithNoOneFollowed() throws {
+        var sensing = DepthSensing()
+        let here = CGPoint(x: 0.5, y: 0.4)
+        sensing.ingest(coarse: DepthScene(heads: [DepthScene.head(at: here, depth: 0.6)]).map(), at: 0)
+        sensing.noteFace(at: here, meters: 0.6, time: 0)
+        let person = try #require(sensing.people.person)
+        #expect(abs(person.distanceMeters - 0.6) < 0.02)
+        #expect(sensing.takeNotes().contains { $0.text.contains("from a face") })
+    }
+}
+
 @Suite struct FaceFlipTests {
     @Test func facesFoundOnlyMirroredAcrossSwitchTheMirrorOn() {
         var sensing = DepthSensing()

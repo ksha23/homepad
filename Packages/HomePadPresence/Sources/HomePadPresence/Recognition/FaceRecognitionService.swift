@@ -205,8 +205,9 @@ final class FaceRecognitionService {
     // MARK: Recognition
 
     /// Considers one embedding. `requireLiveness` is true on TrueDepth iPads,
-    /// where an embedding without a depth verdict is skipped.
-    func consider(_ sample: FaceEmbeddingSample, requireLiveness: Bool, at time: Date = Date()) {
+    /// where an embedding without a depth verdict is skipped. `light` decides
+    /// whether a stranger verdict may undo a face depth named.
+    func consider(_ sample: FaceEmbeddingSample, requireLiveness: Bool, light: AmbientLight? = nil, at time: Date = Date()) {
         guard isEnabled, !templates.isEmpty else { return }
         noteFaceTrack(sample.trackID)
         if looks.noteSample(track: sample.trackID) { lookChanged(at: time) }
@@ -273,7 +274,7 @@ final class FaceRecognitionService {
         }
         if let winner {
             confirm(winner, at: time, track: sample.trackID)
-        } else if isStranger {
+        } else if isStranger, !confirmedByDepth || Self.cameraTellsStrangers(in: light) {
             settleStranger(at: time)
         }
     }
@@ -381,7 +382,23 @@ final class FaceRecognitionService {
     /// light the camera saw the face well enough to try and not well enough
     /// to be sure, while depth, waiting for the dark, did nothing.
     func isDecidingByDepth(light: AmbientLight?, at time: Date) -> Bool {
-        confirmedMemberID == nil && lookIdentity != .stranger && depthIdentity.hasTemplates
+        confirmedMemberID == nil && !isStrangerToCamera(light: light) && depthIdentity.hasTemplates
+    }
+
+    /// True when the camera called the face in view a stranger and its
+    /// "stranger" counts (`cameraTellsStrangers`). That keeps depth from naming it.
+    func isStrangerToCamera(light: AmbientLight?) -> Bool {
+        lookIdentity == .stranger && Self.cameraTellsStrangers(in: light)
+    }
+
+    /// True when the camera's "stranger" counts against depth: in normal or
+    /// bright light, or light not known yet. In poor light the camera's
+    /// matches of a member fall (it called Kyle a stranger, 4 samples in a
+    /// row at 0.53 to 0.55) while depth needs no light. There a stranger
+    /// verdict neither stops depth nor undoes a face depth named, and only
+    /// turning every light off let depth decide.
+    static func cameraTellsStrangers(in light: AmbientLight?) -> Bool {
+        light != .dim && light != .dark
     }
 
     /// Seconds between depth signatures (`AnalyzerOptions.depthSignatureInterval`):
@@ -398,7 +415,7 @@ final class FaceRecognitionService {
     /// camera and depth decide together: whichever is sure first names the face.
     func noteDepthScore(_ score: DepthIdentityScore, look: UUID?, light: AmbientLight?, at time: Date) {
         // The look may have changed while the score was worked out.
-        guard look != nil, look == looks.look, confirmedMemberID == nil, lookIdentity != .stranger else { return }
+        guard look != nil, look == looks.look, confirmedMemberID == nil, !isStrangerToCamera(light: light) else { return }
         let limits = depthIdentity.calibrations.compactMapValues(\.threshold)
         let outcome = depthVoter.vote(on: score, limits: limits, name: memberName)
         PresenceTrace.trace.log("depth vote: " + outcome.reason)

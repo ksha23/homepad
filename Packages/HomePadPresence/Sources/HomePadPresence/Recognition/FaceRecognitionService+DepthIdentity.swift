@@ -27,7 +27,7 @@ extension FaceRecognitionService {
         // Only the camera's naming labels templates: depth's own would teach itself.
         if let member = confirmedMemberID, !confirmedByDepth {
             subject = .member(member)
-        } else if lookIdentity == .stranger {
+        } else if isStrangerToCamera(light: light) {
             subject = .stranger
         } else if depthIdentity.hasTemplates {
             subject = .unnamed

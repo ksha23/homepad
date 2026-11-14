@@ -30,16 +30,15 @@ struct TraceNote: Equatable, Sendable {
 /// The analyzer's depth: the newest maps, movement in them, and the person
 /// followed through them (`DepthPersonTracker`).
 ///
-/// Every depth map is read into a coarse map of about 48 columns, a few
-/// thousand reads, for presence and motion. The full map is copied only while
-/// recognition wants samples, for the liveness check, or a person is
-/// followed, whose face is looked for in it.
+/// Every depth map is copied whole, for the face looked for in it and the
+/// liveness check, and shrunk to a coarse map of about 48 columns for
+/// presence and motion.
 ///
 /// Used on the analysis queue only.
 struct DepthSensing {
     static let coarseColumns = 48
 
-    /// Full resolution, for the liveness check.
+    /// Full resolution, for the depth face and the liveness check.
     private(set) var full: (map: DepthMap, time: TimeInterval)?
     /// Coarse, for presence and motion.
     private(set) var coarse: (map: DepthMap, time: TimeInterval)?
@@ -76,26 +75,17 @@ struct DepthSensing {
     /// Reads one depth map. `image` lines it up with an ARKit image, and
     /// `horizontalFOVDegrees` gives AVCapture depth, which matches its video,
     /// its scale.
-    mutating func ingest(
-        _ depth: AVDepthData, at time: TimeInterval, image: ImageGeometry?, horizontalFOVDegrees: Double?, keepFull: Bool
-    ) {
+    mutating func ingest(_ depth: AVDepthData, at time: TimeInterval, image: ImageGeometry?, horizontalFOVDegrees: Double?) {
         lastArrival = time
         lastSource = (CVPixelBufferGetWidth(depth.depthDataMap), CVPixelBufferGetHeight(depth.depthDataMap), depth.isDepthDataFiltered)
         countRate(at: time, arkit: image != nil)
         let alignment = Self.alignment(of: depth, image: image, horizontalFOVDegrees: horizontalFOVDegrees)
-        if keepFull, var map = DepthMap(depth) {
-            map.registration = alignment.registration
-            map.focalLength = alignment.focalLength
-            full = (map, time)
-            coarse = (map.downsampled(step: map.step(toColumns: Self.coarseColumns)), time)
-        } else {
-            let step = max(1, CVPixelBufferGetWidth(depth.depthDataMap) / Self.coarseColumns)
-            guard var map = DepthMap(depth, step: step) else { return }
-            map.registration = alignment.registration
-            map.focalLength = alignment.focalLength.map { $0 / Double(step) }
-            ingest(coarse: map, at: time)
-        }
         if let note = alignment.note { noteAlignment(note, at: time) }
+        guard var map = DepthMap(depth) else { return }
+        map.registration = alignment.registration
+        map.focalLength = alignment.focalLength
+        full = (map, time)
+        coarse = (map.downsampled(step: map.step(toColumns: Self.coarseColumns)), time)
     }
 
     /// Depth maps a second, every `rateInterval`, in the trace. In a dark room
@@ -196,12 +186,20 @@ struct DepthSensing {
         return result
     }
 
-    /// A face found in the depth map on the followed person confirms them, as
-    /// a face from ARKit or Vision does (`DepthFaceSampler`). In the dark
-    /// nothing else did while they sat still, and they were let go after
+    /// A face found in the depth map (`DepthFaceSampler`), its nose tip at
+    /// `point`, `meters` away. On the followed person's head it confirms
+    /// them. Anywhere else it starts the person there, as an ARKit or Vision
+    /// face does: the face is who is in front of the iPad.
+    ///
+    /// In the dark ARKit and Vision find no face, so before this only
+    /// movement started a person: someone sitting still in front of the iPad
+    /// waited until they moved, often 10 s or more. And while they sat
+    /// still nothing confirmed them, so they were let go after
     /// `DepthPersonTracker.Config.holdSeconds`.
-    mutating func confirmFace(at point: CGPoint, time: TimeInterval) {
-        people.confirm(face: point, at: time)
+    mutating func noteFace(at point: CGPoint, meters: Double, time: TimeInterval) {
+        guard !people.confirm(face: point, at: time), let coarse else { return }
+        people.update(coarse.map, seeds: [DepthPersonTracker.Seed(point: point, expectedMeters: meters)], at: time)
+        noteEvents()
     }
 
     /// The followed person, when the depth showed them in the last second.

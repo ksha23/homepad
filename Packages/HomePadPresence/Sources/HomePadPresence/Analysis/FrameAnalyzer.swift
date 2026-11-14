@@ -45,8 +45,8 @@ struct FrameAnalysis: Sendable {
     var depthSignature: DepthSignatureSample?
     /// For the recognition debug view, about four times a second while it is on.
     var debug: RecognitionDebugFrame?
-    /// True while the depth map shows a face on the followed person
-    /// (`DepthFaceSampler.isFaceInView`). In the dark it is the only face there is.
+    /// True while a face was found in the depth map on the followed person in
+    /// the last `depthFaceHold` seconds. In the dark it is the only face there is.
     var depthFaceSeen = false
     /// The person depth follows, also between maps. In the dark maps came up
     /// to 1.3 s apart, and a frame without the person seen in the last second
@@ -103,11 +103,14 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var depthFaceGeneration = 0
     /// A depth signature that came back, for the next analysis.
     private var pendingDepthSignature: DepthSignatureSample?
+    /// How far away a depth face found since the last analysis is: the next
+    /// analysis counts it as a sighting.
+    private var pendingDepthFaceMeters: Double?
     /// The last search and lit depth, for the debug view, and when and on whom
     /// a depth face was last found.
     private var lastDepthSearch: DepthFaceFinder.Search?
     private var lastShadedDepth: (image: CGImage, box: CGRect?)?
-    private var depthFaceFound: (time: TimeInterval, person: UUID)?
+    private var depthFaceFound: (time: TimeInterval, person: UUID?)?
     /// A face found on the person stays in view this long, so a few searches
     /// that miss do not end the look and its votes.
     private let depthFaceHold: TimeInterval = 10
@@ -150,6 +153,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         depthFaceGeneration += 1
         depthFaceBusy = false
         pendingDepthSignature = nil
+        pendingDepthFaceMeters = nil
         lastDepthSearch = nil
         lastShadedDepth = nil
         depthFaceFound = nil
@@ -198,15 +202,18 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// Stores depth that arrived on its own output (AVCapture depth stream),
     /// which matches its video. `horizontalFOVDegrees` is the video's.
     func ingestDepth(_ data: AVDepthData, at time: TimeInterval, horizontalFOVDegrees: Double?) {
-        depth.ingest(data, at: time, image: nil, horizontalFOVDegrees: horizontalFOVDegrees, keepFull: keepsFullDepth)
+        depth.ingest(data, at: time, image: nil, horizontalFOVDegrees: horizontalFOVDegrees)
     }
 
     /// Call on the analysis queue when face tracking starts: a new session
     /// starts new face tracks, and the trace gets the depth alignment again.
+    /// The depth person carries over from the depth scan, but not the depth
+    /// faces found there, so no signature mixes the scan's smoothed depth in.
     func startFaceTracking() {
         follower.reset()
         depth.noteAlignmentAgain()
         firstFrameTime = nil
+        resetDepthFaces()
     }
 
     /// Follows the person through TrueDepth depth, and the face track on them,
@@ -215,15 +222,9 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// against the depth. Returns the face track (`FaceFollower`).
     func followFaces(_ faces: [ARKitFace], depth data: AVDepthData?, image: ImageGeometry, at time: TimeInterval) -> UUID? {
         if let data {
-            depth.ingest(data, at: time, image: image, horizontalFOVDegrees: nil, keepFull: keepsFullDepth)
+            depth.ingest(data, at: time, image: image, horizontalFOVDegrees: nil)
         }
         return follower.arkitFrame(faces, hasNewDepth: data != nil, depth: &depth, at: time)
-    }
-
-    /// The full depth map is kept for liveness while recognition samples, and
-    /// while a person is followed, whose face is looked for in it.
-    private var keepsFullDepth: Bool {
-        options.wantsEmbeddings || depth.people.person != nil
     }
 
     /// Feeds a face's roll to `upright`. When the correction changes, what was
@@ -300,7 +301,16 @@ final class FrameAnalyzer: @unchecked Sendable {
             observation.faces = frame.trackedFaces ?? visionFaces(vision.faces, frame: frame, sensitivity: options.sensitivity)
             observation.facesAreTracked = frame.trackedFaces != nil
         }
-        let depthSignature = sampleDepthFace(in: frame, options: options)
+        let depthSignature = sampleDepthFace(in: frame, backend: backend, options: options)
+        // A face found in the depth map is a sighting like a camera face. In
+        // the dark it is the only one there is: before, someone sitting still
+        // was not noticed until they moved.
+        let depthFaceMeters = pendingDepthFaceMeters
+        pendingDepthFaceMeters = nil
+        if let depthFaceMeters {
+            observation.bodyCount = max(observation.bodyCount, 1)
+            observation.nearestBodyMeters = observation.nearestBodyMeters ?? depthFaceMeters
+        }
         if let person = depth.person(at: time) {
             observation.depthPersonMeters = person.distanceMeters
             observation.depthPersonID = person.id
@@ -321,7 +331,8 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
         // Between human checks the count is carried over: it holds presence, but
         // only a frame that found someone itself can help start it.
-        observation.isFreshSighting = !observation.faces.isEmpty || depthMoved || (humansDue && vision.humanCount > 0)
+        observation.isFreshSighting = !observation.faces.isEmpty || depthMoved || depthFaceMeters != nil
+            || (humansDue && vision.humanCount > 0)
         let sessionStart = firstFrameTime ?? time
         firstFrameTime = sessionStart
         observation.ambientLux = AmbientLightMath.roomLux(
@@ -365,21 +376,29 @@ final class FrameAnalyzer: @unchecked Sendable {
             observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary,
             framesPerSecond: measureRate(at: time), backend: backend, faceTrackID: faceTrackID,
             traceNotes: depth.takeNotes(), depthSignature: depthSignature, debug: debug,
-            depthFaceSeen: depthFaceFound.map { time - $0.time <= depthFaceHold && $0.person == depth.people.person?.id } ?? false,
+            depthFaceSeen: depthFaceFound.map {
+                time - $0.time <= depthFaceHold && $0.person != nil && $0.person == depth.people.person?.id
+            } ?? false,
             followedPersonID: depth.people.person?.id
         )
     }
 
     /// Hands the newest depth map to the depth face queue when it is free,
     /// and returns a depth signature that came back since the last frame.
-    private func sampleDepthFace(in frame: SensorFrame, options: AnalyzerOptions) -> DepthSignatureSample? {
+    ///
+    /// Faces are looked for whether or not anyone is followed yet: a face
+    /// found with no one followed starts the person (`DepthSensing.noteFace`).
+    /// Signatures come from face tracking's depth only, on a followed person,
+    /// since that is the depth the templates were learned from. The depth
+    /// scan's is smoothed by iOS.
+    private func sampleDepthFace(in frame: SensorFrame, backend: BackendKind, options: AnalyzerOptions) -> DepthSignatureSample? {
         defer { pendingDepthSignature = nil }
-        guard frame.source == .trueDepth, !depthFaceBusy, let full = depth.full, let person = depth.people.person?.id else {
-            return pendingDepthSignature
-        }
+        guard frame.source == .trueDepth, !depthFaceBusy, let full = depth.full else { return pendingDepthSignature }
+        let person = depth.people.person?.id
         let job = DepthFaceSampler.Job(
             map: full.map, mapTime: full.time, person: person, orientation: frame.depthOrientation ?? frame.orientation,
-            signatureInterval: options.depthSignatureInterval, time: frame.timestamp, isTracing: options.isTracing
+            signatureInterval: backend == .faceTracking && person != nil ? options.depthSignatureInterval : nil,
+            time: frame.timestamp, isTracing: options.isTracing
         )
         let expression = frame.faceExpression
         let generation = depthFaceGeneration
@@ -392,9 +411,9 @@ final class FrameAnalyzer: @unchecked Sendable {
         return pendingDepthSignature
     }
 
-    /// A depth face result, back on the analysis queue: it confirms the
-    /// person, teaches which way the depth stands, and holds a signature for
-    /// the next analysis.
+    /// A depth face result, back on the analysis queue: it starts or confirms
+    /// the person, teaches which way the depth stands, and holds a sighting
+    /// and a signature for the next analysis.
     private func apply(_ result: DepthFaceSampler.Result, of job: DepthFaceSampler.Job, expression: Double?, generation: Int) {
         guard generation == depthFaceGeneration else { return }
         depthFaceBusy = false
@@ -402,8 +421,12 @@ final class FrameAnalyzer: @unchecked Sendable {
         if let shaded = result.shaded { lastShadedDepth = shaded }
         result.notes.forEach { depth.note($0) }
         if let face = result.face {
-            depthFaceFound = (job.time, job.person)
-            if depth.people.person?.id == job.person { depth.confirmFace(at: face.nosePoint, time: job.time) }
+            if depth.people.person?.id == job.person {
+                depth.noteFace(at: face.nosePoint, meters: face.noseMeters, time: job.time)
+            }
+            // A face that started the person is theirs.
+            depthFaceFound = (job.time, job.person ?? depth.people.person?.id)
+            pendingDepthFaceMeters = face.noseMeters
         }
         if let points = result.signature {
             pendingDepthSignature = DepthSignatureSample(signature: DepthSignature(points: points), expression: expression)

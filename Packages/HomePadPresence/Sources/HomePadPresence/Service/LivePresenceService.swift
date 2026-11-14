@@ -227,6 +227,23 @@ public final class LivePresenceService: PresenceService {
         }
     }
 
+    /// The track a frame's look follows (`FaceLookTracker`): the person depth
+    /// follows when depth found their face, or when it is too dark for the
+    /// camera, whichever sensor saw the face. Else the camera's face track.
+    ///
+    /// - In dim light the camera saw no face while depth found the face and
+    ///   matched it under the member's limit. The look came from camera faces
+    ///   only, so with none there was nothing to vote on until the room went dark.
+    /// - In the dark Vision found a face on about every other frame, under a
+    ///   track of its own, and the look flipped between the two each time.
+    /// - With two camera faces in view the camera's own tracks tell them apart.
+    private func lookTrack(of analysis: FrameAnalysis) -> UUID? {
+        let tooDark = recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
+        guard let person = analysis.followedPersonID, analysis.observation.faces.count <= 1,
+              tooDark || analysis.depthFaceSeen else { return analysis.faceTrackID }
+        return person
+    }
+
     private func handle(_ analysis: FrameAnalysis) {
         guard mode.usesCamera else { return }
         diagnostics.record(analysis)
@@ -257,30 +274,22 @@ public final class LivePresenceService: PresenceService {
         if let hand = analysis.handSummary { PresenceTrace.trace.logIfChanged("hand", hand) }
         // Every frame, so a break in face tracking stops learning even between
         // samples, and a new face starts a new look before its first sample.
-        // In the dark the depth map shows the face the camera cannot, and the
-        // look belongs to the followed person whichever of them saw the face.
-        // Vision still found a face on about every other dark frame, under a
-        // track of its own, and the look flipped between the two each time.
         let cameraFaces = analysis.observation.faces.count
-        let darkPerson = recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
-            ? analysis.followedPersonID : nil
-        if let darkPerson {
-            let faces = analysis.depthFaceSeen ? max(cameraFaces, 1) : cameraFaces
-            recognition.noteFaces(count: faces, track: darkPerson)
-        } else {
-            recognition.noteFaces(count: cameraFaces, track: analysis.faceTrackID)
-        }
-        if !analysis.observation.faces.isEmpty {
+        let lookTrack = lookTrack(of: analysis)
+        recognition.noteFaces(count: analysis.depthFaceSeen ? max(cameraFaces, 1) : cameraFaces, track: lookTrack)
+        if !analysis.observation.faces.isEmpty || analysis.depthFaceSeen {
             recognition.noteFace(backend: analysis.backend, isPresent: snapshot.isSomeonePresent)
         }
         let wasScanning = !isActiveMode
         _ = fusion.ingest(analysis.observation)
         if analysis.observation.motion { noteMotion(analysis.backend) }
-        if let embedding = analysis.embedding {
-            recognition.consider(embedding, requireLiveness: requiresLiveness(analysis.backend))
+        if var embedding = analysis.embedding {
+            // The camera's sample belongs to the frame's look, not a track of its own.
+            embedding.trackID = lookTrack
+            recognition.consider(embedding, requireLiveness: requiresLiveness(analysis.backend), light: fusion.snapshot.ambientLight)
         }
         if let signature = analysis.depthSignature {
-            recognition.considerDepthSignature(signature, track: analysis.faceTrackID, light: fusion.snapshot.ambientLight)
+            recognition.considerDepthSignature(signature, track: lookTrack, light: fusion.snapshot.ambientLight)
         }
         if let gesture = analysis.handGesture, frameSettings.handGestures {
             PresenceTrace.trace.log("hand gesture \(gesture.rawValue)")

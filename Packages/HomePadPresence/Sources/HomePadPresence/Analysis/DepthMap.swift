@@ -23,10 +23,9 @@ struct DepthMap: Sendable {
         self.focalLength = focalLength
     }
 
-    /// Copies every `step`th pixel of each `step`th row, so a coarse map for
-    /// presence costs a few thousand reads instead of a copy of the whole map.
-    /// Depth arrives as 16 or 32 bit floats. Disparity is converted first.
-    init?(_ depthData: AVDepthData, step: Int = 1) {
+    /// Copies the whole map. Depth arrives as 16 or 32 bit floats. Disparity
+    /// is converted first.
+    init?(_ depthData: AVDepthData) {
         let type = depthData.depthDataType
         let readable = type == kCVPixelFormatType_DepthFloat32 || type == kCVPixelFormatType_DepthFloat16
         let converted = readable ? depthData : depthData.converting(toDepthDataType: kCVPixelFormatType_DepthFloat32)
@@ -34,21 +33,18 @@ struct DepthMap: Sendable {
         CVPixelBufferLockBaseAddress(buffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
         guard let base = CVPixelBufferGetBaseAddress(buffer) else { return nil }
-        let step = max(1, step)
-        let fullWidth = CVPixelBufferGetWidth(buffer)
-        let fullHeight = CVPixelBufferGetHeight(buffer)
-        let width = fullWidth / step
-        let height = fullHeight / step
+        let width = CVPixelBufferGetWidth(buffer)
+        let height = CVPixelBufferGetHeight(buffer)
         guard width > 0, height > 0 else { return nil }
         let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
         let isHalf = converted.depthDataType == kCVPixelFormatType_DepthFloat16
         var meters = [Float](repeating: .nan, count: width * height)
         for row in 0..<height {
-            let line = base + (row * step) * rowBytes
+            let line = base + row * rowBytes
             for column in 0..<width {
                 let value = isHalf
-                    ? Float(line.assumingMemoryBound(to: Float16.self)[column * step])
-                    : line.assumingMemoryBound(to: Float32.self)[column * step]
+                    ? Float(line.assumingMemoryBound(to: Float16.self)[column])
+                    : line.assumingMemoryBound(to: Float32.self)[column]
                 meters[row * width + column] = value.isFinite && value > 0 ? value : .nan
             }
         }

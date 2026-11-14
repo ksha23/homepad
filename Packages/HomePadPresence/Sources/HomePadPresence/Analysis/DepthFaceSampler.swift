@@ -2,12 +2,13 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
-/// The depth face of the followed person, map by map: where it is
-/// (`DepthFaceDetector`), the face itself (`DepthFaceFinder`) and, when one is
-/// due, a depth signature merged from the last few (`DepthFaceFusion`).
+/// The depth face, map by map: where it is (`DepthFaceDetector`), the face
+/// itself (`DepthFaceFinder`) and, when one is due, a depth signature merged
+/// from the last few (`DepthFaceFusion`). It looks with no one followed too:
+/// the face it finds is what starts the person in the dark.
 ///
-/// - Searches each new depth map while signatures are wanted, else every
-///   `idleSearchInterval`.
+/// - Searches each new depth map while signatures are wanted or no one is
+///   followed yet, else every `idleSearchInterval`.
 /// - Looks only in a face box Vision found in the lit depth, or the last one
 ///   for `boxHold` while Vision misses a map. Around the followed head
 ///   instead, the crop landed on whatever the person was picked up from.
@@ -30,7 +31,8 @@ final class DepthFaceSampler {
     struct Job: @unchecked Sendable {
         var map: DepthMap
         var mapTime: TimeInterval
-        var person: UUID
+        /// The followed person, nil while no one is followed yet.
+        var person: UUID?
         /// Turns the map upright.
         var orientation: CGImagePropertyOrientation
         /// Nil while no signatures are wanted.
@@ -59,6 +61,7 @@ final class DepthFaceSampler {
     private var lastMapTime: TimeInterval = -.infinity
     private var lastSearchTime: TimeInterval = -.infinity
     private var lastSignatureTime: TimeInterval = -.infinity
+    /// The person of the last job.
     private var person: UUID?
     private var box: (rect: CGRect, time: TimeInterval)?
     private var window: [(time: TimeInterval, face: DepthFace)] = []
@@ -78,11 +81,15 @@ final class DepthFaceSampler {
 
     func process(_ job: Job) -> Result {
         if job.person != person {
+            // Faces found before anyone was followed are the ones that
+            // started this person, so they stay.
+            if person != nil {
+                box = nil
+                window.removeAll()
+            }
             person = job.person
-            box = nil
-            window.removeAll()
         }
-        let interval = job.signatureInterval == nil ? Self.idleSearchInterval : 0
+        let interval = job.signatureInterval != nil || job.person == nil ? 0 : Self.idleSearchInterval
         guard job.mapTime > lastMapTime, job.time - lastSearchTime >= interval else { return Result() }
         lastMapTime = job.mapTime
         lastSearchTime = job.time
@@ -133,7 +140,8 @@ final class DepthFaceSampler {
         let since = lastSummaryTime ?? time
         if lastSummaryTime == nil { lastSummaryTime = time }
         if time - since >= Self.summaryInterval {
-            if counts.found + counts.noBox + counts.noFace > 0 {
+            // With no one followed and no face box, the room is empty: no line for that every 10 s.
+            if counts.found + counts.noFace > 0 || (person != nil && counts.noBox > 0) {
                 notes.append(TraceNote(key: "depth face searches", text: "depth face searches in "
                     + String(format: "%.0f s: ", time - since)
                     + "\(counts.found) found, \(counts.noBox) with no face box, \(counts.noFace) with no face in the box",

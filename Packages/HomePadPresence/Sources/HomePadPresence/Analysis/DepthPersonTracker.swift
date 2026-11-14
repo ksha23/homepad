@@ -13,6 +13,8 @@ import Foundation
 /// - The room never starts a person. Only a face or movement does, so the
 ///   walls and furniture a wall-mounted iPad always sees do not count.
 /// - A person standing still stays followed. Nothing needs to move.
+/// - Movement beside a face seen in the last `faceHoldSeconds` is that
+///   person moving and picks no one up.
 /// - Something right behind them, such as a chair back within 15 cm of their
 ///   head, can take their place when they leave. That is why a person is let
 ///   go `holdSeconds` after a face, or their own movement, last confirmed them.
@@ -41,6 +43,12 @@ struct DepthPersonTracker: Sendable {
         var movementMeters = 0.2
         /// How long a person is followed without a face or movement confirming them.
         var holdSeconds: TimeInterval = 30
+        /// While a face confirmed the person this recently, movement picks no
+        /// one up: movement beside a face in view is that person moving, a
+        /// hand or a shoulder. In the dark it took the person off their face
+        /// onto their body every few seconds (a new person at 0.7 m while the
+        /// face was still found at 0.57 m), and recognition started over each time.
+        var faceHoldSeconds: TimeInterval = 3
     }
 
     /// Where to pick a person up.
@@ -64,6 +72,8 @@ struct DepthPersonTracker: Sendable {
         var confirmedAt: TimeInterval
         var confirmedCenter: CGPoint
         var confirmedDistance: Double
+        /// When a face last confirmed them, nil if only movement has.
+        var faceSeenAt: TimeInterval?
         /// When the depth last showed them.
         var seenAt: TimeInterval
     }
@@ -94,7 +104,7 @@ struct DepthPersonTracker: Sendable {
     @discardableResult
     mutating func update(_ map: DepthMap, seeds: [Seed], at time: TimeInterval) -> Person? {
         events.removeAll()
-        if let seed = seeds.first {
+        if let seed = seeds.first, !isMovementBesideFace(seed, at: time) {
             switch locateSeed(seed, in: map) {
             case .found(let head):
                 adopt(head, in: map, fromFace: seed.expectedMeters != nil, at: time)
@@ -113,6 +123,7 @@ struct DepthPersonTracker: Sendable {
     mutating func confirm(face point: CGPoint, at time: TimeInterval) -> Bool {
         events.removeAll()
         guard var current = person, isOnHead(point, of: current) else { return false }
+        current.faceSeenAt = time
         current.confirmedAt = time
         current.confirmedCenter = current.center
         current.confirmedDistance = current.distanceMeters
@@ -152,14 +163,21 @@ struct DepthPersonTracker: Sendable {
         var radius: CGSize
     }
 
+    /// A movement seed while a face confirmed the followed person in the last `faceHoldSeconds`.
+    private func isMovementBesideFace(_ seed: Seed, at time: TimeInterval) -> Bool {
+        guard seed.expectedMeters == nil, let faceSeenAt = person?.faceSeenAt else { return false }
+        return time - faceSeenAt <= config.faceHoldSeconds
+    }
+
     /// A face, or movement, picks up a person, or confirms the one followed.
     private mutating func adopt(_ head: Head, in map: DepthMap, fromFace: Bool, at time: TimeInterval) {
         let previous = person
         let same = previous.map { isSame(head, as: $0, in: map, at: time) } ?? false
+        let faceSeenAt = fromFace ? time : (same ? previous?.faceSeenAt : nil)
         let next = Person(
             id: same ? previous?.id ?? UUID() : UUID(), center: head.center, distanceMeters: head.distance,
             radius: head.radius, confirmedAt: time, confirmedCenter: head.center, confirmedDistance: head.distance,
-            seenAt: time
+            faceSeenAt: faceSeenAt, seenAt: time
         )
         if let previous, !same { events.append(.lost(previous)) }
         if !same { events.append(.started(next, fromFace: fromFace)) }

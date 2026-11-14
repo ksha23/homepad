@@ -177,17 +177,21 @@ final class CameraSession: NSObject, @unchecked Sendable {
         depthOutput.isFilteringEnabled = true
         depthOutput.alwaysDiscardsLateDepthData = true
         depthOutput.setDelegate(self, callbackQueue: outputQueue)
-        // The smallest float depth format is plenty for motion and liveness.
+        // The widest float depth format up to 640 columns, as wide as face
+        // tracking's: faces are looked for in the depth scan's maps too, to
+        // notice someone sitting still in the dark. In the smallest (160
+        // columns) a face half a meter away is about 30 pixels across.
         let formats = device.activeFormat.supportedDepthDataFormats.filter {
             let type = CMFormatDescriptionGetMediaSubType($0.formatDescription)
-            return type == kCVPixelFormatType_DepthFloat16 || type == kCVPixelFormatType_DepthFloat32
+            let width = CMVideoFormatDescriptionGetDimensions($0.formatDescription).width
+            return (type == kCVPixelFormatType_DepthFloat16 || type == kCVPixelFormatType_DepthFloat32) && width <= 640
         }
-        let smallest = formats.min {
+        let widest = formats.max {
             CMVideoFormatDescriptionGetDimensions($0.formatDescription).width
                 < CMVideoFormatDescriptionGetDimensions($1.formatDescription).width
         }
-        if let smallest, (try? device.lockForConfiguration()) != nil {
-            device.activeDepthDataFormat = smallest
+        if let widest, (try? device.lockForConfiguration()) != nil {
+            device.activeDepthDataFormat = widest
             device.unlockForConfiguration()
         }
     }

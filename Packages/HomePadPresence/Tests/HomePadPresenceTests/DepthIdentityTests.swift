@@ -398,6 +398,17 @@ private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> 
         #expect(services.household.session.mode == .guest)
     }
 
+    /// In dim light the camera's matches of a member fall, so its "stranger" holds depth back no longer.
+    @Test func aCameraStrangerInDimLightDoesNotStopDepth() throws {
+        let service = try makeService()
+        for index in 0..<4 {
+            let sample = LearningVectors.sample(LearningVectors.axis(5 + index), track: person)
+            service.consider(sample, requireLiveness: true, light: .dim, at: t0 + Double(index) * 0.2)
+        }
+        for index in 0..<3 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .dim, at: t0 + 2 + Double(index)) }
+        #expect(services.household.session.mode == .recognized(kyle.id))
+    }
+
     @Test func overTheLimitOrTooCloseToSomeoneElseIsNoVote() throws {
         let service = try makeService()
         for index in 0..<2 { service.noteDepthScore(score(2.0), look: service.currentLook, light: .dark, at: t0 + Double(index)) }
