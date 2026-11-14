@@ -24,10 +24,6 @@ struct DepthSignature: Codable, Equatable, Sendable {
     /// by the image's faces, which disagreed with the depth's. Version 5
     /// turns it by its own.
     static let version = 5
-    /// ARKit expression coefficients (blend shapes, the eyes left out) above
-    /// this change the face too much for a signature, where ARKit can tell.
-    static let maximumExpression = 0.35
-
     let version: Int
     /// x, y and z of each point, in meters (`DepthFace.points`).
     let points: [Float]

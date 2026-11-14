@@ -125,6 +125,9 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var uprightBase: (backend: BackendKind, orientation: CGImagePropertyOrientation)?
     /// The last shaded depth picture and the face box in it, for the debug view.
     private var lastShadedDepth: (image: CGImage, box: CGRect?)?
+    /// What the searches since the last signature came to, for the trace:
+    /// no new map, no face box, a box with no face in it, or a face.
+    private var searchCounts = (noMap: 0, noBox: 0, noFace: 0, found: 0)
     /// The last face box found in the shaded depth, when, and on whom.
     private var lastFaceBox: (box: CGRect, time: TimeInterval, person: UUID)?
     private let faceBoxHold: TimeInterval = 1
@@ -275,20 +278,24 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
         let face = searchFace(in: frame, person: person, every: burst == nil ? depthFaceInterval : 0, options: options)
         guard var current = burst else { return (face, nil) }
-        // A face far from its resting expression changes shape, where ARKit can tell.
-        if let face, (frame.faceExpression ?? 0) <= DepthSignature.maximumExpression {
-            current.faces.append(face)
-        }
+        // Every face counts, whatever its expression. Skipping faces ARKit
+        // saw far from resting kept nearly every face out in light, where
+        // templates are made, and none in the dark, where ARKit sees none.
+        if let face { current.faces.append(face) }
         guard current.faces.count >= DepthFaceFusion.maximumFaces || time - current.startedAt >= burstSeconds else {
             burst = current
             return (face, nil)
         }
         burst = nil
         lastDepthSignature = time
+        defer { searchCounts = (0, 0, 0, 0) }
         guard current.faces.count >= DepthFaceFusion.minimumFaces, let points = DepthFaceFusion.fuse(current.faces) else {
             if options.isTracing {
+                let counts = searchCounts
                 depth.note(TraceNote(key: "depth signature", text: "depth signature skipped: \(current.faces.count) faces "
-                    + "lined up in " + String(format: "%.2f", time - current.startedAt) + " s", repeats: true))
+                    + "lined up in " + String(format: "%.2f", time - current.startedAt) + " s (searches: "
+                    + "\(counts.noMap) no new map, \(counts.noBox) no face box, \(counts.noFace) no face in the box, "
+                    + "\(counts.found) found)", repeats: true))
             }
             return (face, nil)
         }
@@ -306,7 +313,11 @@ final class FrameAnalyzer: @unchecked Sendable {
         in frame: SensorFrame, person: DepthPersonTracker.Person, every interval: TimeInterval, options: AnalyzerOptions
     ) -> DepthFace? {
         let time = frame.timestamp
-        guard time - lastDepthFaceSearch >= interval, let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return nil }
+        guard time - lastDepthFaceSearch >= interval else { return nil }
+        guard let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else {
+            searchCounts.noMap += 1
+            return nil
+        }
         lastDepthFaceMap = mapTime
         lastDepthFaceSearch = time
         // Vision's face detector on the depth map drawn as a lit surface says
@@ -323,13 +334,18 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
         if let roll = detection?.face?.rollDegrees { noteUpright(rollDegrees: roll, source: .depth) }
         guard let box = lastFaceBox.flatMap({ time - $0.time <= faceBoxHold && $0.person == person.id ? $0.box : nil }) else {
+            searchCounts.noBox += 1
             lastDepthFace = DepthFaceFinder.Search(miss: "no face in the shaded depth")
             if options.isTracing { depth.note(TraceNote(key: "depth shading", text: "no face in the shaded depth")) }
             return nil
         }
         // A quarter of searches found no new map to look at. Those are no
         // search, and must not hide the last face from the debug view.
-        guard let search = depth.findFace(orientation: depthOrientation, faceBox: box, at: time) else { return nil }
+        guard let search = depth.findFace(orientation: depthOrientation, faceBox: box, at: time) else {
+            searchCounts.noMap += 1
+            return nil
+        }
+        if search.face == nil { searchCounts.noFace += 1 } else { searchCounts.found += 1 }
         lastDepthFace = search
         if options.isTracing {
             let text = detection?.face.map { face in
