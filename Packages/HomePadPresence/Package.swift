@@ -16,7 +16,14 @@ let package = Package(
         .target(
             name: "HomePadPresence",
             dependencies: ["HomePadCore", "HomePadUI"],
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            swiftSettings: [
+                .swiftLanguageMode(.v5),
+                // Optimized in Debug builds too: the depth face work (the lit
+                // depth, the crop, lining faces up) took about a quarter
+                // second a map unoptimized, so only 4 of face tracking's 6
+                // depth maps a second were looked at.
+                .unsafeFlags(["-O"], .when(configuration: .debug)),
+            ]
         ),
         .testTarget(
             name: "HomePadPresenceTests",
