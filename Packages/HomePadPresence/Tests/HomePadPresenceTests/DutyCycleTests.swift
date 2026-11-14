@@ -58,12 +58,10 @@ import Testing
         let active = SensingMode.active(framesPerSecond: 10)
         let scanning = SensingMode.scanning(framesPerSecond: 2)
 
-        // Face tracking only while someone is present, and not in a dim or dark
-        // room, where the slow depth scan's long exposures see faces ARKit's cannot.
+        // Face tracking while someone is present, in any light: its face mesh
+        // comes from the dot projector.
         #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .normal) == .faceTracking)
-        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: nil) == .faceTracking)
-        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dim) == .depthScan)
-        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dark) == .depthScan)
+        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dark) == .faceTracking)
         #expect(BackendSelector.framesPerSecond(for: .depthScan, mode: 10) == 2)
         #expect(BackendSelector.framesPerSecond(for: .faceTracking, mode: 10) == 10)
         // A lit room scans with plain RGB, a dark one with infrared depth.

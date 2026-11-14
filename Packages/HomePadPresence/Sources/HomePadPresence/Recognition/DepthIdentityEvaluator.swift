@@ -20,6 +20,9 @@ final class DepthIdentityEvaluator {
     enum Subject: Equatable {
         case member(UUID)
         case stranger
+        /// Not named or settled yet, as in a dark room, where RGB cannot tell
+        /// faces apart. Scored against every member, never kept.
+        case unnamed
 
         var memberID: UUID? {
             if case .member(let id) = self { return id }
@@ -88,7 +91,9 @@ final class DepthIdentityEvaluator {
             stored.templates.filter { !keptThisTrack.contains($0.learnedAt) }.map(\.signature)
         }
         let score = DepthIdentityScore.score(signature, member: member, templates: comparable)
-        PresenceTrace.trace.log(Self.describe(score, member: member, light: light, expression: expression, names: names))
+        PresenceTrace.trace.log(Self.describe(
+            score, member: member, unnamed: subject == .unnamed, light: light, expression: expression, names: names
+        ))
         if let member, newTrack != nil, policy.mayKeep(light: light, keptOnTrack: keptOnTrack, lastKeptAt: lastKeptAt, at: time) {
             keep(signature, for: member, at: time, names: names)
         }
@@ -126,9 +131,10 @@ final class DepthIdentityEvaluator {
     /// "depth identity Kyle, light dim, expression 0.12: own 1.42mm nearest of 8,
     /// others 2.95mm nearest of 6 (Sam)". Distances, counts and names only.
     nonisolated static func describe(
-        _ score: DepthIdentityScore, member: UUID?, light: AmbientLight?, expression: Double, names: [UUID: String]
+        _ score: DepthIdentityScore, member: UUID?, unnamed: Bool = false, light: AmbientLight?, expression: Double,
+        names: [UUID: String]
     ) -> String {
-        let who = member.map { names[$0] ?? "?" } ?? "stranger"
+        let who = member.map { names[$0] ?? "?" } ?? (unnamed ? "unnamed face" : "stranger")
         let lightText = light.map { "\($0)" } ?? "unknown"
         var text = "depth identity \(who), light \(lightText), expression \(String(format: "%.2f", expression)): "
         if member != nil {

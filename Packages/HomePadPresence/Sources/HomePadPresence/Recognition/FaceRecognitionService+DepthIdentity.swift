@@ -12,10 +12,11 @@ struct DepthSignatureSample: Sendable {
 /// changes who recognition says the face is.
 extension FaceRecognitionService {
     /// True while signatures of the face in view are worth taking: RGB
-    /// recognition has named it a member, or settled it as a stranger.
+    /// recognition has named it a member or settled it as a stranger, or
+    /// there are depth templates to score a face it has not named against.
     var wantsDepthSignatures: Bool {
         guard isEnabled, !templates.isEmpty else { return false }
-        return confirmedMemberID != nil || lookIdentity == .stranger
+        return confirmedMemberID != nil || lookIdentity == .stranger || depthIdentity.hasTemplates
     }
 
     /// Scores a depth signature of the face in view on face track `track`.
@@ -26,6 +27,8 @@ extension FaceRecognitionService {
             subject = .member(member)
         } else if lookIdentity == .stranger {
             subject = .stranger
+        } else if depthIdentity.hasTemplates {
+            subject = .unnamed
         } else {
             return
         }
