@@ -28,9 +28,12 @@ struct DepthPalm: Equatable, Sendable {
 /// - the size of a hand, or of a hand on an upright forearm, which lies in the
 ///   same plane: `areas`, `lengths` and `widths`, measured at its depth,
 /// - clearly closer than everything else: nothing in view lies within
-///   `separation` behind it, except the arm it is on (surface joined to it
-///   with no step over `maximumStep`). Kyle's rule. A hand beside the head, or
-///   just in front of the face, has the head within reach behind it.
+///   `separation` (just over a foot) behind it, except the arm it is on:
+///   surface joined to it with no step over `maximumStep`, no larger than
+///   `maximumArmArea`. Kyle's rule. A hand beside the head, or less than a
+///   foot in front of the face, has the head within reach behind it, and an
+///   arm joined to a body within reach does not excuse the body. At 15 cm,
+///   thin surfaces a few centimeters in front of the body counted.
 /// - standing out from what lies right around it: on at least
 ///   `minimumClearance` of its outline, depth is missing or at least
 ///   `separation` farther. A face never does, since the head goes on around
@@ -40,7 +43,9 @@ enum DepthPalmDetector {
     static let range: ClosedRange<Float> = 0.15...1.2
     static let handDepth: Float = 0.06
     static let maximumStep: Float = 0.03
-    static let separation: Float = 0.15
+    static let separation: Float = 0.31
+    /// The most surface an arm joined to the hand covers (forearm and upper arm).
+    static let maximumArmArea = 0.06
     static let minimumClearance = 0.6
     static let areas: ClosedRange<Double> = 0.005...0.05
     static let lengths: ClosedRange<Double> = 0.10...0.5
@@ -170,22 +175,34 @@ enum DepthPalmDetector {
         )
         if !areas.contains(palm.area) { return (palm, palm.area < areas.lowerBound ? "too small for a hand" : "too large for a hand") }
         if !lengths.contains(length) || !widths.contains(width) { return (palm, "not hand shaped") }
-        if let other = nearestOther(than: cells, inside: inside, depth: depth, in: map) {
-            return (palm, String(format: "something else within %.0f cm behind it, at %.2fm", separation * 100, other))
+        switch nearestOther(than: cells, inside: inside, depth: depth, in: map, focal: focal) {
+        case .clear: break
+        case .something(let meters):
+            return (palm, String(format: "something else within %.0f cm behind it, at %.2fm", separation * 100, meters))
+        case .joinedToBody:
+            return (palm, String(format: "joined to more than an arm within %.0f cm behind it", separation * 100))
         }
         if palm.clearance < minimumClearance { return (palm, "not standing out from what is around it") }
         return (palm, nil)
     }
 
-    /// The nearest depth of anything in view within `separation` behind the
-    /// surface at `depth`, other than the surface and the arm it is on. Nil
-    /// when there is none.
-    private static func nearestOther(than cells: [Int], inside: [Bool], depth: Float, in map: DepthMap) -> Double? {
+    private enum Behind {
+        case clear
+        /// The nearest depth of something within reach.
+        case something(Double)
+        /// What is joined to the hand within reach is larger than an arm.
+        case joinedToBody
+    }
+
+    /// What lies within `separation` behind the surface at `depth`, other
+    /// than the surface and the arm it is on.
+    private static func nearestOther(than cells: [Int], inside: [Bool], depth: Float, in map: DepthMap, focal: Double) -> Behind {
         let zone = depth + separation
         // The arm: surface joined to the hand with no step over `maximumStep`, until it is `separation` behind.
         var joined = inside
         var queue = cells
         var next = 0
+        var armArea = 0.0
         while next < queue.count {
             let cell = queue[next]
             next += 1
@@ -194,8 +211,11 @@ enum DepthPalmDetector {
                 guard other < zone, abs(other - map.meters[cell]) <= maximumStep else { continue }
                 joined[neighbor] = true
                 queue.append(neighbor)
+                let side = Double(other) / focal
+                armArea += side * side
             }
         }
+        if armArea > maximumArmArea { return .joinedToBody }
         // Everything else within the zone, in patches big enough to be something.
         var seen = joined
         var nearest: Float?
@@ -217,7 +237,7 @@ enum DepthPalmDetector {
             }
             if patch.count >= minimumOtherCells { nearest = min(nearest ?? patchNearest, patchNearest) }
         }
-        return nearest.map(Double.init)
+        return nearest.map { .something(Double($0)) } ?? .clear
     }
 
     private static func neighbors(of cell: Int, in map: DepthMap) -> [Int] {

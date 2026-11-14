@@ -240,7 +240,7 @@ private struct PalmScene {
 @Suite struct DepthPalmTests {
     @Test func aPalmRaisedInFrontOfTheFaceIsAPalm() throws {
         var scene = PalmScene()
-        scene.person(at: 0.6)
+        scene.person(at: 0.75)
         scene.hand(at: 0.38)
         let result = DepthPalmDetector.detect(in: scene.map)
         let palm = try #require(result.palm, "\(result.description)")
@@ -258,10 +258,10 @@ private struct PalmScene {
         #expect(result.palm == nil)
     }
 
-    /// 10 cm in front of the face is not clearly in front of it.
-    @Test func aHandJustInFrontOfTheFaceIsNot() {
+    /// Kyle: more than a foot closer. 25 cm in front of the face is not.
+    @Test func aHandLessThanAFootInFrontOfTheFaceIsNot() {
         var scene = PalmScene()
-        scene.person(at: 0.6)
+        scene.person(at: 0.75)
         scene.hand(at: 0.5)
         #expect(DepthPalmDetector.detect(in: scene.map).palm == nil)
     }
@@ -269,10 +269,20 @@ private struct PalmScene {
     /// A hand raised on an upright forearm: the arm lies in the palm's plane.
     @Test func aPalmOnAnUprightForearmIsAPalm() throws {
         var scene = PalmScene()
-        scene.person(at: 0.6)
+        scene.person(at: 0.75)
         scene.hand(at: 0.38, slope: 0)
         let result = DepthPalmDetector.detect(in: scene.map)
         _ = try #require(result.palm, "\(result.description)")
+    }
+
+    /// An arm that runs back into the shoulders joins the hand to the body,
+    /// and the body within a foot behind it still counts.
+    @Test func anArmJoinedToTheBodyDoesNotExcuseTheBody() {
+        var scene = PalmScene()
+        scene.person(at: 0.6)
+        scene.hand(at: 0.45, x: 0.2, slope: 1)
+        let result = DepthPalmDetector.detect(in: scene.map)
+        #expect(result.palm == nil)
     }
 
     /// A face leaning in is the nearest thing in view, but the head goes on around it.
