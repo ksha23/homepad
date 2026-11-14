@@ -416,7 +416,7 @@ final class FrameAnalyzer: @unchecked Sendable {
     private func depthPalm(at time: TimeInterval) -> (fired: Bool, result: DepthPalmDetector.Result)? {
         guard let full = depth.full, full.time > lastPalmMapTime, time - full.time < 0.5 else { return nil }
         lastPalmMapTime = full.time
-        let result = DepthPalmDetector.detect(in: full.map, headMeters: depth.people.person?.distanceMeters)
+        let result = DepthPalmDetector.detect(in: full.map)
         let fired = palmHold.note(isPalm: result.palm != nil, center: result.palm?.center, at: full.time)
         return (fired, result)
     }

@@ -213,8 +213,9 @@ private struct PalmScene {
     }
 
     /// An open hand, flat toward the iPad: a 9 by 10 cm palm, four 1.8 cm
-    /// fingers 8 cm long with gaps between them, and the forearm going back.
-    mutating func hand(at depth: Double, x center: Double = 0, y top: Double = -0.08) {
+    /// fingers 8 cm long with gaps between them, and a forearm 6 cm wide that
+    /// goes `slope` meters back for every meter down from the wrist.
+    mutating func hand(at depth: Double, x center: Double = 0, y top: Double = -0.08, slope: Double = 0.6) {
         paint(at: depth) { x, y in
             let across = x - center
             let down = y - top
@@ -226,8 +227,8 @@ private struct PalmScene {
             }
             return nil
         }
-        paint(at: depth + 0.08) { x, y in
-            abs(x - center) <= 0.03 && y - top > 0.18 && y - top <= 0.35 ? depth + 0.08 + (y - top - 0.18) : nil
+        paint(at: depth) { x, y in
+            abs(x - center) <= 0.03 && y - top > 0.18 && y - top <= 0.45 ? depth + slope * (y - top - 0.18) : nil
         }
     }
 
@@ -241,19 +242,19 @@ private struct PalmScene {
         var scene = PalmScene()
         scene.person(at: 0.6)
         scene.hand(at: 0.38)
-        let result = DepthPalmDetector.detect(in: scene.map, headMeters: 0.6)
+        let result = DepthPalmDetector.detect(in: scene.map)
         let palm = try #require(result.palm, "\(result.description)")
         #expect(abs(palm.meters - 0.38) < 0.02)
         #expect(palm.clearance >= DepthPalmDetector.minimumClearance)
     }
 
     /// Kyle: the hand has to be clearly closer than everything else. A hand at
-    /// about the head's depth, beside it, has only the room behind it.
+    /// the head's depth, beside it, has the head within reach.
     @Test func aHandBesideTheHeadIsNot() {
         var scene = PalmScene()
         scene.person(at: 0.6)
         scene.hand(at: 0.6, x: 0.25)
-        let result = DepthPalmDetector.detect(in: scene.map, headMeters: 0.6)
+        let result = DepthPalmDetector.detect(in: scene.map)
         #expect(result.palm == nil)
     }
 
@@ -262,14 +263,23 @@ private struct PalmScene {
         var scene = PalmScene()
         scene.person(at: 0.6)
         scene.hand(at: 0.5)
-        #expect(DepthPalmDetector.detect(in: scene.map, headMeters: 0.6).palm == nil)
+        #expect(DepthPalmDetector.detect(in: scene.map).palm == nil)
+    }
+
+    /// A hand raised on an upright forearm: the arm lies in the palm's plane.
+    @Test func aPalmOnAnUprightForearmIsAPalm() throws {
+        var scene = PalmScene()
+        scene.person(at: 0.6)
+        scene.hand(at: 0.38, slope: 0)
+        let result = DepthPalmDetector.detect(in: scene.map)
+        _ = try #require(result.palm, "\(result.description)")
     }
 
     /// A face leaning in is the nearest thing in view, but the head goes on around it.
     @Test func aFaceLeaningInIsNot() {
         var scene = PalmScene()
         scene.person(at: 0.35)
-        #expect(DepthPalmDetector.detect(in: scene.map, headMeters: nil).palm == nil)
+        #expect(DepthPalmDetector.detect(in: scene.map).palm == nil)
     }
 
     @Test func aPalmHeldStillFiresOnceOverDepthMaps() {
