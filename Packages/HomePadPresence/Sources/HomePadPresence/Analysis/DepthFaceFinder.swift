@@ -109,18 +109,23 @@ enum DepthFaceFinder {
         // more than `surfaceStepMeters` between neighbors ends the surface, so
         // what is not touching the face is not part of it, and the head need
         // not be centered on the face.
+        // A single seed often sat on a stray pixel (hair, an edge, a hole) and
+        // its surface was 1 to 18 points, so several are tried, nearest the
+        // center first, and the largest surface wins. The head's nearest
+        // point is the last resort.
         let headDepth = Float(head.distanceMeters)
-        let onHead = headPixels.filter { abs($0.z - headDepth) <= headSeedMeters }
-        let seed: (column: Int, row: Int, z: Float)
-        if let central = onHead.min(by: { centerDistance($0, centerX, centerY) < centerDistance($1, centerX, centerY) }) {
-            seed = central
-        } else {
-            headPixels.sort { $0.z < $1.z }
-            seed = headPixels[Int(Double(headPixels.count - 1) * nearestFraction)]
+        var seeds = headPixels.filter { abs($0.z - headDepth) <= headSeedMeters }
+            .sorted { centerDistance($0, centerX, centerY) < centerDistance($1, centerX, centerY) }
+        headPixels.sort { $0.z < $1.z }
+        seeds = Array(seeds.prefix(seedAttempts)) + [headPixels[Int(Double(headPixels.count - 1) * nearestFraction)]]
+        var surface: [(column: Int, row: Int, z: Float)] = []
+        for seed in seeds {
+            let found = connectedSurface(in: map, from: seed, focal: focal)
+            if found.count > surface.count { surface = found }
+            if surface.count >= minimumPoints * 4 { break }
         }
-        let surface = connectedSurface(in: map, from: seed, focal: focal)
         guard surface.count >= minimumPoints, let candidate = nearestTip(surface, focal: focal) else {
-            return Search(miss: "only \(surface.count) points connected to the head's nearest point")
+            return Search(miss: "only \(surface.count) points on the head's surface")
         }
         let tipColumn = candidate.column
         let tipRow = candidate.row
@@ -183,8 +188,10 @@ enum DepthFaceFinder {
         return result
     }
 
-    /// How far from the followed head's depth its seed point may be, in meters.
+    /// How far from the followed head's depth its seed points may be, in
+    /// meters, and how many are tried.
     static let headSeedMeters: Float = 0.08
+    static let seedAttempts = 8
 
     private static func centerDistance(_ pixel: (column: Int, row: Int, z: Float), _ x: Double, _ y: Double) -> Double {
         let dx = Double(pixel.column) - x

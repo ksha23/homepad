@@ -31,6 +31,8 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     var depthFace: String
     /// The depth map's native size and whether iOS smoothed it.
     var depthSource: String = "no depth yet"
+    /// Which way the camera's buffers were turned to stand upright, by gravity.
+    var orientation: String = ""
 }
 
 /// Draws `RecognitionDebugFrame`s, on the analysis queue.
@@ -57,6 +59,7 @@ final class RecognitionDebugRenderer {
         let orientation = frame.orientation
         let face = search?.face
         var result = RecognitionDebugFrame(depthFace: Self.describe(search, person: person))
+        result.orientation = Self.describe(orientation)
         result.camera = cameraImage(frame)
         result.faceBoxes = faces.compactMap(\.boundingBox).map { box in
             CGRect(x: box.minX, y: 1 - box.maxY, width: box.width, height: box.height)
@@ -83,6 +86,15 @@ final class RecognitionDebugRenderer {
             }
         }
         return result
+    }
+
+    static func describe(_ orientation: CGImagePropertyOrientation) -> String {
+        switch orientation {
+        case .up, .upMirrored: "not at all"
+        case .down, .downMirrored: "upside down"
+        case .right, .rightMirrored: "a quarter clockwise"
+        case .left, .leftMirrored: "a quarter counterclockwise"
+        }
     }
 
     static func describe(_ search: DepthFaceFinder.Search?, person: DepthPersonTracker.Person?) -> String {
