@@ -19,12 +19,18 @@ the same simulator after the other shots, exports their screenshots from the
 result bundle, and takes the shots with the keyboard up itself while each test
 holds the screen. Rerunning a sheet is the same command as any other shot.
 
+Every shot happens at the same daytime moment, 9:41 AM today, whenever the
+script runs (HOMEPAD_README_CLOCK=HH:MM picks another): a small library loaded
+into the app moves its wall clock (scripts/fake-clock/FakeClock.c). Shots taken
+at night showed night skies, and a run across midnight showed two dates.
+
 Needs Pillow (`pip install pillow`) and a built simulator app (`make build`). The
 UI tests build into .build/DerivedData-UITests on their first run.
 HOMEPAD_SIM picks the simulator (`make readme-images SIM=<name>` sets it). HOMEPAD_SHOT_DELAY sets the seconds to wait
 after launch for shots without their own delay in DELAYS.
 """
 import argparse
+import datetime
 import json
 import os
 import re
@@ -38,6 +44,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, ".build", "readme-shots")
 OUT = os.path.join(ROOT, "docs", "images")
 SIM = os.environ.get("HOMEPAD_SIM", "iPad Pro 13-inch (M5)")
+CLOCK = os.environ.get("HOMEPAD_README_CLOCK", "09:41")
+FAKE_CLOCK_SOURCE = os.path.join(ROOT, "scripts", "fake-clock", "FakeClock.c")
+FAKE_CLOCK_LIBRARY = os.path.join(ROOT, ".build", "fake-clock", "FakeClock.dylib")
 BUNDLE_ID = "com.ksha23.homepad"
 # Capture in landscape (how a HomePad usually sits). The simulator cannot rotate,
 # so the shell lays itself out sideways and the capture is rotated back upright.
@@ -211,12 +220,25 @@ GAP = 48
 MARGIN = 56
 
 
+def fake_clock():
+    """Builds the clock library and returns the moment every launch starts at,
+    in seconds since 1970: `CLOCK` today."""
+    os.makedirs(os.path.dirname(FAKE_CLOCK_LIBRARY), exist_ok=True)
+    subprocess.run(["xcrun", "-sdk", "iphonesimulator", "clang", "-dynamiclib", "-arch", "arm64",
+                    "-target", "arm64-apple-ios17.0-simulator", "-O2", FAKE_CLOCK_SOURCE, "-o", FAKE_CLOCK_LIBRARY],
+                   check=True)
+    hour, minute = (int(part) for part in CLOCK.split(":"))
+    moment = datetime.datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return str(int(moment.timestamp()))
+
+
 def capture(names):
     os.makedirs(RAW, exist_ok=True)
     extra = ["-HomePadForceLandscape", "YES"] if LANDSCAPE else []
+    moment = fake_clock()
     for name in [n for n in names if n in SHOTS]:
         out = os.path.join(RAW, f"{name}.png")
-        env = dict(os.environ)
+        env = dict(os.environ, SIMCTL_CHILD_DYLD_INSERT_LIBRARIES=FAKE_CLOCK_LIBRARY, SIMCTL_CHILD_HOMEPAD_FAKE_CLOCK=moment)
         if name in DELAYS:
             env["HOMEPAD_SHOT_DELAY"] = str(DELAYS[name])
         # A fresh install per shot, so state from one shot (a timer still
@@ -229,17 +251,18 @@ def capture(names):
         print("captured", name)
     sheets = [n for n in names if n in SHEETS]
     if sheets:
-        capture_sheets(sheets)
+        capture_sheets(sheets, moment)
 
 
-def capture_sheets(names):
+def capture_sheets(names, moment):
     """Runs the README tests for these sheets and saves their screenshots.
 
     A fresh install first, as for every other shot. Then the tests run in
     order in one app, each launching it again.
     """
     subprocess.run(["xcrun", "simctl", "uninstall", SIM, BUNDLE_ID], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    env = dict(os.environ, TEST_RUNNER_HOMEPAD_README_SHOTS="YES")
+    env = dict(os.environ, TEST_RUNNER_HOMEPAD_README_SHOTS="YES",
+               TEST_RUNNER_HOMEPAD_FAKE_CLOCK=moment, TEST_RUNNER_HOMEPAD_FAKE_CLOCK_LIBRARY=FAKE_CLOCK_LIBRARY)
     if not LANDSCAPE:
         env["TEST_RUNNER_HOMEPAD_README_PORTRAIT"] = "YES"
     with tempfile.TemporaryDirectory() as work:

@@ -151,6 +151,11 @@ final class ReadmeShotsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = arguments + ["-HomePadCondition", "active", "-HomePadDemoContent", "YES",
                                            "-HomePadMember", "Alex", "-HomePadRecognized", "YES"]
+        // The same daytime moment as the script's other shots (scripts/fake-clock).
+        if let library = environment["HOMEPAD_FAKE_CLOCK_LIBRARY"], let moment = environment["HOMEPAD_FAKE_CLOCK"] {
+            app.launchEnvironment["DYLD_INSERT_LIBRARIES"] = library
+            app.launchEnvironment["HOMEPAD_FAKE_CLOCK"] = moment
+        }
         app.launch()
         return app
     }
