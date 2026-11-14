@@ -101,6 +101,20 @@ import Testing
         #expect(!services.household.isPersonalContentUnlocked)
     }
 
+    @Test func aFaceTooDarkToTellChangesNothing() throws {
+        let service = try aliceSignedIn()
+        // The owner's face in a dark room before the screen lights it scored
+        // under the stranger ceiling. Too dark a crop is no evidence at all.
+        let track = UUID()
+        for index in 0..<8 {
+            service.noteFaces(count: 1, track: track, at: t0 + 2 + Double(index) * 0.2)
+            var sample = LearningVectors.sample(LearningVectors.axis(5 + index), track: track)
+            sample.cropLuma = 0.05
+            service.consider(sample, requireLiveness: true, at: t0 + 2 + Double(index) * 0.2)
+        }
+        #expect(services.household.session.mode == .recognized(alice.id))
+    }
+
     @Test func aFaceItCannotJudgeChangesNothing() throws {
         let service = try aliceSignedIn()
         // Two faces in view: the nearest is far from everyone, but never clean enough.

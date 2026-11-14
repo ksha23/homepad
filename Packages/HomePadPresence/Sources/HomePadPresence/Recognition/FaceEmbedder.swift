@@ -19,6 +19,8 @@ struct FaceEmbeddingSample: Sendable {
     /// For the presence trace, when the face failed the liveness check: the
     /// grid read through other mappings (`LivenessAlignmentCheck`). Numbers only.
     var livenessCheck: String?
+    /// Mean brightness of the embedded crop, 0 to 1 as stored (gamma encoded).
+    var cropLuma: Double?
 }
 
 /// Turns a detected face into an embedding with Vision feature prints.
@@ -33,6 +35,13 @@ final class FaceEmbedder {
     /// Feature print revision recorded with templates.
     static let featurePrintRevision = VNGenerateImageFeaturePrintRequestRevision2
     static let cropSide: CGFloat = 192
+    /// A crop darker than this tells nothing about who it is (`cropLuma`).
+    /// In a 1 lux room, crops at 0.10 or darker scored 0.61 to 0.75 against a
+    /// face that scores 0.80 to 1.00 in daylight, and darker ones under 0.55,
+    /// enough to call the owner a stranger. Brightened first they scored 0.63
+    /// to 0.86, so brightening does not rescue them. From 0.22 they matched
+    /// at 0.86 to 0.88. The screen's own light brings a face there.
+    static let minimumCropLuma = 0.15
 
     private let context = CIContext(options: [.cacheIntermediates: false])
     private let request: VNGenerateImageFeaturePrintRequest = {
@@ -44,17 +53,37 @@ final class FaceEmbedder {
 
     /// Embeds `face` from `frame`, and checks liveness against `depth` when given.
     func embed(_ face: VNFaceObservation, in frame: SensorFrame, depth: DepthMap?) -> FaceEmbeddingSample? {
-        guard let crop = alignedCrop(face, in: frame) else { return nil }
-        let handler = VNImageRequestHandler(cgImage: crop)
+        guard let crop = alignedCrop(face, in: frame), let embedding = featurePrint(of: crop) else { return nil }
+        let yaw = face.yaw?.doubleValue
+        let liveness = depth.map { DepthLiveness.evaluate(faceBox: face.boundingBox, in: frame, depth: $0, yaw: yaw) }
+        var sample = FaceEmbeddingSample(
+            embedding: embedding, liveness: liveness,
+            yaw: face.yaw?.doubleValue, pitch: face.pitch?.doubleValue
+        )
+        sample.cropLuma = meanLuma(of: crop)
+        return sample
+    }
+
+    /// The unit-length feature print of a crop.
+    private func featurePrint(of crop: CIImage) -> [Float]? {
+        let side = Self.cropSide
+        guard let image = context.createCGImage(crop, from: CGRect(x: 0, y: 0, width: side, height: side)) else { return nil }
+        let handler = VNImageRequestHandler(cgImage: image)
         guard (try? handler.perform([request])) != nil,
               let observation = request.results?.first,
               let vector = Self.floats(from: observation) else { return nil }
-        let yaw = face.yaw?.doubleValue
-        let liveness = depth.map { DepthLiveness.evaluate(faceBox: face.boundingBox, in: frame, depth: $0, yaw: yaw) }
-        return FaceEmbeddingSample(
-            embedding: FaceMatcher.normalized(vector), liveness: liveness,
-            yaw: face.yaw?.doubleValue, pitch: face.pitch?.doubleValue
-        )
+        return FaceMatcher.normalized(vector)
+    }
+
+    /// Mean brightness of the crop, 0 to 1 as stored (gamma encoded).
+    private func meanLuma(of crop: CIImage) -> Double? {
+        let area = CGRect(x: 0, y: 0, width: Self.cropSide, height: Self.cropSide)
+        let average = crop.applyingFilter("CIAreaAverage", parameters: [kCIInputExtentKey: CIVector(cgRect: area)])
+        var pixel = [UInt8](repeating: 0, count: 4)
+        guard let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        context.render(average, toBitmap: &pixel, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                       format: .RGBA8, colorSpace: sRGB)
+        return (0.299 * Double(pixel[0]) + 0.587 * Double(pixel[1]) + 0.114 * Double(pixel[2])) / 255
     }
 
     /// Runs the crop and the feature print once on a blank frame in the format
@@ -87,7 +116,7 @@ final class FaceEmbedder {
         return buffer
     }
 
-    private func alignedCrop(_ face: VNFaceObservation, in frame: SensorFrame) -> CGImage? {
+    private func alignedCrop(_ face: VNFaceObservation, in frame: SensorFrame) -> CIImage? {
         let upright = CIImage(cvPixelBuffer: frame.pixelBuffer).oriented(frame.orientation)
         let box = face.boundingBox.denormalized(in: upright.extent)
         let side = max(box.width, box.height) * 1.2
@@ -98,8 +127,7 @@ final class FaceEmbedder {
             .concatenating(CGAffineTransform(rotationAngle: -roll))
             .concatenating(CGAffineTransform(scaleX: scale, y: scale))
             .concatenating(CGAffineTransform(translationX: Self.cropSide / 2, y: Self.cropSide / 2))
-        let output = upright.transformed(by: transform)
-        return context.createCGImage(output, from: CGRect(x: 0, y: 0, width: Self.cropSide, height: Self.cropSide))
+        return upright.transformed(by: transform).cropped(to: CGRect(x: 0, y: 0, width: Self.cropSide, height: Self.cropSide))
     }
 
     static func floats(from observation: VNFeaturePrintObservation) -> [Float]? {

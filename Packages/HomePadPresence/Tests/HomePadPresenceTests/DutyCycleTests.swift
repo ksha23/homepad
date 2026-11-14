@@ -58,10 +58,11 @@ import Testing
         let active = SensingMode.active(framesPerSecond: 10)
         let scanning = SensingMode.scanning(framesPerSecond: 2)
 
-        // Face tracking only while someone is present, and not in a dark room,
-        // where the slow depth scan's long exposures see faces ARKit's cannot.
+        // Face tracking only while someone is present, and not in a dim or dark
+        // room, where the slow depth scan's long exposures see faces ARKit's cannot.
         #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .normal) == .faceTracking)
-        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dim) == .faceTracking)
+        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: nil) == .faceTracking)
+        #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dim) == .depthScan)
         #expect(BackendSelector.kind(for: active, capabilities: trueDepth, preferTrueDepth: true, ambientLight: .dark) == .depthScan)
         #expect(BackendSelector.framesPerSecond(for: .depthScan, mode: 10) == 2)
         #expect(BackendSelector.framesPerSecond(for: .faceTracking, mode: 10) == 10)

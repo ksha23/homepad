@@ -201,6 +201,12 @@ final class FaceRecognitionService {
         guard isEnabled, !templates.isEmpty else { return }
         noteFaceTrack(sample.trackID)
         if looks.noteSample(track: sample.trackID) { lookChanged(at: time) }
+        // Too dark to tell anyone apart: neither a match, a stranger nor a lesson.
+        if let luma = sample.cropLuma, luma < FaceEmbedder.minimumCropLuma {
+            noteSample(nil, at: time)
+            PresenceTrace.trace.log("sample skipped: too dark" + Self.describeLuma(sample) + PresenceTrace.describePose(sample))
+            return
+        }
         if let member = confirmedMemberID {
             learnIfUseful(sample, of: member, at: time)
             // Samples taken only to learn stay out of the votes.
@@ -244,6 +250,7 @@ final class FaceRecognitionService {
             let stranger = strangers.count > 0 ? " stranger \(strangers.count) of \(strangers.requiredSamples)" : ""
             PresenceTrace.trace.log("sample \(PresenceTrace.describe(sample.liveness)) -> \(PresenceTrace.describe(decision, names: names)) "
                 + "votes \(voter.voteSummary) needs \(voter.requiredVotes) of \(voter.windowSize)\(stranger)\(Self.describeWait(sample))"
+                + Self.describeLuma(sample)
                 + PresenceTrace.describePose(sample))
             if let check = sample.livenessCheck { PresenceTrace.trace.log(check) }
         }
@@ -297,6 +304,11 @@ final class FaceRecognitionService {
 
     private static func describeWait(_ sample: FaceEmbeddingSample) -> String {
         sample.depthWaitSeconds.map { " (waited \(PresenceTrace.format($0)) s for depth)" } ?? ""
+    }
+
+    /// " crop 0.25", the crop's mean brightness.
+    private static func describeLuma(_ sample: FaceEmbeddingSample) -> String {
+        sample.cropLuma.map { " crop " + String(format: "%.2f", $0) } ?? ""
     }
 
     private func hasRecentLiveness(at time: Date) -> Bool {

@@ -44,11 +44,15 @@ struct SensingCapabilities: Equatable, Sendable {
 /// lit, and the TrueDepth session with its depth stream when it is dark,
 /// since depth sees movement without light.
 ///
-/// In a dark room the depth scan also runs while someone is present, slowly.
-/// ARKit's camera runs at 30 fps, so each frame gets at most 1/30 s of light:
-/// it found a face in about half its frames at 20 lux and more, and in none
-/// at 1 to 3 lux. At 2 fps each frame can take up to half a second, and on
-/// those frames Vision found a face at 1.7 m in a 1 lux room.
+/// In a dim or dark room the depth scan also runs while someone is present,
+/// slowly. ARKit's camera runs at 30 fps, so each frame gets at most 1/30 s
+/// of light: it found a face in about half its frames at 20 lux and more, and
+/// in none at 1 to 3 lux. At 2 fps each frame can take up to half a second,
+/// and on those frames Vision found a face at 1.7 m in a 1 lux room. The
+/// front camera reads a room far brighter than ARKit does (15 lux against 1
+/// in the same dark room), so dim by its reading is already too dark for
+/// ARKit. Keeping the scan's backend also keeps the person: switching to face
+/// tracking and back left 4 s with no camera, long enough for presence to end.
 ///
 /// The depth scan cannot measure the light, so a reading counts for three
 /// minutes (`LivePresenceService.selectionLight`), and nil light starts a
@@ -66,7 +70,7 @@ enum BackendSelector {
         let trueDepth = capabilities.hasTrueDepth && preferTrueDepth
         switch mode {
         case .active:
-            if trueDepth { return ambientLight == .dark ? .depthScan : .faceTracking }
+            if trueDepth { return isDark(ambientLight) ? .depthScan : .faceTracking }
             return capabilities.hasFrontCamera ? .frontCamera : nil
         case .scanning:
             if trueDepth && isDark(ambientLight) { return .depthScan }
