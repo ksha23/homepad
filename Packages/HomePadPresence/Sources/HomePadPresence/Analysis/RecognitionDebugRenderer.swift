@@ -23,6 +23,8 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     /// depth image, normalized with a top-left origin.
     var nose: CGPoint?
     var reach: CGSize?
+    /// True when the nose tip was looked at but its surface was not taken as a face.
+    var noseRejected = false
     /// The depth face in words and numbers.
     var depthFace: String
     /// The depth map's native size and whether iOS smoothed it.
@@ -48,10 +50,11 @@ final class RecognitionDebugRenderer {
 
     func render(
         frame: SensorFrame, faces: [DetectedFace], map: DepthMap?, person: DepthPersonTracker.Person?,
-        face: DepthFace?, searched: Bool
+        search: DepthFaceFinder.Search?
     ) -> RecognitionDebugFrame {
         let orientation = frame.orientation
-        var result = RecognitionDebugFrame(depthFace: Self.describe(face, person: person, searched: searched))
+        let face = search?.face
+        var result = RecognitionDebugFrame(depthFace: Self.describe(search, person: person))
         result.camera = cameraImage(frame)
         result.faceBoxes = faces.compactMap(\.boundingBox).map { box in
             CGRect(x: box.minX, y: 1 - box.maxY, width: box.width, height: box.height)
@@ -63,6 +66,10 @@ final class RecognitionDebugRenderer {
                 let radius = Self.uprightSize(person.radius, orientation)
                 result.head = CGRect(x: center.x - radius.width, y: center.y - radius.height,
                                      width: radius.width * 2, height: radius.height * 2)
+            }
+            if face == nil, let point = search?.nosePoint {
+                result.nose = Self.upright(point, orientation)
+                result.noseRejected = true
             }
             if let face {
                 result.nose = Self.upright(face.nosePoint, orientation)
@@ -76,13 +83,14 @@ final class RecognitionDebugRenderer {
         return result
     }
 
-    static func describe(_ face: DepthFace?, person: DepthPersonTracker.Person?, searched: Bool) -> String {
-        if let face {
+    static func describe(_ search: DepthFaceFinder.Search?, person: DepthPersonTracker.Person?) -> String {
+        if let face = search?.face {
             return String(format: "found at %.2f m, relief %.1f cm, coverage %.2f, %d points",
                           face.noseMeters, face.relief * 100, face.coverage, face.pointCount)
         }
         if person == nil { return "no person followed to look on" }
-        return searched ? "not found on the followed head" : "not looked for yet"
+        guard let search else { return "not looked for yet" }
+        return "not found, " + (search.miss ?? "no reason")
     }
 
     private func cameraImage(_ frame: SensorFrame) -> CGImage? {

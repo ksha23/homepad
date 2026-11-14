@@ -394,11 +394,24 @@ final class FaceRecognitionService {
               isTooDarkForCamera(light: light, at: time) else { return }
         let policy = depthIdentity.policy
         var vote: UUID?
-        if let best = score.other, let member = score.otherMember,
-           let limit = depthIdentity.calibrations[member]?.threshold, best <= limit,
-           (score.runnerUp ?? .infinity) >= best * policy.marginFactor {
-            vote = member
+        var reason = "no face to compare with"
+        if let best = score.other, let member = score.otherMember {
+            let distance = String(format: "%.2f mm", best)
+            if let limit = depthIdentity.calibrations[member]?.threshold {
+                let limitText = String(format: "%.2f mm", limit)
+                if best > limit {
+                    reason = "\(memberName(member)) \(distance), over the \(limitText) limit"
+                } else if (score.runnerUp ?? .infinity) < best * policy.marginFactor {
+                    reason = "\(memberName(member)) \(distance), too close to someone else"
+                } else {
+                    vote = member
+                    reason = "\(memberName(member)) \(distance), under the \(limitText) limit"
+                }
+            } else {
+                reason = "\(memberName(member)) \(distance), no limit yet"
+            }
         }
+        PresenceTrace.trace.log("depth vote: " + reason)
         depthVotes.append(vote)
         if depthVotes.count > policy.depthWindow { depthVotes.removeFirst(depthVotes.count - policy.depthWindow) }
         let counts = Dictionary(depthVotes.compactMap { $0 }.map { ($0, 1) }, uniquingKeysWith: +)

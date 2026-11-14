@@ -87,8 +87,8 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var lastDepthSignature: TimeInterval = -.infinity
     /// Seconds between searches of the depth map for a face.
     private let depthFaceInterval: TimeInterval = 0.5
-    /// The last search's face, kept for the debug view between searches.
-    private var lastDepthFace: (face: DepthFace?, searched: Bool) = (nil, false)
+    /// The last search, kept for the debug view between searches.
+    private var lastDepthFace: DepthFaceFinder.Search?
     /// When a depth face was last found, and on which person.
     private var depthFaceFound: (time: TimeInterval, person: UUID)?
     /// Capture time of the last depth map searched, so each is searched once.
@@ -127,7 +127,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         firstFrameTime = nil
         lastDepthFaceSearch = -.infinity
         lastDepthSignature = -.infinity
-        lastDepthFace = (nil, false)
+        lastDepthFace = nil
         depthFaceFound = nil
         lastDepthFaceMap = -.infinity
         burst = nil
@@ -219,14 +219,15 @@ final class FrameAnalyzer: @unchecked Sendable {
               let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return (nil, nil) }
         lastDepthFaceMap = mapTime
         lastDepthFaceSearch = time
-        let face = depth.findFace(orientation: frame.orientation, at: time)
-        lastDepthFace = (face, true)
+        let search = depth.findFace(orientation: frame.orientation, at: time)
+        let face = search.face
+        lastDepthFace = search
         if face != nil { depthFaceFound = (time, person.id) }
         if options.isTracing {
             let text = face.map {
-                String(format: "depth face at %.2fm, %d points, relief %.1f cm, coverage %.1f",
+                String(format: "depth face at %.2fm, %d points, relief %.1f cm, coverage %.2f",
                        $0.noseMeters, $0.pointCount, $0.relief * 100, $0.coverage)
-            } ?? "depth face not found on the followed head"
+            } ?? "depth face not found: \(search.miss ?? "?")"
             depth.note(TraceNote(key: "depth face", text: text))
         }
         guard var current = burst else { return (face, nil) }
@@ -359,7 +360,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         let tracesHand = handsWanted && options.isTracing && handTrace.isDue(hasHand: vision.hand != nil, at: time)
         let handSummary = tracesHand ? hands.describe(vision.hand) : nil
 
-        if depth.people.person == nil { lastDepthFace = (nil, false) }
+        if depth.people.person == nil { lastDepthFace = nil }
         let depthFaceSeen = depthFaceFound.map { time - $0.time <= 1 && $0.person == depth.people.person?.id } ?? false
         var debug: RecognitionDebugFrame?
         if options.wantsDebugView, time - lastDebugFrame >= debugInterval {
@@ -367,7 +368,7 @@ final class FrameAnalyzer: @unchecked Sendable {
             let map = depth.full.flatMap { time - $0.time < 0.5 ? $0.map : nil } ?? depth.coarse?.map
             debug = debugRenderer.render(
                 frame: frame, faces: observation.faces, map: map, person: depth.people.person,
-                face: lastDepthFace.face, searched: lastDepthFace.searched
+                search: lastDepthFace
             )
             if let source = depth.lastSource {
                 debug?.depthSource = "\(source.width)x\(source.height), smoothed by iOS \(source.filtered ? "yes" : "no")"

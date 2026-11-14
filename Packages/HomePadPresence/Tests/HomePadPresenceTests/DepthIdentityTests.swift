@@ -67,10 +67,12 @@ enum SyntheticDepthFace {
         #expect(SyntheticDepthFace.signature(turnDegrees: 60).distance(to: face) == nil)
     }
 
-    /// Templates from ARKit's face mesh, which had no version, no longer load.
-    @Test func meshSignaturesNoLongerLoad() throws {
-        let old = Data(#"{"points":[0,0,0]}"#.utf8)
-        #expect(throws: DecodingError.self) { try JSONDecoder().decode(DepthSignature.self, from: old) }
+    /// Templates from ARKit's face mesh (no version) and from single depth maps (version 2) no longer load.
+    @Test func olderSignaturesNoLongerLoad() throws {
+        let mesh = Data(#"{"points":[0,0,0]}"#.utf8)
+        #expect(throws: DecodingError.self) { try JSONDecoder().decode(DepthSignature.self, from: mesh) }
+        let single = Data(#"{"version":2,"points":[0,0,0]}"#.utf8)
+        #expect(throws: DecodingError.self) { try JSONDecoder().decode(DepthSignature.self, from: single) }
         let current = try JSONEncoder().encode(SyntheticDepthFace.signature())
         #expect(try JSONDecoder().decode(DepthSignature.self, from: current) == SyntheticDepthFace.signature())
     }

@@ -54,15 +54,35 @@ enum DepthFaceFinder {
     static let nearestFraction = 0.01
     static let noseDepthMeters: Float = 0.005
 
+    /// One search of the followed head: the face, or why there was none,
+    /// in numbers only, with where the nose tip was looked for.
+    struct Search: Sendable {
+        var face: DepthFace?
+        /// The nose tip candidate, normalized with a top-left origin, and its distance.
+        var nosePoint: CGPoint?
+        var noseMeters: Double?
+        /// Why it is not a face, for the trace and the debug view. Nil when it is.
+        var miss: String?
+    }
+
+    /// How far around the nearest point the nose tip is averaged, in meters.
+    static let tipRadiusMeters: Float = 0.03
+
     static func find(
         in map: DepthMap, head: DepthPersonTracker.Person, orientation: CGImagePropertyOrientation
     ) -> DepthFace? {
+        search(in: map, head: head, orientation: orientation).face
+    }
+
+    static func search(
+        in map: DepthMap, head: DepthPersonTracker.Person, orientation: CGImagePropertyOrientation
+    ) -> Search {
         let width = map.width
         let height = map.height
         let focal = Float(map.focalLengthOrDefault)
-        guard width > 0, height > 0, focal > 0 else { return nil }
+        guard width > 0, height > 0, focal > 0 else { return Search(miss: "no depth map") }
 
-        // The nose tip: the nearest few millimeters of the head.
+        // The nose tip: the nearest few millimeters of the head, around its nearest point.
         let centerX = Double(head.center.x) * Double(width)
         let centerY = Double(head.center.y) * Double(height)
         let reachX = max(4, Double(head.radius.width) * Double(width) * 1.2)
@@ -71,34 +91,47 @@ enum DepthFaceFinder {
         let rows = clamp(Int(centerY - reachY), height)...clamp(Int(centerY + reachY), height)
         let near = Float(head.distanceMeters - 0.25)
         let far = Float(head.distanceMeters + 0.15)
-        var headDepths: [Float] = []
+        var headPixels: [(column: Int, row: Int, z: Float)] = []
         for row in rows {
             for column in columns {
                 let z = map.meters[row * width + column]
-                if z.isFinite, z > near, z < far { headDepths.append(z) }
+                if z.isFinite, z > near, z < far { headPixels.append((column, row, z)) }
             }
         }
-        guard headDepths.count >= minimumPoints else { return nil }
-        headDepths.sort()
-        let nearest = headDepths[Int(Double(headDepths.count - 1) * nearestFraction)]
-        var sumColumn = 0.0
-        var sumRow = 0.0
-        var tipDepths: [Float] = []
-        for row in rows {
-            for column in columns {
-                let z = map.meters[row * width + column]
-                guard z.isFinite, z >= nearest - 0.01, z <= nearest + noseDepthMeters else { continue }
-                sumColumn += Double(column)
-                sumRow += Double(row)
-                tipDepths.append(z)
-            }
+        guard headPixels.count >= minimumPoints else {
+            return Search(miss: "the head shows only \(headPixels.count) depth points")
         }
-        guard !tipDepths.isEmpty else { return nil }
-        tipDepths.sort()
-        let tipColumn = sumColumn / Double(tipDepths.count)
-        let tipRow = sumRow / Double(tipDepths.count)
-        let tipZ = tipDepths[tipDepths.count / 2]
+        guard var candidate = nearestTip(headPixels, focal: focal) else { return Search(miss: "no nose tip") }
+        // The followed head is not always centered on the face, so the nearest
+        // point of its window can sit on its edge with the nose beyond it. The
+        // tip moves to the nearest point within reach of where it is until it
+        // stays put: on a face looking at the camera, the nose.
+        for _ in 0..<4 {
+            let reach = Double(radiusMeters) * Double(focal) / Double(candidate.z)
+            var around: [(column: Int, row: Int, z: Float)] = []
+            let rowRange = clamp(Int(candidate.row - reach), height)...clamp(Int(candidate.row + reach), height)
+            let columnRange = clamp(Int(candidate.column - reach), width)...clamp(Int(candidate.column + reach), width)
+            for row in rowRange {
+                for column in columnRange {
+                    let dx = Double(column) - candidate.column
+                    let dy = Double(row) - candidate.row
+                    guard dx * dx + dy * dy <= reach * reach else { continue }
+                    let z = map.meters[row * width + column]
+                    if z.isFinite, z > candidate.z - 0.15, z < candidate.z + 0.15 { around.append((column, row, z)) }
+                }
+            }
+            guard let next = nearestTip(around, focal: focal) else { break }
+            let moved = abs(next.column - candidate.column) + abs(next.row - candidate.row)
+            candidate = next
+            if moved < 1 { break }
+        }
+        let tipColumn = candidate.column
+        let tipRow = candidate.row
+        let tipZ = candidate.z
         let tip = point(column: tipColumn, row: tipRow, z: tipZ, width: width, height: height, focal: focal)
+        var result = Search(
+            nosePoint: CGPoint(x: tipColumn / Double(width), y: tipRow / Double(height)), noseMeters: Double(tipZ)
+        )
 
         // The face: the surface within `radiusMeters` of the tip, on an even grid.
         let radius = Float(radiusMeters)
@@ -129,15 +162,54 @@ enum DepthFaceFinder {
                 behind.append(offset.z)
             }
         }
-        guard points.count / 3 >= minimumPoints, discCells > 0 else { return nil }
+        let count = points.count / 3
+        guard count >= minimumPoints, discCells > 0 else {
+            result.miss = "only \(count) points around the nose tip"
+            return result
+        }
         behind.sort()
         let relief = Double(behind[behind.count / 2])
         let coverage = Double(coveredCells) / Double(discCells)
-        guard reliefRange.contains(relief), coverage >= minimumCoverage else { return nil }
-        return DepthFace(
+        let numbers = String(format: "relief %.1f cm, coverage %.2f, %d points", relief * 100, coverage, count)
+        guard reliefRange.contains(relief) else {
+            result.miss = "not face shaped: " + numbers
+            return result
+        }
+        guard coverage >= minimumCoverage else {
+            result.miss = "too little surface around the nose tip: " + numbers
+            return result
+        }
+        result.face = DepthFace(
             nosePoint: CGPoint(x: tipColumn / Double(width), y: tipRow / Double(height)),
             noseMeters: Double(tipZ), points: points, relief: relief, coverage: coverage
         )
+        return result
+    }
+
+    /// The nose tip among `pixels`: the centroid of the pixels within
+    /// `noseDepthMeters` of their robust nearest, and within
+    /// `tipRadiusMeters` of it sideways.
+    private static func nearestTip(
+        _ pixels: [(column: Int, row: Int, z: Float)], focal: Float
+    ) -> (column: Double, row: Double, z: Float)? {
+        guard !pixels.isEmpty else { return nil }
+        let sorted = pixels.sorted { $0.z < $1.z }
+        let nearest = sorted[Int(Double(sorted.count - 1) * nearestFraction)]
+        let tipPixels = Double(tipRadiusMeters * focal / nearest.z)
+        var sumColumn = 0.0
+        var sumRow = 0.0
+        var depths: [Float] = []
+        for pixel in sorted {
+            guard pixel.z <= nearest.z + noseDepthMeters else { break }
+            let dx = Double(pixel.column - nearest.column)
+            let dy = Double(pixel.row - nearest.row)
+            guard dx * dx + dy * dy <= tipPixels * tipPixels else { continue }
+            sumColumn += Double(pixel.column)
+            sumRow += Double(pixel.row)
+            depths.append(pixel.z)
+        }
+        guard !depths.isEmpty else { return nil }
+        return (sumColumn / Double(depths.count), sumRow / Double(depths.count), depths[depths.count / 2])
     }
 
     /// The point at a pixel and depth, in meters, with the principal point

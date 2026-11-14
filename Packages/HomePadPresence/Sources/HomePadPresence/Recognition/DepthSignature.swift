@@ -18,7 +18,10 @@ import Foundation
 struct DepthSignature: Codable, Equatable, Sendable {
     /// Signatures of another version are not comparable. Version 1, ARKit's
     /// face mesh, had no version field, so its templates no longer load.
-    static let version = 2
+    /// Version 2 was a single depth map, often with the nose tip off the
+    /// nose; version 3 merges several (`DepthFaceFusion`) around a tip that
+    /// settles on the nose.
+    static let version = 3
     /// ARKit expression coefficients (blend shapes, the eyes left out) above
     /// this change the face too much for a signature, where ARKit can tell.
     static let maximumExpression = 0.35

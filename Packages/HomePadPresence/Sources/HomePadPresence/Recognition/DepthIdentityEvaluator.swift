@@ -77,6 +77,9 @@ final class DepthIdentityEvaluator {
     private func setCalibration(_ calibration: DepthCalibration, for member: UUID, from count: Int) {
         // A newer calibration is under way when the templates changed meanwhile.
         guard templates[member]?.templates.count == count else { return }
+        if calibration != calibrations[member] {
+            PresenceTrace.trace.log("depth calibration \(short(member)): " + calibration.describe(policy: policy))
+        }
         use(calibration, for: member)
     }
 
@@ -165,6 +168,8 @@ final class DepthIdentityEvaluator {
         PresenceTrace.trace.log("depth template added for \(names[member] ?? "?"), "
             + "\(updated.templates.count) of \(policy.capPerMember)")
     }
+
+    private func short(_ id: UUID) -> String { String(id.uuidString.prefix(4)) }
 
     private func startTrack(_ newTrack: UUID?) {
         track = newTrack

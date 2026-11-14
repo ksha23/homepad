@@ -37,7 +37,7 @@ struct DepthCalibration: Equatable, Sendable {
         guard distances.count >= policy.minimumTemplates else { return calibration }
         distances.sort()
         let percentile = distances[Int((Double(distances.count - 1) * 0.95).rounded())]
-        calibration.threshold = percentile * policy.thresholdFactor
+        calibration.threshold = min(percentile * policy.thresholdFactor, policy.maximumThreshold)
         return calibration
     }
 

@@ -94,7 +94,7 @@ private struct RecognitionDebugPanel: View {
                     .position(x: nose.x * size.width, y: nose.y * size.height)
             }
             Circle()
-                .fill(.white)
+                .fill(state.frame.noseRejected ? .red : .white)
                 .frame(width: 7, height: 7)
                 .position(x: nose.x * size.width, y: nose.y * size.height)
         }

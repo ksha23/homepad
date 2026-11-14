@@ -55,11 +55,17 @@ struct DepthTemplatePolicy: Equatable, Sendable {
     /// Templates, from visits, a member needs before depth may name them (`DepthCalibration`).
     var minimumTemplates = 6
     var minimumVisits = 2
-    /// Templates further apart in time than this are from different visits.
-    var visitGap: TimeInterval = 60
+    /// Templates further apart in time than this are from different visits:
+    /// separate sittings. At 60 s one evening counted as 6 visits, which makes
+    /// a face look steadier than it is.
+    var visitGap: TimeInterval = 600
     /// The match limit is this times the 95th percentile of a member's own
-    /// distances across visits.
+    /// distances across visits, never more than `maximumThreshold`.
     var thresholdFactor = 1.25
+    /// Millimeters. Templates from builds with the nose tip off the nose
+    /// once set a limit of 7.5 mm, which anyone would pass. The owner's own
+    /// face in the dark came 0.8 mm from his templates.
+    var maximumThreshold = 1.5
     /// Depth names a member when this many of the last `depthWindow`
     /// signatures came under their limit.
     var requiredDepthVotes = 3

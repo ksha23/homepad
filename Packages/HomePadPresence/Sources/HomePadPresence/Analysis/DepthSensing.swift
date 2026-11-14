@@ -178,11 +178,14 @@ struct DepthSensing {
     /// there confirms the person, as a face from ARKit or Vision does: in the
     /// dark nothing else did while they sat still, and they were let go after
     /// `DepthPersonTracker.Config.holdSeconds`.
-    mutating func findFace(orientation: CGImagePropertyOrientation, at time: TimeInterval) -> DepthFace? {
-        guard let full, time - full.time < 0.25, let person = people.person, full.time - person.seenAt <= 1,
-              let face = DepthFaceFinder.find(in: full.map, head: person, orientation: orientation) else { return nil }
-        people.confirm(face: face.nosePoint, at: full.time)
-        return face
+    mutating func findFace(orientation: CGImagePropertyOrientation, at time: TimeInterval) -> DepthFaceFinder.Search {
+        guard let full, time - full.time < 0.25 else { return DepthFaceFinder.Search(miss: "no fresh full depth map") }
+        guard let person = people.person, full.time - person.seenAt <= 1 else {
+            return DepthFaceFinder.Search(miss: "the followed head is not in the newest map")
+        }
+        let search = DepthFaceFinder.search(in: full.map, head: person, orientation: orientation)
+        if let face = search.face { people.confirm(face: face.nosePoint, at: full.time) }
+        return search
     }
 
     /// The followed person, when the depth showed them in the last second.
