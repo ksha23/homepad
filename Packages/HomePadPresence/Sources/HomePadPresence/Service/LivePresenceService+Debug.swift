@@ -29,7 +29,11 @@ extension LivePresenceService {
         lines.append("Camera recognition: " + (recognition.lastSampleSummary ?? "no sample yet"))
         lines.append("Depth identity: " + (recognition.depthIdentity.lastSummary ?? "no signature yet"))
         let deciding = recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
-        lines.append("Depth votes: " + recognition.describeDepthVotes() + (deciding ? "" : " (in light the camera decides)"))
+        if recognition.depthIdentity.hasTemplates {
+            lines.append("Depth votes: " + recognition.describeDepthVotes() + (deciding ? "" : " (in light the camera decides)"))
+        } else {
+            lines.append("Depth votes: none, no saved depth faces to compare with yet")
+        }
         lines.append("Depth templates: " + depthTemplateSummary)
         lines.append("Session: " + sessionDescription)
         return lines

@@ -31,7 +31,8 @@ private struct RecognitionDebugPanel: View {
                 picture(state.frame.camera, title: "Camera") { size in cameraMarks(size) }
                 picture(state.frame.depth, title: "Depth (near red, far blue)") { size in depthMarks(size) }
                 if let face = state.frame.faceDepth {
-                    picture(face, title: "Face, nose to 8 cm back") { _ in EmptyView() }
+                    let age = state.frame.faceAgeSeconds.map { String(format: " (%.1f s ago)", $0) } ?? ""
+                    picture(face, title: "Face, nose to 8 cm back" + age) { _ in EmptyView() }
                 }
             }
             VStack(alignment: .leading, spacing: 2) {

@@ -15,6 +15,8 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     /// The depth face at full resolution, upright, from its nose tip (red) to
     /// `faceSpanMeters` behind it (blue): what the depth signature compares.
     var faceDepth: CGImage?
+    /// How old `faceDepth` is when the last search missed, in seconds.
+    var faceAgeSeconds: Double?
     /// Faces in the camera image, normalized with a top-left origin.
     var faceBoxes: [CGRect] = []
     /// The followed head in the depth image, normalized with a top-left origin.

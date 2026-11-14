@@ -98,6 +98,10 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var burst: (person: UUID, startedAt: TimeInterval, faces: [DepthFace])?
     private let burstSeconds: TimeInterval = 1.2
     private let debugRenderer = RecognitionDebugRenderer()
+    /// The last depth face picture, kept up for `debugFaceHold` after it was
+    /// found, so a single miss does not make it flicker.
+    private var lastDebugFace: (image: CGImage, time: TimeInterval)?
+    private let debugFaceHold: TimeInterval = 1.5
     private var lastDebugFrame: TimeInterval = -.infinity
     private let debugInterval: TimeInterval = 0.25
 
@@ -219,7 +223,9 @@ final class FrameAnalyzer: @unchecked Sendable {
               let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return (nil, nil) }
         lastDepthFaceMap = mapTime
         lastDepthFaceSearch = time
-        let search = depth.findFace(orientation: frame.orientation, at: time)
+        // A quarter of searches found no new map to look at. Those are no
+        // search, and must not hide the last face from the debug view.
+        guard let search = depth.findFace(orientation: frame.orientation, at: time) else { return (nil, nil) }
         let face = search.face
         lastDepthFace = search
         if face != nil { depthFaceFound = (time, person.id) }
@@ -370,6 +376,12 @@ final class FrameAnalyzer: @unchecked Sendable {
                 frame: frame, faces: observation.faces, map: map, person: depth.people.person,
                 search: lastDepthFace
             )
+            if let image = debug?.faceDepth {
+                lastDebugFace = (image, time)
+            } else if let last = lastDebugFace, time - last.time <= debugFaceHold {
+                debug?.faceDepth = last.image
+                debug?.faceAgeSeconds = time - last.time
+            }
             if let source = depth.lastSource {
                 debug?.depthSource = "\(source.width)x\(source.height), smoothed by iOS \(source.filtered ? "yes" : "no")"
             }
