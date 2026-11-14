@@ -36,6 +36,18 @@ final class DepthIdentityEvaluator {
     /// Each member's match limit, worked out off the main thread whenever
     /// their templates change.
     private(set) var calibrations: [UUID: DepthCalibration] = [:]
+    /// The member whose templates are kept faster, until when: right after
+    /// setting their face up (`EnrollmentSession.learnDepth`).
+    private(set) var quickLearning: (member: UUID, until: Date)?
+
+    func learnQuickly(_ member: UUID?, until: Date = .distantFuture) {
+        quickLearning = member.map { ($0, until) }
+    }
+
+    func isLearningQuickly(_ member: UUID?, at time: Date) -> Bool {
+        guard let member, let quick = quickLearning else { return false }
+        return quick.member == member && time < quick.until
+    }
     let policy: DepthTemplatePolicy
     private let store: FaceTemplateStore?
     /// The face track the per-track counts below belong to.
@@ -145,8 +157,9 @@ final class DepthIdentityEvaluator {
         let line = Self.describe(score, member: member, unnamed: subject == .unnamed, light: light, expression: expression, names: names)
         PresenceTrace.trace.log(line)
         lastSummary = String(line.dropFirst("depth identity ".count))
+        let rules = isLearningQuickly(member, at: time) ? policy.quick : policy
         guard let member, scoredTrack != nil, scoredTrack == track,
-              policy.mayKeep(light: light, keptOnTrack: keptOnTrack, lastKeptAt: lastKeptAt, at: time) else { return }
+              rules.mayKeep(light: light, keptOnTrack: keptOnTrack, lastKeptAt: lastKeptAt, at: time) else { return }
         keep(signature, for: member, at: time, names: names)
     }
 

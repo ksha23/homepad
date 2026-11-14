@@ -381,7 +381,8 @@ final class FaceRecognitionService {
     func depthSignatureInterval(light: AmbientLight?, at time: Date) -> TimeInterval {
         let policy = depthIdentity.policy
         let deciding = confirmedMemberID == nil && isTooDarkForCamera(light: light, at: time)
-        return deciding ? policy.decidingInterval : policy.sampleInterval
+        let learning = depthIdentity.isLearningQuickly(confirmedMemberID, at: time)
+        return deciding || learning ? policy.decidingInterval : policy.sampleInterval
     }
 
     /// Depth's vote on a face recognition has not named: in the dark, depth

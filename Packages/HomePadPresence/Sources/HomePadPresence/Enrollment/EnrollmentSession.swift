@@ -15,6 +15,9 @@ final class EnrollmentSession: Identifiable {
         case denied
         case unavailable(String)
         case capturing
+        /// The face is saved, and recognition's own face tracking keeps depth
+        /// templates of it (`learnDepth`).
+        case learningDepth
         case finished
         case failed(String)
     }
@@ -29,6 +32,12 @@ final class EnrollmentSession: Identifiable {
     private(set) var samplesInStep = 0
     /// Short guidance under the instruction ("Move closer", "Hold still").
     private(set) var hint = ""
+    /// Depth templates kept so far while learning the face's depth.
+    private(set) var depthLearned = 0
+    var depthNeeded: Int { recognition.depthIdentity.policy.minimumTemplates }
+    /// How long learning the face's depth may take before setup finishes anyway.
+    static let depthLearningSeconds: TimeInterval = 45
+    @ObservationIgnored private var depthTask: Task<Void, Never>?
 
     @ObservationIgnored let capture: any EnrollmentCapture
     @ObservationIgnored private let services: AppServices
@@ -94,7 +103,15 @@ final class EnrollmentSession: Identifiable {
     func cancel() {
         capture.stop()
         services.capture.release(Self.owner)
+        stopLearningDepth()
         if phase == .capturing { phase = .ready }
+    }
+
+    /// Finishes without waiting for the face's depth. Recognition still keeps
+    /// depth templates of the member later, whenever it recognizes them in light.
+    func skipDepth() {
+        stopLearningDepth()
+        phase = .finished
     }
 
     // MARK: Capture
@@ -158,10 +175,45 @@ final class EnrollmentSession: Identifiable {
             try recognition.saveEnrollment(memberID: member.id, embeddings: filter.embeddings, revision: capture.featurePrintRevision)
             let far = filter.kept.filter { $0.step.distance == .far }.count
             PresenceTrace.trace.log("enrollment saved \(filter.kept.count) samples, \(far) sitting back")
-            phase = .finished
+            if capture.requiresLiveness { learnDepth() } else { phase = .finished }
         } catch {
             phase = .failed("The face template could not be saved.")
         }
+    }
+
+    /// With the camera free again, recognition's own face tracking takes
+    /// over: it recognizes the member just set up and keeps depth templates
+    /// of their face, from the same depth it compares with in the dark.
+    /// Setup's own camera reports a focal length several percent apart from
+    /// face tracking's on some iPads (the 11-inch 3rd generation among them),
+    /// so templates from it would not compare. Templates are kept faster
+    /// while this step shows.
+    private func learnDepth() {
+        phase = .learningDepth
+        depthLearned = 0
+        let evaluator = recognition.depthIdentity
+        let member = self.member.id
+        let needed = depthNeeded
+        evaluator.learnQuickly(member, until: Date().addingTimeInterval(Self.depthLearningSeconds))
+        depthTask = Task { [weak self] in
+            let deadline = Date().addingTimeInterval(Self.depthLearningSeconds)
+            while !Task.isCancelled, Date() < deadline {
+                let count = evaluator.templates[member]?.templates.count ?? 0
+                self?.depthLearned = min(count, needed)
+                if count >= needed { break }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+            guard !Task.isCancelled, let self else { return }
+            PresenceTrace.trace.log("enrollment depth: \(self.depthLearned) of \(needed) templates")
+            self.stopLearningDepth()
+            self.phase = .finished
+        }
+    }
+
+    private func stopLearningDepth() {
+        depthTask?.cancel()
+        depthTask = nil
+        recognition.depthIdentity.learnQuickly(nil)
     }
 
     private func fail(_ message: String) {

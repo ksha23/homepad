@@ -37,6 +37,8 @@ struct EnrollmentView: View {
             EmptyStateView("Camera Unavailable", message: message, systemImage: "video.slash.fill")
         case .capturing:
             capturing
+        case .learningDepth:
+            learningDepth
         case .finished:
             EmptyStateView(
                 "\(session.member.name) Is Set Up",
@@ -46,6 +48,27 @@ struct EnrollmentView: View {
         case .failed(let message):
             EmptyStateView("Setup Did Not Finish", message: message, systemImage: "exclamationmark.triangle.fill",
                            actionTitle: "Try Again") { session.begin() }
+        }
+    }
+
+    /// After the face is saved, while recognition keeps depth templates of it.
+    private var learningDepth: some View {
+        VStack(spacing: Theme.Spacing.l) {
+            ZStack {
+                AvatarView(member: session.member, size: 120)
+                SegmentedProgressRing(
+                    segments: session.depthNeeded, completed: session.depthLearned, current: 0, lineWidth: 10
+                )
+                .frame(width: 150, height: 150)
+            }
+            Text("Keep Looking at HomePad")
+                .font(.largeTitle.bold())
+            Text("HomePad is learning the shape of your face from its depth, so it can recognize you in the dark too. \(session.depthLearned) of \(session.depthNeeded).")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 560)
+            GlassCapsuleButton("Skip", size: .large, isProminent: false) { session.skipDepth() }
         }
     }
 

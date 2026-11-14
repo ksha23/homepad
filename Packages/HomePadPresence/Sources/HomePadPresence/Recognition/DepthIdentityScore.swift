@@ -80,6 +80,15 @@ struct DepthTemplatePolicy: Equatable, Sendable {
     /// Seconds between signatures while depth is deciding who it is.
     var decidingInterval: TimeInterval = 1
 
+    /// While a member's face is being set up: more templates from the one
+    /// look, closer together.
+    var quick: DepthTemplatePolicy {
+        var rules = self
+        rules.perTrackLimit = minimumTemplates * 2
+        rules.minimumSpacing = 3
+        return rules
+    }
+
     /// True when a signature of a member confirmed on this look may become a
     /// template. RGB recognition labels it, and it is most reliable in light.
     func mayKeep(light: AmbientLight?, keptOnTrack: Int, lastKeptAt: Date?, at time: Date) -> Bool {

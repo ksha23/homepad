@@ -102,29 +102,17 @@ enum DepthFaceFinder {
         guard headPixels.count >= minimumPoints else {
             return Search(miss: "the head shows only \(headPixels.count) depth points")
         }
-        guard var candidate = nearestTip(headPixels, focal: focal) else { return Search(miss: "no nose tip") }
-        // The followed head is not always centered on the face, so the nearest
-        // point of its window can sit on its edge with the nose beyond it. The
-        // tip moves to the nearest point within reach of where it is until it
-        // stays put: on a face looking at the camera, the nose.
-        for _ in 0..<4 {
-            let reach = Double(radiusMeters) * Double(focal) / Double(candidate.z)
-            var around: [(column: Int, row: Int, z: Float)] = []
-            let rowRange = clamp(Int(candidate.row - reach), height)...clamp(Int(candidate.row + reach), height)
-            let columnRange = clamp(Int(candidate.column - reach), width)...clamp(Int(candidate.column + reach), width)
-            for row in rowRange {
-                for column in columnRange {
-                    let dx = Double(column) - candidate.column
-                    let dy = Double(row) - candidate.row
-                    guard dx * dx + dy * dy <= reach * reach else { continue }
-                    let z = map.meters[row * width + column]
-                    if z.isFinite, z > candidate.z - 0.15, z < candidate.z + 0.15 { around.append((column, row, z)) }
-                }
-            }
-            guard let next = nearestTip(around, focal: focal) else { break }
-            let moved = abs(next.column - candidate.column) + abs(next.row - candidate.row)
-            candidate = next
-            if moved < 1 { break }
+        // The nose tip is the nearest point of the surface connected to the
+        // head's nearest point. Stepping to the nearest point around the tip
+        // instead walked off the head onto whatever was nearer, a hand or the
+        // desk. A depth step of more than `surfaceStepMeters` between
+        // neighbors ends the surface, so what is not touching the face is not
+        // part of it, and the head need not be centered on the face.
+        headPixels.sort { $0.z < $1.z }
+        let seed = headPixels[Int(Double(headPixels.count - 1) * nearestFraction)]
+        let surface = connectedSurface(in: map, from: seed, focal: focal)
+        guard surface.count >= minimumPoints, let candidate = nearestTip(surface, focal: focal) else {
+            return Search(miss: "only \(surface.count) points connected to the head's nearest point")
         }
         let tipColumn = candidate.column
         let tipRow = candidate.row
@@ -185,6 +173,52 @@ enum DepthFaceFinder {
             noseMeters: Double(tipZ), points: points, relief: relief, coverage: coverage
         )
         return result
+    }
+
+    /// Depth step between neighboring pixels, in meters, that ends a surface.
+    static let surfaceStepMeters: Float = 0.025
+    /// How far the connected surface may reach from its seed, in meters.
+    static let surfaceReachMeters: Float = 0.2
+    /// Every this many pixels are visited when following the surface.
+    static let surfaceStride = 2
+
+    /// The pixels of the surface connected to `seed`: neighbors (every
+    /// `surfaceStride` pixels) with no depth step over `surfaceStepMeters`,
+    /// within `surfaceReachMeters` of it sideways.
+    private static func connectedSurface(
+        in map: DepthMap, from seed: (column: Int, row: Int, z: Float), focal: Float
+    ) -> [(column: Int, row: Int, z: Float)] {
+        let width = map.width
+        let height = map.height
+        let reach = Int((surfaceReachMeters * focal / seed.z).rounded(.up))
+        let stride = surfaceStride
+        let cells = reach / stride * 2 + 1
+        var visited = [Bool](repeating: false, count: cells * cells)
+        var surface: [(column: Int, row: Int, z: Float)] = []
+        var stack = [(seed.column, seed.row, seed.z)]
+        let originColumn = seed.column - (cells / 2) * stride
+        let originRow = seed.row - (cells / 2) * stride
+        func cell(_ column: Int, _ row: Int) -> Int? {
+            let x = (column - originColumn) / stride
+            let y = (row - originRow) / stride
+            guard x >= 0, y >= 0, x < cells, y < cells else { return nil }
+            return y * cells + x
+        }
+        if let first = cell(seed.column, seed.row) { visited[first] = true }
+        while let (column, row, z) = stack.popLast() {
+            surface.append((column, row, z))
+            for (dx, dy) in [(stride, 0), (-stride, 0), (0, stride), (0, -stride)] {
+                let nextColumn = column + dx
+                let nextRow = row + dy
+                guard nextColumn >= 0, nextColumn < width, nextRow >= 0, nextRow < height,
+                      let index = cell(nextColumn, nextRow), !visited[index] else { continue }
+                let nextZ = map.meters[nextRow * width + nextColumn]
+                guard nextZ.isFinite, abs(nextZ - z) <= surfaceStepMeters else { continue }
+                visited[index] = true
+                stack.append((nextColumn, nextRow, nextZ))
+            }
+        }
+        return surface
     }
 
     /// The nose tip among `pixels`: the centroid of the pixels within
