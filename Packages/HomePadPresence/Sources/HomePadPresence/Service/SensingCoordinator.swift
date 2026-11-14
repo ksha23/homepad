@@ -6,8 +6,8 @@ import HomePadCore
 /// frame rate when the same backend keeps running.
 @MainActor
 final class SensingCoordinator {
-    let analyzer = FrameAnalyzer()
-    private let queue = DispatchQueue(label: "com.homepad.presence.analysis", qos: .utility)
+    let analyzer: FrameAnalyzer
+    private let queue: DispatchQueue
     /// Models load here, beside the analysis queue (`warmUp`).
     private let warmUpQueue = DispatchQueue(label: "com.homepad.presence.warmup", qos: .utility)
     private let script: SimulatedPresenceScript?
@@ -30,6 +30,9 @@ final class SensingCoordinator {
     var simulatedRecognitionTarget: (() -> [Float]?)?
 
     init(script: SimulatedPresenceScript?, capture: CaptureCoordinator? = nil) {
+        let queue = DispatchQueue(label: "com.homepad.presence.analysis", qos: .utility)
+        self.queue = queue
+        analyzer = FrameAnalyzer(queue: queue)
         self.script = script
         self.capture = capture
     }

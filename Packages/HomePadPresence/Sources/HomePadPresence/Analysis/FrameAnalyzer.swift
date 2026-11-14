@@ -61,6 +61,13 @@ struct FrameAnalysis: Sendable {
 final class FrameAnalyzer: @unchecked Sendable {
     private let optionsLock = NSLock()
     private var _options = AnalyzerOptions()
+    /// The analysis queue, where the depth face queue's results come back.
+    private let queue: DispatchQueue
+
+    /// - Parameter queue: The analysis queue it is confined to.
+    init(queue: DispatchQueue) {
+        self.queue = queue
+    }
 
     /// On the CPU from launch until `moveVisionToNeuralEngine()`.
     private let detectors: VisionDetectors = {
@@ -86,8 +93,24 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// Time of the first frame analyzed since the backend started, for
     /// `AmbientLightMath.roomLux`.
     private var firstFrameTime: TimeInterval?
-    /// The depth face of the followed person, and its signatures.
+    /// The depth face of the followed person, and its signatures, on a queue
+    /// of its own (`DepthFaceSampler`). One map at a time: while it is busy,
+    /// newer maps wait for the next frame.
     private let depthFaces = DepthFaceSampler()
+    private let depthFaceQueue = DispatchQueue(label: "com.homepad.presence.depthface", qos: .utility)
+    private var depthFaceBusy = false
+    /// Results of a sampler that was reset since are dropped.
+    private var depthFaceGeneration = 0
+    /// A depth signature that came back, for the next analysis.
+    private var pendingDepthSignature: DepthSignatureSample?
+    /// The last search and lit depth, for the debug view, and when and on whom
+    /// a depth face was last found.
+    private var lastDepthSearch: DepthFaceFinder.Search?
+    private var lastShadedDepth: (image: CGImage, box: CGRect?)?
+    private var depthFaceFound: (time: TimeInterval, person: UUID)?
+    /// A face found on the person stays in view this long, so a few searches
+    /// that miss do not end the look and its votes.
+    private let depthFaceHold: TimeInterval = 10
     /// Quarter turns that make each backend's frames stand upright, from faces.
     private var upright = UprightCalibration()
     /// The frame being analyzed's backend and orientation before correction.
@@ -120,7 +143,18 @@ final class FrameAnalyzer: @unchecked Sendable {
         lastHumanBox = nil
         lastNearestMeters = nil
         firstFrameTime = nil
-        depthFaces.reset()
+        resetDepthFaces()
+    }
+
+    private func resetDepthFaces() {
+        depthFaceGeneration += 1
+        depthFaceBusy = false
+        pendingDepthSignature = nil
+        lastDepthSearch = nil
+        lastShadedDepth = nil
+        depthFaceFound = nil
+        let sampler = depthFaces
+        depthFaceQueue.async { sampler.reset() }
     }
 
     /// Loads models before anyone arrives, with requests of its own, so it
@@ -199,7 +233,7 @@ final class FrameAnalyzer: @unchecked Sendable {
               let line = upright.note(rollDegrees: rollDegrees, backend: base.backend, base: base.orientation, source: source)
         else { return }
         depth.note(TraceNote(key: "upright", text: line, repeats: true))
-        if source == .depth { depthFaces.reset() }
+        if source == .depth { resetDepthFaces() }
     }
 
     /// Adds a line for the presence trace, delivered with the next analysis.
@@ -322,7 +356,7 @@ final class FrameAnalyzer: @unchecked Sendable {
             let full = depth.full.flatMap { time - $0.time < 0.5 ? $0.map : nil }
             debug = debugRenderer.render(
                 frame: frame, faces: observation.faces, map: full ?? depth.coarse?.map, person: depth.people.person,
-                search: full == nil ? nil : depthFaces.lastSearch, shaded: depthFaces.lastShaded,
+                search: full == nil ? nil : lastDepthSearch, shaded: lastShadedDepth,
                 source: depth.lastSource, at: time
             )
         }
@@ -331,25 +365,50 @@ final class FrameAnalyzer: @unchecked Sendable {
             observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary,
             framesPerSecond: measureRate(at: time), backend: backend, faceTrackID: faceTrackID,
             traceNotes: depth.takeNotes(), depthSignature: depthSignature, debug: debug,
-            depthFaceSeen: depthFaces.isFaceInView(on: depth.people.person?.id, at: time),
+            depthFaceSeen: depthFaceFound.map { time - $0.time <= depthFaceHold && $0.person == depth.people.person?.id } ?? false,
             followedPersonID: depth.people.person?.id
         )
     }
 
-    /// The depth face of the followed person on a TrueDepth frame: it confirms
-    /// the person, teaches which way the depth stands, and gives a depth
-    /// signature when one is due.
+    /// Hands the newest depth map to the depth face queue when it is free,
+    /// and returns a depth signature that came back since the last frame.
     private func sampleDepthFace(in frame: SensorFrame, options: AnalyzerOptions) -> DepthSignatureSample? {
-        guard frame.source == .trueDepth else { return nil }
-        let time = frame.timestamp
-        let found = depthFaces.process(
-            map: depth.full, person: depth.people.person?.id, orientation: frame.depthOrientation ?? frame.orientation,
-            signatureInterval: options.depthSignatureInterval, at: time
+        defer { pendingDepthSignature = nil }
+        guard frame.source == .trueDepth, !depthFaceBusy, let full = depth.full, let person = depth.people.person?.id else {
+            return pendingDepthSignature
+        }
+        let job = DepthFaceSampler.Job(
+            map: full.map, mapTime: full.time, person: person, orientation: frame.depthOrientation ?? frame.orientation,
+            signatureInterval: options.depthSignatureInterval, time: frame.timestamp, isTracing: options.isTracing
         )
-        if let roll = found.roll { noteUpright(rollDegrees: roll, source: .depth) }
-        if let face = found.face { depth.confirmFace(at: face.nosePoint, time: time) }
-        if options.isTracing { depthFaces.traceNotes(at: time).forEach { depth.note($0) } }
-        return found.signature.map { DepthSignatureSample(signature: DepthSignature(points: $0), expression: frame.faceExpression) }
+        let expression = frame.faceExpression
+        let generation = depthFaceGeneration
+        let sampler = depthFaces
+        depthFaceBusy = true
+        depthFaceQueue.async { [weak self, queue] in
+            let result = sampler.process(job)
+            queue.async { self?.apply(result, of: job, expression: expression, generation: generation) }
+        }
+        return pendingDepthSignature
+    }
+
+    /// A depth face result, back on the analysis queue: it confirms the
+    /// person, teaches which way the depth stands, and holds a signature for
+    /// the next analysis.
+    private func apply(_ result: DepthFaceSampler.Result, of job: DepthFaceSampler.Job, expression: Double?, generation: Int) {
+        guard generation == depthFaceGeneration else { return }
+        depthFaceBusy = false
+        if let search = result.search { lastDepthSearch = search }
+        if let shaded = result.shaded { lastShadedDepth = shaded }
+        result.notes.forEach { depth.note($0) }
+        if let face = result.face {
+            depthFaceFound = (job.time, job.person)
+            if depth.people.person?.id == job.person { depth.confirmFace(at: face.nosePoint, time: job.time) }
+        }
+        if let points = result.signature {
+            pendingDepthSignature = DepthSignatureSample(signature: DepthSignature(points: points), expression: expression)
+        }
+        if let roll = result.roll { noteUpright(rollDegrees: roll, source: .depth) }
     }
 
     /// Faces from Vision, with distance from face size and gaze from head pose.
