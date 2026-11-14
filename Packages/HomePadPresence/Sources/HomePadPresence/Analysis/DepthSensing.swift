@@ -44,6 +44,9 @@ struct DepthSensing {
     private(set) var coarse: (map: DepthMap, time: TimeInterval)?
     /// Capture time of the newest depth data, for the trace.
     private(set) var lastArrival: TimeInterval?
+    /// The newest depth's native size and whether iOS had already smoothed
+    /// and filled it in, for the recognition debug view.
+    private(set) var lastSource: (width: Int, height: Int, filtered: Bool)?
     private(set) var people = DepthPersonTracker()
     private var motion = DepthMotionDetector()
     /// Capture time of the last map the motion detector compared.
@@ -72,6 +75,7 @@ struct DepthSensing {
         _ depth: AVDepthData, at time: TimeInterval, image: ImageGeometry?, horizontalFOVDegrees: Double?, keepFull: Bool
     ) {
         lastArrival = time
+        lastSource = (CVPixelBufferGetWidth(depth.depthDataMap), CVPixelBufferGetHeight(depth.depthDataMap), depth.isDepthDataFiltered)
         let alignment = Self.alignment(of: depth, image: image, horizontalFOVDegrees: horizontalFOVDegrees)
         if keepFull, var map = DepthMap(depth) {
             map.registration = alignment.registration

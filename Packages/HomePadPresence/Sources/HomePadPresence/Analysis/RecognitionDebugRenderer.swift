@@ -25,6 +25,8 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     var reach: CGSize?
     /// The depth face in words and numbers.
     var depthFace: String
+    /// The depth map's native size and whether iOS smoothed it.
+    var depthSource: String = "no depth yet"
 }
 
 /// Draws `RecognitionDebugFrame`s, on the analysis queue.

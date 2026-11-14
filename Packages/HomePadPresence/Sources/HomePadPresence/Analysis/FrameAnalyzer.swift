@@ -327,6 +327,9 @@ final class FrameAnalyzer: @unchecked Sendable {
                 frame: frame, faces: observation.faces, map: map, person: depth.people.person,
                 face: lastDepthFace.face, searched: lastDepthFace.searched
             )
+            if let source = depth.lastSource {
+                debug?.depthSource = "\(source.width)x\(source.height), smoothed by iOS \(source.filtered ? "yes" : "no")"
+            }
         }
 
         return FrameAnalysis(

@@ -23,6 +23,7 @@ extension LivePresenceService {
             let by = observation.facesAreTracked ? "tracked by ARKit" : "found by Vision"
             lines.append("Camera: \(faces) face\(faces == 1 ? "" : "s"), \(by)")
         }
+        lines.append("Depth map: " + frame.depthSource)
         lines.append(observation.depthPersonMeters.map { String(format: "Depth: person at %.2f m", $0) } ?? "Depth: no person followed")
         lines.append("Depth face: " + frame.depthFace)
         lines.append("Camera recognition: " + (recognition.lastSampleSummary ?? "no sample yet"))
