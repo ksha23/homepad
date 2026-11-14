@@ -52,9 +52,14 @@ struct DepthTemplatePolicy: Equatable, Sendable {
     var perTrackLimit = 3
     /// Seconds between two templates kept from one track at least.
     var minimumSpacing: TimeInterval = 10
-    /// Templates, from visits, a member needs before depth may name them (`DepthCalibration`).
-    var minimumTemplates = 6
-    var minimumVisits = 2
+    /// Templates a member needs before depth may name them (`DepthCalibration`).
+    var minimumTemplates = 3
+    /// With templates from one sitting only, the limit is this times the
+    /// largest distance between them, at least `oneSittingFloor`. One sitting
+    /// shows less of how a face varies than several do. The owner's face in
+    /// the dark came 0.8 mm from his templates from light.
+    var oneSittingFactor = 2.0
+    var oneSittingFloor = 1.0
     /// Templates further apart in time than this are from different visits:
     /// separate sittings. At 60 s one evening counted as 6 visits, which makes
     /// a face look steadier than it is.

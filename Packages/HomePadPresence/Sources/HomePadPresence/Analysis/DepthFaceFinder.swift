@@ -46,8 +46,9 @@ enum DepthFaceFinder {
     static let reliefRange = 0.012...0.06
     /// Share of the disc within `coverageRadiusMeters` of the nose tip, seen
     /// from the camera, the surface must cover. Farther out a face curves
-    /// away behind the 9 cm reach, so the full disc is never covered.
-    static let minimumCoverage = 0.6
+    /// away behind the 9 cm reach, so the full disc is never covered. A face
+    /// looking a little down or aside read 0.54 to 0.57, with 3.6 cm of relief.
+    static let minimumCoverage = 0.5
     static let coverageRadiusMeters = 0.05
     /// The nearest share of the head's depths, and how far behind their
     /// deepest the nose tip still reaches, in meters.

@@ -257,15 +257,19 @@ public final class LivePresenceService: PresenceService {
         if let hand = analysis.handSummary { PresenceTrace.trace.logIfChanged("hand", hand) }
         // Every frame, so a break in face tracking stops learning even between
         // samples, and a new face starts a new look before its first sample.
-        // In the dark the camera sees no face, but the depth map does: that
-        // face, on the followed person, is the face in view.
+        // In the dark the depth map shows the face the camera cannot, and the
+        // look belongs to the followed person whichever of them saw the face.
+        // Vision still found a face on about every other dark frame, under a
+        // track of its own, and the look flipped between the two each time.
         let cameraFaces = analysis.observation.faces.count
-        let depthOnly = cameraFaces == 0 && analysis.depthFaceSeen
-            && recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
-        recognition.noteFaces(
-            count: depthOnly ? 1 : cameraFaces,
-            track: depthOnly ? analysis.observation.depthPersonID : analysis.faceTrackID
-        )
+        let darkPerson = recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
+            ? analysis.followedPersonID : nil
+        if let darkPerson {
+            let faces = analysis.depthFaceSeen ? max(cameraFaces, 1) : cameraFaces
+            recognition.noteFaces(count: faces, track: darkPerson)
+        } else {
+            recognition.noteFaces(count: cameraFaces, track: analysis.faceTrackID)
+        }
         if !analysis.observation.faces.isEmpty {
             recognition.noteFace(backend: analysis.backend, isPresent: snapshot.isSomeonePresent)
         }

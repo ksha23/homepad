@@ -46,8 +46,12 @@ struct FrameAnalysis: Sendable {
     /// For the recognition debug view, about four times a second while it is on.
     var debug: RecognitionDebugFrame?
     /// True while the depth map shows a face on the followed person (found in
-    /// the last second). In the dark it is the only face there is.
+    /// the last `depthFaceHold`). In the dark it is the only face there is.
     var depthFaceSeen = false
+    /// The person depth follows, also between maps. In the dark maps came up
+    /// to 1.3 s apart, and a frame without the person seen in the last second
+    /// ended the look and its votes.
+    var followedPersonID: UUID?
 }
 
 /// The per-frame pipeline shared by every camera backend: motion, faces,
@@ -96,7 +100,12 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// Depth faces collected for the next signature (`DepthFaceFusion`): every
     /// new depth map is searched until enough are merged or `burstSeconds` passed.
     private var burst: (person: UUID, startedAt: TimeInterval, faces: [DepthFace])?
-    private let burstSeconds: TimeInterval = 1.2
+    /// In the dark face tracking delivered about 4 depth maps a second, with
+    /// gaps up to 1.9 s, and a 1.2 s burst often came up with 2 faces.
+    private let burstSeconds: TimeInterval = 2.5
+    /// A depth face found on the followed person stays in view this long, so
+    /// a few searches that miss do not end the look and its votes.
+    private let depthFaceHold: TimeInterval = 10
     private let debugRenderer = RecognitionDebugRenderer()
     /// The last depth face picture, kept up for `debugFaceHold` after it was
     /// found, so a single miss does not make it flicker.
@@ -278,10 +287,11 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
         observation.depthAgeSeconds = depth.lastArrival.map { time - $0 }
         var depthMoved = false
-        // Depth arrives in its own callback, often just after the frame it belongs
-        // to, so at 2 fps the newest map is usually the previous capture's.
         // Motion only compares maps with each other, so any new map will do.
-        if backend == .depthScan, let result = depth.detectMotion(at: time) {
+        // Face tracking watches for it too: in a dark room ARKit finds no
+        // face, and a new session started with no one followed, so movement
+        // is the only thing that can pick the person up again.
+        if frame.source == .trueDepth, let result = depth.detectMotion(at: time) {
             observation.depthBlobFraction = result.blobFraction
             depthMoved = result.moved
             if result.moved {
@@ -367,14 +377,16 @@ final class FrameAnalyzer: @unchecked Sendable {
         let handSummary = tracesHand ? hands.describe(vision.hand) : nil
 
         if depth.people.person == nil { lastDepthFace = nil }
-        let depthFaceSeen = depthFaceFound.map { time - $0.time <= 1 && $0.person == depth.people.person?.id } ?? false
+        let depthFaceSeen = depthFaceFound.map {
+            time - $0.time <= depthFaceHold && $0.person == depth.people.person?.id
+        } ?? false
         var debug: RecognitionDebugFrame?
         if options.wantsDebugView, time - lastDebugFrame >= debugInterval {
             lastDebugFrame = time
-            let map = depth.full.flatMap { time - $0.time < 0.5 ? $0.map : nil } ?? depth.coarse?.map
+            let full = depth.full.flatMap { time - $0.time < 0.5 ? $0.map : nil }
             debug = debugRenderer.render(
-                frame: frame, faces: observation.faces, map: map, person: depth.people.person,
-                search: lastDepthFace
+                frame: frame, faces: observation.faces, map: full ?? depth.coarse?.map, person: depth.people.person,
+                search: full == nil ? nil : lastDepthFace
             )
             if let image = debug?.faceDepth {
                 lastDebugFace = (image, time)
@@ -390,7 +402,8 @@ final class FrameAnalyzer: @unchecked Sendable {
         return FrameAnalysis(
             observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary,
             framesPerSecond: measureRate(at: time), backend: backend, faceTrackID: faceTrackID,
-            traceNotes: depth.takeNotes(), depthSignature: found.signature, debug: debug, depthFaceSeen: depthFaceSeen
+            traceNotes: depth.takeNotes(), depthSignature: found.signature, debug: debug, depthFaceSeen: depthFaceSeen,
+            followedPersonID: depth.people.person?.id
         )
     }
 

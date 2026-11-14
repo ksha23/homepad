@@ -323,10 +323,18 @@ private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> 
         #expect(apart > limit)
     }
 
-    @Test func oneVisitIsNotEnough() {
-        let calibration = DepthCalibration.calibrate(templates(visits: 1, perVisit: 8), policy: policy)
+    /// One sitting gives a limit too: twice the largest distance among its templates, at least 1 mm.
+    @Test func oneSittingUsesItsOwnSpread() throws {
+        let calibration = DepthCalibration.calibrate(templates(visits: 1, perVisit: 3), policy: policy)
+        let limit = try #require(calibration.threshold)
+        #expect(limit >= policy.oneSittingFloor)
+        #expect(limit <= policy.maximumThreshold)
+    }
+
+    @Test func tooFewTemplatesGiveNoLimit() {
+        let calibration = DepthCalibration.calibrate(templates(visits: 1, perVisit: 2), policy: policy)
         #expect(calibration.threshold == nil)
-        #expect(calibration.describe(policy: policy) == "8 templates from 1 visit, needs 6 from 2 visits in light")
+        #expect(calibration.describe(policy: policy) == "2 templates from 1 visit, needs 3")
     }
 }
 

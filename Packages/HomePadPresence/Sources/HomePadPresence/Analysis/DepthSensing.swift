@@ -47,6 +47,10 @@ struct DepthSensing {
     /// The newest depth's native size and whether iOS had already smoothed
     /// and filled it in, for the recognition debug view.
     private(set) var lastSource: (width: Int, height: Int, filtered: Bool)?
+    /// Depth maps counted since `rateSince`, for the trace's rate line.
+    private var rateCount = 0
+    private var rateSince: TimeInterval?
+    static let rateInterval: TimeInterval = 10
     private(set) var people = DepthPersonTracker()
     private var motion = DepthMotionDetector()
     /// Capture time of the last map the motion detector compared.
@@ -76,6 +80,7 @@ struct DepthSensing {
     ) {
         lastArrival = time
         lastSource = (CVPixelBufferGetWidth(depth.depthDataMap), CVPixelBufferGetHeight(depth.depthDataMap), depth.isDepthDataFiltered)
+        countRate(at: time, arkit: image != nil)
         let alignment = Self.alignment(of: depth, image: image, horizontalFOVDegrees: horizontalFOVDegrees)
         if keepFull, var map = DepthMap(depth) {
             map.registration = alignment.registration
@@ -90,6 +95,23 @@ struct DepthSensing {
             ingest(coarse: map, at: time)
         }
         if let note = alignment.note { noteAlignment(note, at: time) }
+    }
+
+    /// Depth maps a second, every `rateInterval`, in the trace. In a dark room
+    /// face tracking delivered far fewer than in light.
+    private mutating func countRate(at time: TimeInterval, arkit: Bool) {
+        rateCount += 1
+        guard let since = rateSince else {
+            rateSince = time
+            rateCount = 0
+            return
+        }
+        guard time - since >= Self.rateInterval else { return }
+        let rate = Double(rateCount) / (time - since)
+        notes.append(TraceNote(key: "depth rate", text: String(format: "depth maps %.1f a second", rate)
+            + " from \(arkit ? "face tracking" : "the depth scan")", repeats: true))
+        rateSince = time
+        rateCount = 0
     }
 
     /// Writes the alignment line again with the next depth map, as when a
@@ -211,6 +233,8 @@ struct DepthSensing {
         motion.reset()
         lastMotionTime = -.infinity
         notes.removeAll()
+        rateSince = nil
+        rateCount = 0
         flipHits = nil
         alignment = nil
     }
