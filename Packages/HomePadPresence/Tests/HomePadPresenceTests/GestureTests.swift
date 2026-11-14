@@ -258,11 +258,11 @@ private struct PalmScene {
         #expect(result.palm == nil)
     }
 
-    /// Kyle: more than a foot closer. 25 cm in front of the face is not.
-    @Test func aHandLessThanAFootInFrontOfTheFaceIsNot() {
+    /// Kyle: clearly closer. 20 cm in front of the face is not.
+    @Test func aHandJustInFrontOfTheFaceIsNot() {
         var scene = PalmScene()
         scene.person(at: 0.75)
-        scene.hand(at: 0.5)
+        scene.hand(at: 0.55)
         #expect(DepthPalmDetector.detect(in: scene.map).palm == nil)
     }
 
@@ -276,10 +276,10 @@ private struct PalmScene {
     }
 
     /// An arm that runs back into the shoulders joins the hand to the body,
-    /// and the body within a foot behind it still counts.
+    /// and the body within reach behind it still counts.
     @Test func anArmJoinedToTheBodyDoesNotExcuseTheBody() {
         var scene = PalmScene()
-        scene.person(at: 0.6)
+        scene.person(at: 0.55)
         scene.hand(at: 0.45, x: 0.2, slope: 1)
         let result = DepthPalmDetector.detect(in: scene.map)
         #expect(result.palm == nil)

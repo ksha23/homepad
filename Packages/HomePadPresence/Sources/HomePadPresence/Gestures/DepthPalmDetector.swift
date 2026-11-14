@@ -28,12 +28,12 @@ struct DepthPalm: Equatable, Sendable {
 /// - the size of a hand, or of a hand on an upright forearm, which lies in the
 ///   same plane: `areas`, `lengths` and `widths`, measured at its depth,
 /// - clearly closer than everything else: nothing in view lies within
-///   `separation` (just over a foot) behind it, except the arm it is on:
+///   `separation` (about 9 inches) behind it, except the arm it is on:
 ///   surface joined to it with no step over `maximumStep`, no larger than
-///   `maximumArmArea`. Kyle's rule. A hand beside the head, or less than a
-///   foot in front of the face, has the head within reach behind it, and an
-///   arm joined to a body within reach does not excuse the body. At 15 cm,
-///   thin surfaces a few centimeters in front of the body counted.
+///   `maximumArmArea`. Kyle's rule. A hand beside the head, or just in front
+///   of the face, has the head within reach behind it, and an arm joined to a
+///   body within reach does not excuse the body. At 15 cm, thin surfaces a
+///   few centimeters in front of the body counted. A foot was too much.
 /// - standing out from what lies right around it: on at least
 ///   `minimumClearance` of its outline, depth is missing or at least
 ///   `separation` farther. A face never does, since the head goes on around
@@ -43,7 +43,7 @@ enum DepthPalmDetector {
     static let range: ClosedRange<Float> = 0.15...1.2
     static let handDepth: Float = 0.06
     static let maximumStep: Float = 0.03
-    static let separation: Float = 0.31
+    static let separation: Float = 0.23
     /// The most surface an arm joined to the hand covers (forearm and upper arm).
     static let maximumArmArea = 0.06
     static let minimumClearance = 0.6
