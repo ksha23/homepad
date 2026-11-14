@@ -39,6 +39,11 @@ final class CameraSession: NSObject, @unchecked Sendable {
     private let outputQueue: DispatchQueue
     private let videoOutput = AVCaptureVideoDataOutput()
     private let depthOutput = AVCaptureDepthDataOutput()
+    /// Pairs each video frame with the depth map of the same moment, while
+    /// both are delivered. Apart, the depth came in just after its frame, so
+    /// at 2 fps every frame saw the previous capture's depth, half a second
+    /// old, and liveness turned down every face sample in a dark room.
+    private var synchronizer: AVCaptureDataOutputSynchronizer?
     private let stateLock = NSLock()
     private var device: AVCaptureDevice?
     private var source: PresenceSource = .frontCamera
@@ -138,6 +143,7 @@ final class CameraSession: NSObject, @unchecked Sendable {
     private func configure(device: AVCaptureDevice, configuration: Configuration) -> Bool {
         session.beginConfiguration()
         defer { session.commitConfiguration() }
+        synchronizer = nil
         session.inputs.forEach(session.removeInput)
         session.outputs.forEach(session.removeOutput)
         guard let input = try? AVCaptureDeviceInput(device: device), session.canAddInput(input) else {
@@ -156,6 +162,11 @@ final class CameraSession: NSObject, @unchecked Sendable {
         }
         if configuration.deliversDepth, configuration.camera == .trueDepth {
             addDepthOutput(device: device)
+            if configuration.deliversFrames, session.outputs.contains(depthOutput) {
+                let synchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [videoOutput, depthOutput])
+                synchronizer.setDelegate(self, queue: outputQueue)
+                self.synchronizer = synchronizer
+            }
         }
         return true
     }
@@ -193,8 +204,29 @@ final class CameraSession: NSObject, @unchecked Sendable {
     }
 }
 
-extension CameraSession: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureDepthDataOutputDelegate {
+extension CameraSession: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureDepthDataOutputDelegate,
+    AVCaptureDataOutputSynchronizerDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        deliverFrame(sampleBuffer)
+    }
+
+    /// A video frame and its depth map, the depth first so the frame's
+    /// analysis has the depth of its own moment.
+    func dataOutputSynchronizer(
+        _ synchronizer: AVCaptureDataOutputSynchronizer, didOutput collection: AVCaptureSynchronizedDataCollection
+    ) {
+        if let depth = collection.synchronizedData(for: depthOutput) as? AVCaptureSynchronizedDepthData,
+           !depth.depthDataWasDropped {
+            let fieldOfView = stateLock.withLock { self.fieldOfView }
+            onDepth?(depth.depthData, depth.timestamp.seconds, fieldOfView)
+        }
+        if let video = collection.synchronizedData(for: videoOutput) as? AVCaptureSynchronizedSampleBufferData,
+           !video.sampleBufferWasDropped {
+            deliverFrame(video.sampleBuffer)
+        }
+    }
+
+    private func deliverFrame(_ sampleBuffer: CMSampleBuffer) {
         guard let onFrame, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let (source, fov, tracker) = stateLock.withLock { (self.source, self.fieldOfView, self.orientation) }
         // The TrueDepth session's BrightnessValue never moves from the camera's
