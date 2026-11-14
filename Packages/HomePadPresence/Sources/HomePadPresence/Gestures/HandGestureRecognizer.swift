@@ -19,35 +19,24 @@ struct HandPoseSample: Sendable {
     var points: [HandJoint: CGPoint]
 }
 
-/// Recognizes a deliberately held open palm from hand poses.
+/// Recognizes a deliberately held open palm from camera hand poses, on iPads
+/// without TrueDepth. With TrueDepth the palm comes from depth instead
+/// (`DepthPalmDetector`): camera hand pose was unreliable.
 ///
-/// The palm fires once it shows in most frames of the last `holdDuration`, once
-/// per hold. It has to be deliberate: every visible finger straight, the hand
+/// The palm has to be deliberate: every visible finger straight, the hand
 /// large in the image (raised toward the iPad, not resting across the room),
-/// held still, and pointing up. Looser rules toggled the music on their own.
-/// Missed frames do not restart the hold: Vision loses a joint every few frames,
-/// more so in dim light.
+/// pointing up, and held still (`PalmHold`). Looser rules toggled the music
+/// on their own.
 ///
 /// Which way is up in the image is learned from open hands, since people raise a
 /// hand fingers up. On the 3rd generation 11-inch iPad Pro the image reaches
 /// Vision upside down, so a fixed "up" read every palm as pointing down.
 struct HandGestureRecognizer: Sendable {
-    var holdDuration: TimeInterval = 0.8
-    /// Share of the frames in the hold that must show the palm.
-    var holdShare = 0.75
     /// Smallest wrist-to-fingertip span, as a share of the image.
     var minimumSpan: CGFloat = 0.12
-    /// How far the palm may drift during the hold, as a share of the image.
-    var maximumDrift: CGFloat = 0.06
-    var cooldown: TimeInterval = 1.0
-
-    /// Recent frames: whether each showed the palm, and where the palm was.
-    private var frames: [(time: TimeInterval, isPalm: Bool, center: CGPoint?)] = []
-    /// The palm already fired during the current hold.
-    private var firedThisHold = false
+    private var hold = PalmHold()
     /// Recent open hands' finger directions, which point up in the room.
     private var openHandAxes: [CGVector] = []
-    private var lastFired: TimeInterval = -.infinity
 
     /// Up in the image, once a few open hands were seen.
     var imageUp: CGVector? {
@@ -61,28 +50,11 @@ struct HandGestureRecognizer: Sendable {
     mutating func process(_ sample: HandPoseSample?, at time: TimeInterval) -> HandGesture? {
         let up = imageUp
         let isPalm = sample.map { isDeliberatePalm($0, up: up) } ?? false
-        frames.append((time, isPalm, sample.flatMap(Self.palmCenter)))
-        frames.removeAll { time - $0.time > holdDuration }
         if let sample, Self.isOpenHand(sample), let axis = Self.axis(sample) {
             openHandAxes.append(axis)
             if openHandAxes.count > 20 { openHandAxes.removeFirst() }
         }
-        // Once the palm is gone from the window, it may fire again.
-        if !frames.contains(where: \.isPalm) { firedThisHold = false }
-        guard !firedThisHold, time - lastFired >= cooldown,
-              let oldest = frames.first?.time, time - oldest >= holdDuration * 0.75, frames.count >= 3,
-              Double(frames.filter(\.isPalm).count) >= Double(frames.count) * holdShare,
-              isSteady() else { return nil }
-        firedThisHold = true
-        lastFired = time
-        return .openPalm
-    }
-
-    /// The palm stayed in place during the hold, so a waving or moving hand never fires.
-    private func isSteady() -> Bool {
-        let centers = frames.filter(\.isPalm).compactMap(\.center)
-        guard let first = centers.first else { return false }
-        return centers.allSatisfy { Self.distance($0, first) <= maximumDrift }
+        return hold.note(isPalm: isPalm, center: sample.flatMap(Self.palmCenter), at: time) ? .openPalm : nil
     }
 
     private func isDeliberatePalm(_ sample: HandPoseSample, up: CGVector?) -> Bool {

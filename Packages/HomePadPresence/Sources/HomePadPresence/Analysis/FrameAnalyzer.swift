@@ -6,8 +6,11 @@ import HomePadCore
 /// What the main actor wants from the analyzer right now.
 struct AnalyzerOptions: Equatable, Sendable {
     var sensitivity: SensingSensitivity = .medium
-    /// Run hand pose detection (only when someone is within reach).
+    /// Look for a raised palm (only when someone is within reach).
     var detectHands = false
+    /// Look for it in TrueDepth depth (`DepthPalmDetector`). Without TrueDepth,
+    /// in the camera image with hand pose (`HandGestureRecognizer`).
+    var handsFromDepth = false
     /// Compute face embeddings for recognition.
     var wantsEmbeddings = false
     /// Seconds between recognition samples, from `RecognitionCadence`.
@@ -33,6 +36,8 @@ struct FrameAnalysis: Sendable {
     /// What the hand detector saw, for the presence trace. Nil when not looking
     /// for hands or not tracing.
     var handSummary: String?
+    /// What the depth palm detector saw, for the recognition debug view.
+    var depthHand: String?
     var framesPerSecond: Double
     var backend: BackendKind
     /// The unbroken single-face track of the frame, nil without exactly one
@@ -83,6 +88,10 @@ final class FrameAnalyzer: @unchecked Sendable {
     private var follower = FaceFollower()
     private var hands = HandGestureRecognizer()
     private var handTrace = HandTraceThrottle()
+    /// The palm from depth: held over depth maps, the last map looked at, and what it showed.
+    private var palmHold = PalmHold()
+    private var lastPalmMapTime: TimeInterval = -.infinity
+    private var lastDepthHand: DepthPalmDetector.Result?
     private var frameTimes: [TimeInterval] = []
     private var sampleGate = RecognitionSampleGate()
     private var lastHumanCheck: TimeInterval = -.infinity
@@ -140,6 +149,9 @@ final class FrameAnalyzer: @unchecked Sendable {
         depth.reset()
         follower.reset()
         hands = HandGestureRecognizer()
+        palmHold = PalmHold()
+        lastPalmMapTime = -.infinity
+        lastDepthHand = nil
         frameTimes.removeAll()
         lastHumanCount = 0
         lastHumanConfidence = nil
@@ -281,12 +293,13 @@ final class FrameAnalyzer: @unchecked Sendable {
         )
         let humansDue = frame.trackedFaces == nil || time - lastHumanCheck >= humanCheckInterval
         let handsWanted = options.detectHands && (lastNearestMeters ?? .infinity) <= handRangeMeters
+        let cameraHands = handsWanted && !options.handsFromDepth
         // While ARKit tracks no face, Vision looks for one at least once a second,
         // with the people count: a head turned past ARKit's reach is still a face
         // to Vision, and it keeps the person and their look.
         let arkitSeesNoFace = frame.trackedFaces?.isEmpty == true
         let facesWanted = frame.trackedFaces == nil || wantsEmbedding || (arkitSeesNoFace && humansDue)
-        let vision = detectors.detect(in: frame, faces: facesWanted, humans: humansDue, hands: handsWanted)
+        let vision = detectors.detect(in: frame, faces: facesWanted, humans: humansDue, hands: cameraHands)
         if let roll = vision.faces.max(by: { $0.boundingBox.width < $1.boundingBox.width })?.roll {
             noteUpright(rollDegrees: roll.doubleValue * 180 / .pi, source: .image)
         }
@@ -357,9 +370,24 @@ final class FrameAnalyzer: @unchecked Sendable {
             embedding?.trackID = faceTrackID
             embedding?.visibleFaces = vision.faces.count
         }
-        let gesture = hands.process(handsWanted ? vision.hand : nil, at: time)
-        let tracesHand = handsWanted && options.isTracing && handTrace.isDue(hasHand: vision.hand != nil, at: time)
-        let handSummary = tracesHand ? hands.describe(vision.hand) : nil
+        var gesture: HandGesture?
+        var handSummary: String?
+        if options.handsFromDepth {
+            if handsWanted, frame.source == .trueDepth, let palm = depthPalm(at: time) {
+                gesture = palm.fired ? .openPalm : nil
+                lastDepthHand = palm.result
+                if options.isTracing && handTrace.isDue(hasHand: palm.result.palm != nil, at: time) {
+                    handSummary = palm.result.description
+                }
+            }
+        } else {
+            gesture = hands.process(cameraHands ? vision.hand : nil, at: time)
+            let tracesHand = cameraHands && options.isTracing && handTrace.isDue(hasHand: vision.hand != nil, at: time)
+            handSummary = tracesHand ? hands.describe(vision.hand) : nil
+        }
+        let depthHand = options.wantsDebugView && options.handsFromDepth
+            ? handsWanted ? lastDepthHand?.details ?? "no depth map yet" : "not looking: gestures off, or no one within 2.5 m"
+            : nil
 
         var debug: RecognitionDebugFrame?
         if options.wantsDebugView, time - lastDebugFrame >= debugInterval {
@@ -373,7 +401,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
 
         return FrameAnalysis(
-            observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary,
+            observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary, depthHand: depthHand,
             framesPerSecond: measureRate(at: time), backend: backend, faceTrackID: faceTrackID,
             traceNotes: depth.takeNotes(), depthSignature: depthSignature, debug: debug,
             depthFaceSeen: depthFaceFound.map {
@@ -381,6 +409,16 @@ final class FrameAnalyzer: @unchecked Sendable {
             } ?? false,
             followedPersonID: depth.people.person?.id
         )
+    }
+
+    /// Looks for a raised palm in each new depth map (`DepthPalmDetector`),
+    /// and holds it over the maps (`palmHold`). Nil when no new map came.
+    private func depthPalm(at time: TimeInterval) -> (fired: Bool, result: DepthPalmDetector.Result)? {
+        guard let full = depth.full, full.time > lastPalmMapTime, time - full.time < 0.5 else { return nil }
+        lastPalmMapTime = full.time
+        let result = DepthPalmDetector.detect(in: full.map, headMeters: depth.people.person?.distanceMeters)
+        let fired = palmHold.note(isPalm: result.palm != nil, center: result.palm?.center, at: full.time)
+        return (fired, result)
     }
 
     /// Hands the newest depth map to the depth face queue when it is free,

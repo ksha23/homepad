@@ -26,6 +26,7 @@ extension LivePresenceService {
         lines.append("Depth map: " + frame.depthSource + ", turned \(frame.orientation) to stand upright")
         lines.append(observation.depthPersonMeters.map { String(format: "Depth: person at %.2f m", $0) } ?? "Depth: no person followed")
         lines.append("Depth face: " + frame.depthFace)
+        if let hand = analysis.depthHand { lines.append("Depth hand: " + hand) }
         lines.append("Camera recognition: " + (recognition.lastSampleSummary ?? "no sample yet"))
         lines.append("Depth identity: " + (recognition.depthIdentity.lastSummary ?? "no signature yet"))
         if recognition.depthIdentity.hasTemplates {

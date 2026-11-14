@@ -176,3 +176,108 @@ import Testing
         #expect(fired == [.openPalm])
     }
 }
+
+/// A synthetic face tracking depth map (640 by 360, focal 382 px, as on the
+/// 11-inch): a wall, a person, and a hand raised toward the iPad.
+private struct PalmScene {
+    static let width = 640
+    static let height = 360
+    static let focal = 382.0
+    var meters = [Float](repeating: 3, count: width * height)
+
+    /// Paints `inside` (meters across and down from the middle of the view, at `depth`) at `depth`, nearest wins.
+    mutating func paint(at depth: Double, _ inside: (Double, Double) -> Double?) {
+        for row in 0..<Self.height {
+            for column in 0..<Self.width {
+                let x = (Double(column) - Double(Self.width) / 2) * depth / Self.focal
+                let y = (Double(row) - Double(Self.height) / 2) * depth / Self.focal
+                guard let z = inside(x, y) else { continue }
+                let index = row * Self.width + column
+                meters[index] = min(meters[index], Float(z))
+            }
+        }
+    }
+
+    /// A head at `depth`, centered `x` across, with shoulders below: a face
+    /// 16 by 22 cm and 4 cm deep, and around it the sides of the head, ears and
+    /// hair, going 10 cm farther back, as a real head does.
+    mutating func person(at depth: Double, x center: Double = 0) {
+        paint(at: depth) { x, y in
+            let dx = (x - center) / 0.08
+            let dy = y / 0.11
+            let r = (dx * dx + dy * dy).squareRoot()
+            if r <= 1 { return depth + 0.04 * r * r }
+            return r <= 1.35 ? depth + 0.04 + 0.1 * (r - 1) / 0.35 : nil
+        }
+        paint(at: depth + 0.12) { x, y in abs(x - center) <= 0.22 && y >= 0.12 ? depth + 0.12 : nil }
+    }
+
+    /// An open hand, flat toward the iPad: a 9 by 10 cm palm, four 1.8 cm
+    /// fingers 8 cm long with gaps between them, and the forearm going back.
+    mutating func hand(at depth: Double, x center: Double = 0, y top: Double = -0.08) {
+        paint(at: depth) { x, y in
+            let across = x - center
+            let down = y - top
+            if abs(across) <= 0.045 && down >= 0.08 && down <= 0.18 { return depth }
+            if abs(across) <= 0.045 && down >= 0 && down < 0.08 {
+                let slot = (across + 0.045) / 0.0225
+                let within = slot - slot.rounded(.down)
+                return within >= 0.1 && within <= 0.9 ? depth : nil
+            }
+            return nil
+        }
+        paint(at: depth + 0.08) { x, y in
+            abs(x - center) <= 0.03 && y - top > 0.18 && y - top <= 0.35 ? depth + 0.08 + (y - top - 0.18) : nil
+        }
+    }
+
+    var map: DepthMap {
+        DepthMap(width: Self.width, height: Self.height, meters: meters, focalLength: Self.focal)
+    }
+}
+
+@Suite struct DepthPalmTests {
+    @Test func aPalmRaisedInFrontOfTheFaceIsAPalm() throws {
+        var scene = PalmScene()
+        scene.person(at: 0.6)
+        scene.hand(at: 0.38)
+        let result = DepthPalmDetector.detect(in: scene.map, headMeters: 0.6)
+        let palm = try #require(result.palm, "\(result.description)")
+        #expect(abs(palm.meters - 0.38) < 0.02)
+        #expect(palm.clearance >= DepthPalmDetector.minimumClearance)
+    }
+
+    /// Kyle: the hand has to be clearly closer than everything else. A hand at
+    /// about the head's depth, beside it, has only the room behind it.
+    @Test func aHandBesideTheHeadIsNot() {
+        var scene = PalmScene()
+        scene.person(at: 0.6)
+        scene.hand(at: 0.6, x: 0.25)
+        let result = DepthPalmDetector.detect(in: scene.map, headMeters: 0.6)
+        #expect(result.palm == nil)
+    }
+
+    /// 10 cm in front of the face is not clearly in front of it.
+    @Test func aHandJustInFrontOfTheFaceIsNot() {
+        var scene = PalmScene()
+        scene.person(at: 0.6)
+        scene.hand(at: 0.5)
+        #expect(DepthPalmDetector.detect(in: scene.map, headMeters: 0.6).palm == nil)
+    }
+
+    /// A face leaning in is the nearest thing in view, but the head goes on around it.
+    @Test func aFaceLeaningInIsNot() {
+        var scene = PalmScene()
+        scene.person(at: 0.35)
+        #expect(DepthPalmDetector.detect(in: scene.map, headMeters: nil).palm == nil)
+    }
+
+    @Test func aPalmHeldStillFiresOnceOverDepthMaps() {
+        var hold = PalmHold()
+        // About five depth maps a second, as in the dark.
+        let fired = stride(from: 0.0, through: 2.0, by: 0.2).filter { time in
+            hold.note(isPalm: true, center: CGPoint(x: 0.5, y: 0.4), at: time)
+        }
+        #expect(fired.count == 1)
+    }
+}

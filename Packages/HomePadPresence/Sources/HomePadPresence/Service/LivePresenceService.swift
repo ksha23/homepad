@@ -121,7 +121,7 @@ public final class LivePresenceService: PresenceService {
             updateAnalyzerOptions()
         }
         let start = Date()
-        sensors.warmUp(featurePrint: featurePrint, detectors: detectors, hands: detectors && frameSettings.handGestures) { [weak self] _ in
+        sensors.warmUp(featurePrint: featurePrint, detectors: detectors, hands: detectors && frameSettings.handGestures && !handsFromDepth) { [weak self] _ in
             PresenceTrace.trace.log("recognition ready \(PresenceTrace.format(Date().timeIntervalSince(start))) s after its warm-up began")
             self?.isRecognitionStarting = false
             self?.updateAnalyzerOptions()
@@ -320,6 +320,12 @@ public final class LivePresenceService: PresenceService {
         return fusion.snapshot.ambientLight
     }
 
+    /// The raised palm comes from TrueDepth depth where there is TrueDepth:
+    /// camera hand pose was unreliable. Elsewhere it comes from the camera.
+    private var handsFromDepth: Bool {
+        capabilities.hasTrueDepth && frameSettings.useTrueDepth
+    }
+
     private func requiresLiveness(_ backend: BackendKind) -> Bool {
         backend != .simulated && capabilities.hasTrueDepth && frameSettings.useTrueDepth
     }
@@ -373,6 +379,7 @@ public final class LivePresenceService: PresenceService {
         sensors.analyzer.options = AnalyzerOptions(
             sensitivity: settings.sensitivity,
             detectHands: settings.handGestures && snapshot.isSomeonePresent && within && !isRecognitionStarting,
+            handsFromDepth: handsFromDepth,
             wantsEmbeddings: wantsEmbeddings,
             embeddingInterval: interval,
             embeddingsNeedDepth: capabilities.hasTrueDepth && settings.useTrueDepth,
