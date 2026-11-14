@@ -342,7 +342,7 @@ private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> 
     }
 }
 
-/// Depth names a member only in the dark, on enough votes under their limit, clearly nearer them than anyone else.
+/// Depth names a member on enough votes under their limit, clearly nearer them than anyone else, unless the camera called the face a stranger.
 @MainActor @Suite struct DepthDecisionTests {
     private let services = AppServices(settings: SettingsStore(defaults: UserDefaults(suiteName: "presence.depthdecision.\(UUID())")!))
     private let kyle = HouseholdMember(name: "Kyle")
@@ -381,9 +381,20 @@ private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> 
         #expect(service.confirmedByDepth)
     }
 
-    @Test func inLightTheCameraDecides() throws {
+    /// The camera and depth decide together: in dim light the camera tried and was never sure.
+    @Test func depthDecidesInLightToo() throws {
         let service = try makeService()
-        for index in 0..<4 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .normal, at: t0 + Double(index)) }
+        for index in 0..<3 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .normal, at: t0 + Double(index)) }
+        #expect(services.household.session.mode == .recognized(kyle.id))
+    }
+
+    @Test func aCameraStrangerStopsDepth() throws {
+        let service = try makeService()
+        for index in 0..<4 {
+            let sample = LearningVectors.sample(LearningVectors.axis(5 + index), track: person)
+            service.consider(sample, requireLiveness: true, at: t0 + Double(index) * 0.2)
+        }
+        for index in 0..<3 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .normal, at: t0 + 2 + Double(index)) }
         #expect(services.household.session.mode == .guest)
     }
 

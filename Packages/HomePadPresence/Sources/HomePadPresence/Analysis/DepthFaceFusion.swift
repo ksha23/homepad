@@ -6,9 +6,10 @@ import simd
 ///
 /// iOS does not smooth the depth HomePad gets, so what looks smooth is the
 /// dot projector itself: a face at half a meter falls on a few thousand dots,
-/// each measured with some noise. Depth arrives about 15 times a second, and
-/// a person sitting still moves only a little between maps, so lining a
-/// handful up and averaging them keeps the face's shape and lowers the noise.
+/// each measured with some noise. Face tracking gives about 4 depth maps a
+/// second in the dark and 6 in light, and a person sitting still moves only
+/// a little between them, so lining a few up and averaging them keeps the
+/// face's shape and lowers the noise.
 enum DepthFaceFusion {
     /// 3 mm cells over the 18 cm a face reaches across.
     static let cells = 60
