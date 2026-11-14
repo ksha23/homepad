@@ -16,8 +16,17 @@ import ImageIO
 /// then on. Heads tilt: those rolls ran 10 to 58 degrees off a half turn, so
 /// rounding each on its own split them between two turns.
 ///
+/// The camera's image and the depth map learn apart (`Source`): face
+/// tracking's depth map is not laid out like its image (faces need a flip on
+/// their way into it, `FaceFlip`), and learning both from one set of rolls
+/// swung between a half turn and three quarters on every few faces.
+///
 /// Used on the analysis queue only.
 struct UprightCalibration {
+    enum Source: String {
+        case image, depth
+    }
+
     static let samplesNeeded = 5
     /// Length of the rolls' mean direction, 0 when they point every way and
     /// 1 when they all point the same way.
@@ -34,15 +43,19 @@ struct UprightCalibration {
     }
 
     /// `orientation` turned by what faces taught for `backend`.
-    mutating func corrected(_ orientation: CGImagePropertyOrientation, backend: BackendKind) -> CGImagePropertyOrientation {
-        Self.turned(orientation, quarters: quarters(for: Self.key(backend, orientation)))
+    mutating func corrected(
+        _ orientation: CGImagePropertyOrientation, backend: BackendKind, source: Source
+    ) -> CGImagePropertyOrientation {
+        Self.turned(orientation, quarters: quarters(for: Self.key(backend, orientation, source)))
     }
 
     /// Notes the roll Vision measured, in degrees, for a face in a frame of
     /// `backend` whose orientation was `base` before correction. Returns a
     /// line for the trace when the correction changed.
-    mutating func note(rollDegrees: Double, backend: BackendKind, base: CGImagePropertyOrientation) -> String? {
-        let key = Self.key(backend, base)
+    mutating func note(
+        rollDegrees: Double, backend: BackendKind, base: CGImagePropertyOrientation, source: Source
+    ) -> String? {
+        let key = Self.key(backend, base, source)
         var list = rolls[key, default: []]
         list.append(rollDegrees)
         if list.count > Self.samplesNeeded { list.removeFirst(list.count - Self.samplesNeeded) }
@@ -59,7 +72,7 @@ struct UprightCalibration {
         turns[key] = updated
         defaults?.set(updated, forKey: Self.defaultsPrefix + key)
         rolls[key] = []
-        return "frames of \(backend.rawValue) turned \(turn) more quarter turn\(turn == 1 ? "" : "s") to stand upright: "
+        return "\(source.rawValue) of \(backend.rawValue) turned \(turn) more quarter turn\(turn == 1 ? "" : "s") to stand upright: "
             + "faces read a roll of \(Int(mean.rounded())) degrees on average"
     }
 
@@ -78,8 +91,8 @@ struct UprightCalibration {
         return Int((normalized / 90).rounded()) % 4
     }
 
-    static func key(_ backend: BackendKind, _ orientation: CGImagePropertyOrientation) -> String {
-        "\(backend.rawValue).\(orientation.rawValue)"
+    static func key(_ backend: BackendKind, _ orientation: CGImagePropertyOrientation, _ source: Source) -> String {
+        "\(source.rawValue).\(backend.rawValue).\(orientation.rawValue)"
     }
 
     /// An orientation turned by `quarters` more quarter turns clockwise.

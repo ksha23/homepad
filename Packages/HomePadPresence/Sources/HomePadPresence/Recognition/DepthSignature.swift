@@ -20,8 +20,10 @@ struct DepthSignature: Codable, Equatable, Sendable {
     /// face mesh, had no version field, so its templates no longer load.
     /// Version 2 was a single depth map, often with the nose tip off the
     /// nose; version 3 merges several (`DepthFaceFusion`), but front camera
-    /// frames on a short edge were turned upside down. Version 4 is upright.
-    static let version = 4
+    /// frames on a short edge were turned upside down. Version 4 turned depth
+    /// by the image's faces, which disagreed with the depth's. Version 5
+    /// turns it by its own.
+    static let version = 5
     /// ARKit expression coefficients (blend shapes, the eyes left out) above
     /// this change the face too much for a signature, where ARKit can tell.
     static let maximumExpression = 0.35

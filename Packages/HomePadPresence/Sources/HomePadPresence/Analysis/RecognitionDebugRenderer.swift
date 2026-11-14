@@ -61,7 +61,7 @@ final class RecognitionDebugRenderer {
         frame: SensorFrame, faces: [DetectedFace], map: DepthMap?, person: DepthPersonTracker.Person?,
         search: DepthFaceFinder.Search?
     ) -> RecognitionDebugFrame {
-        let orientation = frame.orientation
+        let orientation = frame.depthOrientation ?? frame.orientation
         let face = search?.face
         var result = RecognitionDebugFrame(depthFace: Self.describe(search, person: person))
         result.orientation = Self.describe(orientation)

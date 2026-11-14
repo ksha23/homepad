@@ -311,7 +311,8 @@ final class FrameAnalyzer: @unchecked Sendable {
         lastDepthFaceSearch = time
         // Vision's face detector on the depth map drawn as a lit surface says
         // where the face is, with no light (`DepthFaceDetector`).
-        let detection = depth.full.map { depthFaceDetector.detect(in: $0.map, orientation: frame.orientation) }
+        let depthOrientation = frame.depthOrientation ?? frame.orientation
+        let detection = depth.full.map { depthFaceDetector.detect(in: $0.map, orientation: depthOrientation) }
         lastShadedDepth = detection.flatMap { found in found.shaded.map { ($0, found.face?.box) } }
         // Only a face box says where the face is. Around the followed head
         // instead, the crop landed on whatever the person was picked up from
@@ -320,7 +321,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         if let box = detection?.face?.box {
             lastFaceBox = (box, time, person.id)
         }
-        if let roll = detection?.face?.rollDegrees { noteUpright(rollDegrees: roll) }
+        if let roll = detection?.face?.rollDegrees { noteUpright(rollDegrees: roll, source: .depth) }
         guard let box = lastFaceBox.flatMap({ time - $0.time <= faceBoxHold && $0.person == person.id ? $0.box : nil }) else {
             lastDepthFace = DepthFaceFinder.Search(miss: "no face in the shaded depth")
             if options.isTracing { depth.note(TraceNote(key: "depth shading", text: "no face in the shaded depth")) }
@@ -328,7 +329,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         }
         // A quarter of searches found no new map to look at. Those are no
         // search, and must not hide the last face from the debug view.
-        guard let search = depth.findFace(orientation: frame.orientation, faceBox: box, at: time) else { return nil }
+        guard let search = depth.findFace(orientation: depthOrientation, faceBox: box, at: time) else { return nil }
         lastDepthFace = search
         if options.isTracing {
             let text = detection?.face.map { face in
@@ -349,10 +350,12 @@ final class FrameAnalyzer: @unchecked Sendable {
 
     /// Feeds a face's roll to `upright`. When the correction changes, what was
     /// gathered in the old orientation is dropped.
-    private func noteUpright(rollDegrees: Double) {
+    private func noteUpright(rollDegrees: Double, source: UprightCalibration.Source) {
         guard let base = uprightBase,
-              let line = upright.note(rollDegrees: rollDegrees, backend: base.backend, base: base.orientation) else { return }
+              let line = upright.note(rollDegrees: rollDegrees, backend: base.backend, base: base.orientation, source: source)
+        else { return }
         depth.note(TraceNote(key: "upright", text: line, repeats: true))
+        guard source == .depth else { return }
         recentFaces.removeAll()
         burst = nil
         lastFaceBox = nil
@@ -367,7 +370,8 @@ final class FrameAnalyzer: @unchecked Sendable {
         let options = self.options
         let base = frame.orientation
         var frame = frame
-        frame.orientation = upright.corrected(base, backend: backend)
+        frame.orientation = upright.corrected(base, backend: backend, source: .image)
+        frame.depthOrientation = upright.corrected(base, backend: backend, source: .depth)
         uprightBase = (backend, base)
         let time = frame.timestamp
         motion.pixelDelta = options.sensitivity.motionPixelDelta
@@ -408,7 +412,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         let facesWanted = frame.trackedFaces == nil || wantsEmbedding || (arkitSeesNoFace && humansDue)
         let vision = detectors.detect(in: frame, faces: facesWanted, humans: humansDue, hands: handsWanted)
         if let roll = vision.faces.max(by: { $0.boundingBox.width < $1.boundingBox.width })?.roll {
-            noteUpright(rollDegrees: roll.doubleValue * 180 / .pi)
+            noteUpright(rollDegrees: roll.doubleValue * 180 / .pi, source: .image)
         }
 
         var faceTrackID = frame.faceTrackID
@@ -484,8 +488,9 @@ final class FrameAnalyzer: @unchecked Sendable {
                 search: full == nil ? nil : lastDepthFace
             )
             if let shaded = lastShadedDepth {
-                debug?.shaded = debugRenderer.upright(shaded.image, orientation: frame.orientation)
-                debug?.shadedBox = shaded.box.map { RecognitionDebugRenderer.upright($0, frame.orientation) }
+                let depthOrientation = frame.depthOrientation ?? frame.orientation
+                debug?.shaded = debugRenderer.upright(shaded.image, orientation: depthOrientation)
+                debug?.shadedBox = shaded.box.map { RecognitionDebugRenderer.upright($0, depthOrientation) }
             }
             if let image = debug?.faceDepth {
                 lastDebugFace = (image, time)

@@ -9,6 +9,9 @@ struct SensorFrame: @unchecked Sendable {
     var pixelBuffer: CVPixelBuffer
     /// Rotation that makes the native buffer upright (no mirroring).
     var orientation: CGImagePropertyOrientation
+    /// Rotation that makes the depth map upright, which faces teach apart
+    /// from the image's (`UprightCalibration`). Nil until the analyzer sets it.
+    var depthOrientation: CGImagePropertyOrientation?
     /// Monotonic capture time in seconds.
     var timestamp: TimeInterval
     var source: PresenceSource
