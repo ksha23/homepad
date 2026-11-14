@@ -148,7 +148,7 @@ Even then it would start small: carrying an RGB recognition across a look in the
 
 #### Seeing what the sensors see
 
-Settings, Presence & Privacy, Show What the Sensors See puts a panel on the face screen: the camera's picture with the faces ARKit or Vision found, the depth map (near in red, far in blue) with the followed head, the nose tip the depth face was found at and its 9 cm reach, and a line per stage: the backend and light, the camera's faces, the depth person, the depth face, the last recognition sample (with its crop's brightness), the last depth identity score, and the session. It is drawn four times a second while on, takes no touches, and lives in memory only: nothing of it is saved, traced or sent anywhere.
+Settings, Presence & Privacy, Show What the Sensors See puts a panel on the face screen: the camera's picture with the faces ARKit or Vision found, the depth map (near in red, far in blue) with the followed head, the nose tip the depth face was found at and its 9 cm reach, the depth face itself at full resolution, colored from its nose tip to 8 cm behind it (what the depth signature compares: the room picture spreads its colors over 2.2 m, so a face's few centimeters of shape barely show there), and a line per stage: the backend and light, the camera's faces, the depth person, the depth face, the last recognition sample (with its crop's brightness), the last depth identity score, and the session. It is drawn four times a second while on, takes no touches, and lives in memory only: nothing of it is saved, traced or sent anywhere.
 
 #### Each HomePad learns each person itself
 

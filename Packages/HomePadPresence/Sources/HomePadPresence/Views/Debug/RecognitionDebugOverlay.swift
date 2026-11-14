@@ -30,6 +30,9 @@ private struct RecognitionDebugPanel: View {
             HStack(alignment: .top, spacing: 8) {
                 picture(state.frame.camera, title: "Camera") { size in cameraMarks(size) }
                 picture(state.frame.depth, title: "Depth (near red, far blue)") { size in depthMarks(size) }
+                if let face = state.frame.faceDepth {
+                    picture(face, title: "Face, nose to 8 cm back") { _ in EmptyView() }
+                }
             }
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(Array(state.lines.enumerated()), id: \.offset) { _, line in
@@ -41,7 +44,7 @@ private struct RecognitionDebugPanel: View {
         .foregroundStyle(.white)
         .padding(10)
         .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
-        .frame(maxWidth: 620, alignment: .leading)
+        .frame(maxWidth: 860, alignment: .leading)
     }
 
     private func picture<Marks: View>(

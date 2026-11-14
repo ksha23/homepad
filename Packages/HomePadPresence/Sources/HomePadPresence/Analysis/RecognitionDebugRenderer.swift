@@ -12,6 +12,9 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     var camera: CGImage?
     /// The depth map, upright, nearer in warmer colors, black where it has no depth.
     var depth: CGImage?
+    /// The depth face at full resolution, upright, from its nose tip (red) to
+    /// `faceSpanMeters` behind it (blue): what the depth signature compares.
+    var faceDepth: CGImage?
     /// Faces in the camera image, normalized with a top-left origin.
     var faceBoxes: [CGRect] = []
     /// The followed head in the depth image, normalized with a top-left origin.
@@ -31,6 +34,8 @@ final class RecognitionDebugRenderer {
     /// Depths drawn from red (near) to blue (far), in meters.
     static let nearMeters: Float = 0.3
     static let farMeters: Float = 2.5
+    /// The face picture's colors span this much depth behind the nose tip.
+    static let faceSpanMeters: Float = 0.08
 
     private let context = CIContext(options: [.cacheIntermediates: false])
     private let palette: [(UInt8, UInt8, UInt8)] = (0..<256).map { index in
@@ -59,6 +64,7 @@ final class RecognitionDebugRenderer {
             }
             if let face {
                 result.nose = Self.upright(face.nosePoint, orientation)
+                result.faceDepth = faceImage(map, face: face, orientation: orientation)
                 let pixels = DepthFaceFinder.radiusMeters * map.focalLengthOrDefault / face.noseMeters
                 result.reach = Self.uprightSize(
                     CGSize(width: pixels / Double(map.width), height: pixels / Double(map.height)), orientation
@@ -104,6 +110,38 @@ final class RecognitionDebugRenderer {
                 bytes[offset + 2] = color.2
             }
         }
+        return uprightImage(bytes, width: width, height: height, orientation: orientation)
+    }
+
+    /// The square around the nose tip the signature reaches over, at the map's
+    /// full resolution, colored by depth behind the nose tip.
+    private func faceImage(_ map: DepthMap, face: DepthFace, orientation: CGImagePropertyOrientation) -> CGImage? {
+        let reach = Int((DepthFaceFinder.radiusMeters * map.focalLengthOrDefault / face.noseMeters).rounded(.up))
+        let centerColumn = Int(face.nosePoint.x * CGFloat(map.width))
+        let centerRow = Int(face.nosePoint.y * CGFloat(map.height))
+        let side = reach * 2 + 1
+        guard reach > 2 else { return nil }
+        let nose = Float(face.noseMeters)
+        var bytes = [UInt8](repeating: 0, count: side * side * 4)
+        for row in 0..<side {
+            for column in 0..<side {
+                let offset = (row * side + column) * 4
+                bytes[offset + 3] = 255
+                let z = map.depth(column: centerColumn - reach + column, row: centerRow - reach + row)
+                guard z.isFinite else { continue }
+                let behind = z - nose
+                guard behind >= -0.01, behind <= Self.faceSpanMeters * 1.25 else { continue }
+                let color = palette[Int(min(max(behind / Self.faceSpanMeters, 0), 1) * 255)]
+                bytes[offset] = color.0
+                bytes[offset + 1] = color.1
+                bytes[offset + 2] = color.2
+            }
+        }
+        return uprightImage(bytes, width: side, height: side, orientation: orientation)
+    }
+
+    /// RGBA bytes in the native orientation as an upright image.
+    private func uprightImage(_ bytes: [UInt8], width: Int, height: Int, orientation: CGImagePropertyOrientation) -> CGImage? {
         guard let provider = CGDataProvider(data: Data(bytes) as CFData),
               let space = CGColorSpace(name: CGColorSpace.sRGB),
               let native = CGImage(
