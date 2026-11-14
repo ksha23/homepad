@@ -33,6 +33,9 @@ final class DepthIdentityEvaluator {
     private(set) var templates: [UUID: MemberDepthTemplates] = [:]
     /// The last score in words, for the recognition debug view.
     private(set) var lastSummary: String?
+    /// Each member's match limit, worked out off the main thread whenever
+    /// their templates change.
+    private(set) var calibrations: [UUID: DepthCalibration] = [:]
     let policy: DepthTemplatePolicy
     private let store: FaceTemplateStore?
     /// The face track the per-track counts below belong to.
@@ -57,18 +60,43 @@ final class DepthIdentityEvaluator {
         let loaded = try store?.loadDepth() ?? []
         let kept = loaded.filter { enrolled.contains($0.memberID) }
         templates = Dictionary(kept.map { ($0.memberID, $0) }, uniquingKeysWith: { _, latest in latest })
+        calibrations = [:]
+        for member in templates.keys { recalibrate(member) }
+    }
+
+    /// Works a member's calibration out again, off the main thread.
+    func recalibrate(_ member: UUID) {
+        let stored = templates[member]?.templates ?? []
+        let policy = self.policy
+        Task.detached(priority: .utility) { [weak self] in
+            let calibration = DepthCalibration.calibrate(stored, policy: policy)
+            await self?.setCalibration(calibration, for: member, from: stored.count)
+        }
+    }
+
+    private func setCalibration(_ calibration: DepthCalibration, for member: UUID, from count: Int) {
+        // A newer calibration is under way when the templates changed meanwhile.
+        guard templates[member]?.templates.count == count else { return }
+        use(calibration, for: member)
+    }
+
+    /// Uses a calibration worked out elsewhere (and in tests).
+    func use(_ calibration: DepthCalibration, for member: UUID) {
+        calibrations[member] = calibration
     }
 
     /// Deletes a member's depth templates, file and memory.
     func reset(memberID: UUID) {
         try? store?.deleteDepth(memberID: memberID)
         templates[memberID] = nil
+        calibrations[memberID] = nil
         endTrack()
     }
 
     /// Forgets a member whose files the store already deleted.
     func forget(memberID: UUID) {
         templates[memberID] = nil
+        calibrations[memberID] = nil
         endTrack()
     }
 
@@ -77,6 +105,7 @@ final class DepthIdentityEvaluator {
         guard var moved = templates.removeValue(forKey: old) else { return }
         moved.memberID = new
         templates[new] = moved
+        calibrations[new] = calibrations.removeValue(forKey: old)
     }
 
     // MARK: Evaluation
@@ -129,6 +158,7 @@ final class DepthIdentityEvaluator {
             return
         }
         templates[member] = updated
+        recalibrate(member)
         keptOnTrack += 1
         lastKeptAt = time
         keptThisTrack.insert(time)

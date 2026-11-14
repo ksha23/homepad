@@ -15,11 +15,14 @@ struct DepthIdentityScore: Equatable, Sendable {
     var otherMember: UUID?
     /// Templates of everyone else it was compared with.
     var otherCount = 0
+    /// Distance to the nearest template of a third member, after `otherMember`.
+    var runnerUp: Double?
 
     /// Scores `signature` of the face RGB recognition named `member` (nil for
     /// a stranger) against each member's templates.
     static func score(_ signature: DepthSignature, member: UUID?, templates: [UUID: [DepthSignature]]) -> DepthIdentityScore {
         var score = DepthIdentityScore()
+        var others: [(member: UUID, distance: Double)] = []
         for (id, signatures) in templates {
             let nearest = signatures.compactMap { signature.distance(to: $0) }.min()
             if id == member {
@@ -28,11 +31,12 @@ struct DepthIdentityScore: Equatable, Sendable {
                 continue
             }
             score.otherCount += signatures.count
-            if let nearest, nearest < (score.other ?? .infinity) {
-                score.other = nearest
-                score.otherMember = id
-            }
+            if let nearest { others.append((id, nearest)) }
         }
+        others.sort { $0.distance < $1.distance }
+        score.other = others.first?.distance
+        score.otherMember = others.first?.member
+        score.runnerUp = others.dropFirst().first?.distance
         return score
     }
 }
@@ -48,6 +52,22 @@ struct DepthTemplatePolicy: Equatable, Sendable {
     var perTrackLimit = 3
     /// Seconds between two templates kept from one track at least.
     var minimumSpacing: TimeInterval = 10
+    /// Templates, from visits, a member needs before depth may name them (`DepthCalibration`).
+    var minimumTemplates = 6
+    var minimumVisits = 2
+    /// Templates further apart in time than this are from different visits.
+    var visitGap: TimeInterval = 60
+    /// The match limit is this times the 95th percentile of a member's own
+    /// distances across visits.
+    var thresholdFactor = 1.25
+    /// Depth names a member when this many of the last `depthWindow`
+    /// signatures came under their limit.
+    var requiredDepthVotes = 3
+    var depthWindow = 4
+    /// And the nearest other member is at least this many times farther.
+    var marginFactor = 1.25
+    /// Seconds between signatures while depth is deciding who it is.
+    var decidingInterval: TimeInterval = 1
 
     /// True when a signature of a member confirmed on this look may become a
     /// template. RGB recognition labels it, and it is most reliable in light.

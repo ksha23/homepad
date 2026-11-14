@@ -265,3 +265,127 @@ enum SyntheticDepthFace {
         #expect(values.isExcludedFromBackup == true)
     }
 }
+
+/// A synthetic face with depth noise, as one depth map would give it.
+private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> = .zero) -> DepthFace {
+    var state = seed
+    func random() -> Float {
+        state = state &* 6364136223846793005 &+ 1442695040888963407
+        return Float(state >> 40) / Float(1 << 24) * 2 - 1
+    }
+    var points = SyntheticDepthFace.points(shift: shift)
+    for index in stride(from: 2, to: points.count, by: 3) { points[index] += random() * noise }
+    return DepthFace(nosePoint: .zero, noseMeters: 0.5, points: points, relief: 0.03, coverage: 0.9)
+}
+
+@Suite struct DepthFaceFusionTests {
+    /// Merging a handful of noisy depth maps of a still face brings it closer to the face than any one of them.
+    @Test func mergingLowersTheNoise() throws {
+        let faces = (0..<5).map { noisyFace(seed: UInt64($0 + 1), shift: SIMD3(Float($0) * 0.001, 0, 0)) }
+        let merged = try #require(DepthFaceFusion.fuse(faces))
+        let clean = SyntheticDepthFace.signature()
+        let single = try #require(DepthSignature(points: faces[0].points).distance(to: clean))
+        let fused = try #require(DepthSignature(points: merged).distance(to: clean))
+        #expect(fused < single)
+    }
+
+    @Test func tooFewFacesDoNotMerge() {
+        #expect(DepthFaceFusion.fuse([noisyFace(seed: 1), noisyFace(seed: 2)]) == nil)
+    }
+}
+
+@Suite struct DepthCalibrationTests {
+    private let policy = DepthTemplatePolicy()
+
+    private func templates(visits: Int, perVisit: Int) -> [DepthTemplate] {
+        let start = Date()
+        return (0..<visits).flatMap { visit in
+            (0..<perVisit).map { index in
+                let face = noisyFace(seed: UInt64(visit * 10 + index + 1))
+                return DepthTemplate(
+                    signature: DepthSignature(points: face.points),
+                    learnedAt: start + Double(visit) * 3600 + Double(index) * 10
+                )
+            }
+        }
+    }
+
+    @Test func aLimitComesFromOtherVisits() throws {
+        let calibration = DepthCalibration.calibrate(templates(visits: 2, perVisit: 3), policy: policy)
+        #expect(calibration.visits == 2)
+        let limit = try #require(calibration.threshold)
+        #expect(limit > 0)
+        // Another face is beyond it.
+        let other = SyntheticDepthFace.signature(width: 0.155, noseLength: 0.022)
+        let apart = try #require(other.distance(to: DepthSignature(points: noisyFace(seed: 1).points)))
+        #expect(apart > limit)
+    }
+
+    @Test func oneVisitIsNotEnough() {
+        let calibration = DepthCalibration.calibrate(templates(visits: 1, perVisit: 8), policy: policy)
+        #expect(calibration.threshold == nil)
+        #expect(calibration.describe(policy: policy) == "8 templates from 1 visit, needs 6 from 2 visits in light")
+    }
+}
+
+/// Depth names a member only in the dark, on enough votes under their limit, clearly nearer them than anyone else.
+@MainActor @Suite struct DepthDecisionTests {
+    private let services = AppServices(settings: SettingsStore(defaults: UserDefaults(suiteName: "presence.depthdecision.\(UUID())")!))
+    private let kyle = HouseholdMember(name: "Kyle")
+    private let sam = HouseholdMember(name: "Sam")
+    private let person = UUID()
+    private let t0 = Date()
+
+    private func makeService() throws -> FaceRecognitionService {
+        services.settings[CoreSettings.faceRecognitionEnabled] = true
+        services.household.add(kyle)
+        services.household.add(sam)
+        let service = FaceRecognitionService(services: services, store: nil)
+        try service.saveEnrollment(memberID: kyle.id, embeddings: [LearningVectors.axis(0)])
+        try service.saveEnrollment(memberID: sam.id, embeddings: [LearningVectors.axis(1)])
+        service.updateSensing(isWatching: true, isSomeonePresent: true, at: t0)
+        service.depthIdentity.use(DepthCalibration(templates: 8, visits: 2, threshold: 1.5), for: kyle.id)
+        // The depth face on the followed person is the face in view.
+        service.noteFaces(count: 1, track: person, at: t0)
+        return service
+    }
+
+    private func score(_ distance: Double, runnerUp: Double? = nil) -> DepthIdentityScore {
+        var score = DepthIdentityScore()
+        score.other = distance
+        score.otherMember = kyle.id
+        score.runnerUp = runnerUp
+        return score
+    }
+
+    @Test func threeVotesUnderTheLimitNameThemInTheDark() throws {
+        let service = try makeService()
+        for index in 0..<2 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .dark, at: t0 + Double(index)) }
+        #expect(services.household.session.mode == .guest)
+        service.noteDepthScore(score(1.1), look: service.currentLook, light: .dark, at: t0 + 2)
+        #expect(services.household.session.mode == .recognized(kyle.id))
+        #expect(service.confirmedByDepth)
+    }
+
+    @Test func inLightTheCameraDecides() throws {
+        let service = try makeService()
+        for index in 0..<4 { service.noteDepthScore(score(1.0), look: service.currentLook, light: .normal, at: t0 + Double(index)) }
+        #expect(services.household.session.mode == .guest)
+    }
+
+    @Test func overTheLimitOrTooCloseToSomeoneElseIsNoVote() throws {
+        let service = try makeService()
+        for index in 0..<2 { service.noteDepthScore(score(2.0), look: service.currentLook, light: .dark, at: t0 + Double(index)) }
+        for index in 2..<4 { service.noteDepthScore(score(1.0, runnerUp: 1.1), look: service.currentLook, light: .dark, at: t0 + Double(index)) }
+        #expect(services.household.session.mode == .guest)
+        #expect(service.depthVotes.allSatisfy { $0 == nil })
+    }
+
+    /// A score worked out for a face that has since left counts for nothing.
+    @Test func aScoreForAnotherLookIsIgnored() throws {
+        let service = try makeService()
+        for index in 0..<3 { service.noteDepthScore(score(1.0), look: UUID(), light: .dark, at: t0 + Double(index)) }
+        #expect(services.household.session.mode == .guest)
+        #expect(service.depthVotes.isEmpty)
+    }
+}

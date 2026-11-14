@@ -28,8 +28,24 @@ extension LivePresenceService {
         lines.append("Depth face: " + frame.depthFace)
         lines.append("Camera recognition: " + (recognition.lastSampleSummary ?? "no sample yet"))
         lines.append("Depth identity: " + (recognition.depthIdentity.lastSummary ?? "no signature yet"))
+        let deciding = recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
+        lines.append("Depth votes: " + recognition.describeDepthVotes() + (deciding ? "" : " (in light the camera decides)"))
+        lines.append("Depth templates: " + depthTemplateSummary)
         lines.append("Session: " + sessionDescription)
         return lines
+    }
+
+    /// "Kyle 12 templates from 4 visits, match under 1.40 mm" per member.
+    private var depthTemplateSummary: String {
+        let evaluator = recognition.depthIdentity
+        let names = services.household.members
+        let parts = evaluator.templates.keys.sorted { $0.uuidString < $1.uuidString }.map { member in
+            let name = names.first { $0.id == member }?.name ?? "someone"
+            let calibration = evaluator.calibrations[member]
+                ?? DepthCalibration(templates: evaluator.templates[member]?.templates.count ?? 0, visits: 0, threshold: nil)
+            return name + " " + calibration.describe(policy: evaluator.policy)
+        }
+        return parts.isEmpty ? "none yet, kept in light once the camera recognizes someone" : parts.joined(separator: "; ")
     }
 
     private var sessionDescription: String {

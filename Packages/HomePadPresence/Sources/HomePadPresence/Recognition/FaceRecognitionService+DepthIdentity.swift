@@ -7,6 +7,11 @@ import HomePadCore
 struct DepthSignatureSample: Sendable {
     var signature: DepthSignature
     var expression: Double?
+    /// The depth person the face was on, which stands for the look in the
+    /// dark, where the camera sees no face.
+    var personID: UUID?
+    /// Depth faces merged into the signature (`DepthFaceFusion`).
+    var faces = 1
 }
 
 /// Depth identity, evaluation only (`DepthIdentityEvaluator`). Nothing here
@@ -24,7 +29,8 @@ extension FaceRecognitionService {
     func considerDepthSignature(_ sample: DepthSignatureSample, track: UUID?, light: AmbientLight?, at time: Date = Date()) {
         guard isEnabled else { return }
         let subject: DepthIdentityEvaluator.Subject
-        if let member = confirmedMemberID {
+        // Only the camera's naming labels templates: depth's own would teach itself.
+        if let member = confirmedMemberID, !confirmedByDepth {
             subject = .member(member)
         } else if lookIdentity == .stranger {
             subject = .stranger
@@ -40,11 +46,13 @@ extension FaceRecognitionService {
         let comparable = evaluator.prepare(track: track)
         let signature = sample.signature
         let expression = sample.expression
-        Task.detached(priority: .utility) {
+        let look = currentLook
+        Task.detached(priority: .utility) { [weak self] in
             let score = DepthIdentityScore.score(signature, member: subject.memberID, templates: comparable)
             await evaluator.record(
                 score, of: signature, expression: expression, subject: subject, track: track, light: light, names: names, at: time
             )
+            if subject == .unnamed { await self?.noteDepthScore(score, look: look, light: light, at: time) }
         }
     }
 }

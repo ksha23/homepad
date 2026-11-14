@@ -45,6 +45,9 @@ struct FrameAnalysis: Sendable {
     var depthSignature: DepthSignatureSample?
     /// For the recognition debug view, about four times a second while it is on.
     var debug: RecognitionDebugFrame?
+    /// True while the depth map shows a face on the followed person (found in
+    /// the last second). In the dark it is the only face there is.
+    var depthFaceSeen = false
 }
 
 /// The per-frame pipeline shared by every camera backend: motion, faces,
@@ -86,6 +89,14 @@ final class FrameAnalyzer: @unchecked Sendable {
     private let depthFaceInterval: TimeInterval = 0.5
     /// The last search's face, kept for the debug view between searches.
     private var lastDepthFace: (face: DepthFace?, searched: Bool) = (nil, false)
+    /// When a depth face was last found, and on which person.
+    private var depthFaceFound: (time: TimeInterval, person: UUID)?
+    /// Capture time of the last depth map searched, so each is searched once.
+    private var lastDepthFaceMap: TimeInterval = -.infinity
+    /// Depth faces collected for the next signature (`DepthFaceFusion`): every
+    /// new depth map is searched until enough are merged or `burstSeconds` passed.
+    private var burst: (person: UUID, startedAt: TimeInterval, faces: [DepthFace])?
+    private let burstSeconds: TimeInterval = 1.2
     private let debugRenderer = RecognitionDebugRenderer()
     private var lastDebugFrame: TimeInterval = -.infinity
     private let debugInterval: TimeInterval = 0.25
@@ -117,6 +128,9 @@ final class FrameAnalyzer: @unchecked Sendable {
         lastDepthFaceSearch = -.infinity
         lastDepthSignature = -.infinity
         lastDepthFace = (nil, false)
+        depthFaceFound = nil
+        lastDepthFaceMap = -.infinity
+        burst = nil
     }
 
     /// Loads models before anyone arrives, with requests of its own, so it
@@ -189,15 +203,25 @@ final class FrameAnalyzer: @unchecked Sendable {
     }
 
     /// Looks for the face on the followed head in the depth map, every
-    /// `depthFaceInterval`, and makes a depth signature of it when one is due.
+    /// `depthFaceInterval`. When a depth signature is due, searches every new
+    /// map for about a second and merges what it found into one signature.
     private func depthFace(in frame: SensorFrame, options: AnalyzerOptions) -> (face: DepthFace?, signature: DepthSignatureSample?) {
         let time = frame.timestamp
-        guard frame.source == .trueDepth, time - lastDepthFaceSearch >= depthFaceInterval, depth.people.person != nil else {
+        guard frame.source == .trueDepth, let person = depth.people.person else {
+            burst = nil
             return (nil, nil)
         }
+        if let current = burst, current.person != person.id { burst = nil }
+        if burst == nil, let interval = options.depthSignatureInterval, time - lastDepthSignature >= interval {
+            burst = (person.id, time, [])
+        }
+        guard burst != nil || time - lastDepthFaceSearch >= depthFaceInterval,
+              let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return (nil, nil) }
+        lastDepthFaceMap = mapTime
         lastDepthFaceSearch = time
         let face = depth.findFace(orientation: frame.orientation, at: time)
         lastDepthFace = (face, true)
+        if face != nil { depthFaceFound = (time, person.id) }
         if options.isTracing {
             let text = face.map {
                 String(format: "depth face at %.2fm, %d points, relief %.1f cm, coverage %.1f",
@@ -205,12 +229,29 @@ final class FrameAnalyzer: @unchecked Sendable {
             } ?? "depth face not found on the followed head"
             depth.note(TraceNote(key: "depth face", text: text))
         }
-        guard let face, let interval = options.depthSignatureInterval, time - lastDepthSignature >= interval else {
+        guard var current = burst else { return (face, nil) }
+        // A face far from its resting expression changes shape, where ARKit can tell.
+        if let face, (frame.faceExpression ?? 0) <= DepthSignature.maximumExpression {
+            current.faces.append(face)
+        }
+        guard current.faces.count >= DepthFaceFusion.maximumFaces || time - current.startedAt >= burstSeconds else {
+            burst = current
             return (face, nil)
         }
-        if let expression = frame.faceExpression, expression > DepthSignature.maximumExpression { return (face, nil) }
+        burst = nil
         lastDepthSignature = time
-        return (face, DepthSignatureSample(signature: DepthSignature(face: face), expression: frame.faceExpression))
+        guard current.faces.count >= DepthFaceFusion.minimumFaces, let points = DepthFaceFusion.fuse(current.faces) else {
+            if options.isTracing {
+                depth.note(TraceNote(key: "depth signature", text: "depth signature skipped: \(current.faces.count) faces "
+                    + "lined up in " + String(format: "%.2f", time - current.startedAt) + " s", repeats: true))
+            }
+            return (face, nil)
+        }
+        let sample = DepthSignatureSample(
+            signature: DepthSignature(points: points), expression: frame.faceExpression,
+            personID: person.id, faces: current.faces.count
+        )
+        return (face, sample)
     }
 
     /// Adds a line for the presence trace, delivered with the next analysis.
@@ -319,6 +360,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         let handSummary = tracesHand ? hands.describe(vision.hand) : nil
 
         if depth.people.person == nil { lastDepthFace = (nil, false) }
+        let depthFaceSeen = depthFaceFound.map { time - $0.time <= 1 && $0.person == depth.people.person?.id } ?? false
         var debug: RecognitionDebugFrame?
         if options.wantsDebugView, time - lastDebugFrame >= debugInterval {
             lastDebugFrame = time
@@ -335,7 +377,7 @@ final class FrameAnalyzer: @unchecked Sendable {
         return FrameAnalysis(
             observation: observation, embedding: embedding, handGesture: gesture, handSummary: handSummary,
             framesPerSecond: measureRate(at: time), backend: backend, faceTrackID: faceTrackID,
-            traceNotes: depth.takeNotes(), depthSignature: found.signature, debug: debug
+            traceNotes: depth.takeNotes(), depthSignature: found.signature, debug: debug, depthFaceSeen: depthFaceSeen
         )
     }
 

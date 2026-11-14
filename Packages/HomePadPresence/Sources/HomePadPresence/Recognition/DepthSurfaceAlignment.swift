@@ -99,6 +99,9 @@ enum DepthAlignment {
         var overlap: Double
         /// How far the points had to turn.
         var rotationDegrees: Double
+        /// The turn and shift that line the points up with the surface.
+        var rotation: simd_float3x3
+        var translation: SIMD3<Float>
     }
 
     static let iterations = 12
@@ -148,7 +151,9 @@ enum DepthAlignment {
         let kept = trimmed(matched, keeping: comparedFraction)
         let squares = kept.reduce(0.0) { $0 + Double($1.residual * $1.residual) }
         let rms = (squares / Double(max(1, kept.count))).squareRoot()
-        return Result(rmsMillimeters: rms * 1000, overlap: overlap, rotationDegrees: degrees)
+        return Result(
+            rmsMillimeters: rms * 1000, overlap: overlap, rotationDegrees: degrees, rotation: rotation, translation: translation
+        )
     }
 
     private struct Match {

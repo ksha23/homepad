@@ -257,7 +257,15 @@ public final class LivePresenceService: PresenceService {
         if let hand = analysis.handSummary { PresenceTrace.trace.logIfChanged("hand", hand) }
         // Every frame, so a break in face tracking stops learning even between
         // samples, and a new face starts a new look before its first sample.
-        recognition.noteFaces(count: analysis.observation.faces.count, track: analysis.faceTrackID)
+        // In the dark the camera sees no face, but the depth map does: that
+        // face, on the followed person, is the face in view.
+        let cameraFaces = analysis.observation.faces.count
+        let depthOnly = cameraFaces == 0 && analysis.depthFaceSeen
+            && recognition.isTooDarkForCamera(light: snapshot.ambientLight, at: Date())
+        recognition.noteFaces(
+            count: depthOnly ? 1 : cameraFaces,
+            track: depthOnly ? analysis.observation.depthPersonID : analysis.faceTrackID
+        )
         if !analysis.observation.faces.isEmpty {
             recognition.noteFace(backend: analysis.backend, isPresent: snapshot.isSomeonePresent)
         }
@@ -356,7 +364,8 @@ public final class LivePresenceService: PresenceService {
             embeddingInterval: interval,
             embeddingsNeedDepth: capabilities.hasTrueDepth && settings.useTrueDepth,
             isTracing: PresenceTrace.trace.isEnabled,
-            depthSignatureInterval: recognition.wantsDepthSignatures ? recognition.depthIdentity.policy.sampleInterval : nil,
+            depthSignatureInterval: recognition.wantsDepthSignatures
+                ? recognition.depthSignatureInterval(light: snapshot.ambientLight, at: now) : nil,
             wantsDebugView: settings.recognitionDebug && mode.usesCamera
         )
         if !settings.recognitionDebug || !mode.usesCamera, debugView != nil { debugView = nil }
