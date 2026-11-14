@@ -5,7 +5,8 @@ import HomePadCore
 ///
 /// - Starts presence only on a confirmed sighting, so one false detection does
 ///   not flip the screen to "someone" and back.
-/// - Smooths distance and applies proximity hysteresis.
+/// - Smooths distance and applies proximity hysteresis. Coming closer
+///   changes the level at once, moving away only after `awaySeconds`.
 /// - Holds presence for a short time after the last detection, so a face that
 ///   turns away for a moment does not flip the UI to "nobody".
 /// - Treats microphone activity as presence at an unknown distance, with a longer hold.
@@ -16,6 +17,11 @@ struct PresenceFusion: Sendable {
         /// Seconds a microphone detection keeps someone "present".
         var voiceHoldSeconds: TimeInterval = 45
         var hysteresisMeters = 0.15
+        /// A farther level takes effect only once every reading for this long
+        /// said farther. A single reading over a meter off, or leaning back
+        /// for a moment, flipped the face from its up close layout to its
+        /// across-the-room one and back within a second.
+        var awaySeconds: TimeInterval = 2
         /// A sighting starts presence only when another follows within this many
         /// seconds. Noise in the depth map or a coat that looks like shoulders
         /// shows up for a frame, a person stays. ARKit faces start it at once.
@@ -34,6 +40,8 @@ struct PresenceFusion: Sendable {
     /// Last camera observation, with or without anyone in it.
     private var lastCameraFrame: Date?
     private var unconfirmedSighting: Date?
+    /// Since when every reading has put the person farther than the current level.
+    private var awaySince: Date?
     /// Face distance over body estimate, learned while both are seen. Kept when
     /// presence ends, since it mostly depends on this camera and its framing.
     private(set) var bodyScale = 1.0
@@ -90,6 +98,7 @@ struct PresenceFusion: Sendable {
         lastCameraDetection = nil
         lastCameraFrame = nil
         unconfirmedSighting = nil
+        awaySince = nil
         lastVoiceDetection = nil
     }
 
@@ -127,15 +136,28 @@ struct PresenceFusion: Sendable {
         if let raw = observation.depthPersonMeters ?? faceDistance ?? observation.nearestBodyMeters ?? bodyDistance {
             let smoothed = smoother.add(raw)
             snapshot.nearestDistanceMeters = smoothed
-            snapshot.proximity = ProximityMath.level(
-                for: smoothed, current: snapshot.proximity, margin: config.hysteresisMeters
-            )
+            let level = ProximityMath.level(for: smoothed, current: snapshot.proximity, margin: config.hysteresisMeters)
+            moveProximity(to: level, at: observation.timestamp)
         } else {
             // Seen but too small or too far to measure.
             smoother.reset()
             snapshot.nearestDistanceMeters = nil
-            snapshot.proximity = .far
+            moveProximity(to: .far, at: observation.timestamp)
         }
+    }
+
+    /// Closer at once, farther once every reading for `awaySeconds` said farther.
+    private mutating func moveProximity(to level: ProximityLevel, at now: Date) {
+        guard level < snapshot.proximity else {
+            awaySince = nil
+            snapshot.proximity = level
+            return
+        }
+        let since = awaySince ?? now
+        awaySince = since
+        guard now.timeIntervalSince(since) >= config.awaySeconds else { return }
+        awaySince = nil
+        snapshot.proximity = level
     }
 
     private mutating func applyVoice(_ observation: SensorObservation) {
@@ -171,6 +193,7 @@ struct PresenceFusion: Sendable {
                 snapshot.nearestDistanceMeters = nil
                 snapshot.isLookingAtScreen = false
                 smoother.reset()
+                awaySince = nil
             }
             return
         }
@@ -178,5 +201,6 @@ struct PresenceFusion: Sendable {
         let activity = snapshot.lastActivity
         snapshot = PresenceSnapshot(ambientLight: light, lastActivity: activity)
         smoother.reset()
+        awaySince = nil
     }
 }

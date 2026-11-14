@@ -131,10 +131,31 @@ import Testing
                                                           facesAreTracked: true, isFreshSighting: false, bodyEstimateMeters: 1))
         #expect(lookingDown.proximity == .near)
         #expect(abs((lookingDown.nearestDistanceMeters ?? 0) - 0.8) < 0.1)
-        // Walking away shrinks the box: far again at once.
-        let away = fusion.ingest(SensorObservation(timestamp: start.addingTimeInterval(2), source: .trueDepth, bodyCount: 1,
-                                                   facesAreTracked: true, bodyEstimateMeters: 4))
-        #expect(away.proximity == .far)
+        // Walking away shrinks the box: far again once it has stayed small for `awaySeconds`.
+        let wait = fusion.config.awaySeconds
+        for step in 0...Int(wait * 10) {
+            _ = fusion.ingest(SensorObservation(timestamp: start.addingTimeInterval(2 + Double(step) * 0.1), source: .trueDepth,
+                                                bodyCount: 1, facesAreTracked: true, bodyEstimateMeters: 4))
+        }
+        #expect(fusion.snapshot.proximity == .far)
+    }
+
+    /// One reading over a meter off, or leaning back for a moment, flipped the
+    /// face to its across-the-room layout and back. Coming closer is still at once.
+    @Test func movingAwayWaitsAndComingCloserDoesNot() {
+        var fusion = PresenceFusion()
+        func reading(_ seconds: Double, _ meters: Double) -> PresenceSnapshot {
+            fusion.ingest(SensorObservation(timestamp: start.addingTimeInterval(seconds), source: .trueDepth,
+                                            faces: [face(meters)], facesAreTracked: true))
+        }
+        #expect(reading(0, 0.6).proximity == .near)
+        #expect(reading(0.1, 2.1).proximity == .near)
+        #expect(reading(0.2, 0.6).proximity == .near)
+        // Away for longer than `awaySeconds`: far.
+        let wait = fusion.config.awaySeconds
+        for step in 0...Int(wait * 10) { _ = reading(1 + Double(step) * 0.1, 3) }
+        #expect(fusion.snapshot.proximity == .far)
+        #expect(reading(1 + wait + 0.2, 0.6).proximity == .near)
     }
 
     /// Presence lapsed right after it was noticed, because the switch from the
