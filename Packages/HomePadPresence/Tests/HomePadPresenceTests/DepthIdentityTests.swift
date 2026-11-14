@@ -4,51 +4,139 @@ import simd
 import Testing
 @testable import HomePadPresence
 
-/// A synthetic face mesh: an ellipsoid with a nose, sized by `width`.
-enum SyntheticMesh {
-    static func vertices(width: Float = 0.14, noseLength: Float = 0.03, count: Int = 1220) -> [SIMD3<Float>] {
-        (0..<count).map { index in
-            let u = Float(index % 40) / 39 * 2 - 1
-            let v = Float(index / 40) / Float(count / 40) * 2 - 1
-            let nose = max(0, 1 - 6 * (u * u + v * v)) * noseLength
-            let z = 0.05 * (1 - 0.5 * (u * u + v * v)) + nose
-            return SIMD3(u * width / 2, v * width * 0.65, z)
+/// A synthetic face as the depth map shows it: a curved head with a nose,
+/// sized by `width`, its surface within 9 cm of the nose tip on a grid.
+enum SyntheticDepthFace {
+    /// How far behind the nose tip the face is at (x, y), in meters.
+    static func depth(x: Float, y: Float, width: Float, noseLength: Float) -> Float {
+        let curve = 0.05 * ((x / (width / 2)) * (x / (width / 2)) + (y / (width * 0.65)) * (y / (width * 0.65)))
+        let nose = noseLength * (1 - exp(-(x * x + y * y) / (0.015 * 0.015)))
+        return curve + nose
+    }
+
+    /// Signature points, turned by `turnDegrees` about the vertical axis
+    /// through the nose tip and moved by `shift`.
+    static func points(
+        width: Float = 0.14, noseLength: Float = 0.03, turnDegrees: Float = 0, shift: SIMD3<Float> = .zero
+    ) -> [Float] {
+        let angle = turnDegrees * .pi / 180
+        var points: [Float] = []
+        for y in stride(from: Float(-0.09), through: 0.09, by: 0.0036) {
+            for x in stride(from: Float(-0.09), through: 0.09, by: 0.0036) {
+                let z = depth(x: x, y: y, width: width, noseLength: noseLength)
+                let p = SIMD3<Float>(x, y, z)
+                guard simd_length(p) <= 0.09 else { continue }
+                let turned = SIMD3<Float>(p.x * cos(angle) + p.z * sin(angle), p.y, -p.x * sin(angle) + p.z * cos(angle)) + shift
+                points.append(contentsOf: [turned.x, turned.y, turned.z])
+            }
         }
+        return points
+    }
+
+    static func signature(width: Float = 0.14, noseLength: Float = 0.03, turnDegrees: Float = 0) -> DepthSignature {
+        DepthSignature(points: points(width: width, noseLength: noseLength, turnDegrees: turnDegrees))
     }
 }
 
 @Suite struct DepthSignatureTests {
     @Test func aFaceIsAtNoDistanceFromItself() throws {
-        let face = try #require(DepthSignature(vertices: SyntheticMesh.vertices()))
-        let again = try #require(DepthSignature(vertices: SyntheticMesh.vertices()))
-        #expect(face.distance(to: again) == 0)
-        #expect(face.points.count == 407 * 3)
+        let face = SyntheticDepthFace.signature()
+        let apart = try #require(face.distance(to: SyntheticDepthFace.signature()))
+        // What is left is the surface grid's own error on a curved face.
+        #expect(apart < 0.3)
     }
 
-    @Test func aWiderFaceIsFartherAway() throws {
-        let face = try #require(DepthSignature(vertices: SyntheticMesh.vertices(width: 0.14)))
-        let wider = try #require(DepthSignature(vertices: SyntheticMesh.vertices(width: 0.15)))
-        let apart = try #require(face.distance(to: wider))
-        #expect(apart > 1)
+    /// Where the head is and a small turn of it do not matter: the faces are lined up first.
+    @Test func aTurnedAndMovedFaceIsStillClose() throws {
+        let face = SyntheticDepthFace.signature()
+        let turned = DepthSignature(points: SyntheticDepthFace.points(turnDegrees: 10, shift: SIMD3(0.003, -0.002, 0.004)))
+        let apart = try #require(turned.distance(to: face))
+        #expect(apart < 0.5)
     }
 
-    /// An expression moves part of the mesh. The vertices that moved most are left out.
-    @Test func aLocalChangeIsLeftOut() throws {
-        var vertices = SyntheticMesh.vertices()
-        // One kept vertex in five moves 2 cm.
-        for index in vertices.indices where index % 15 == 0 {
-            vertices[index].z += 0.02
+    @Test func anotherFaceIsFartherAway() throws {
+        let face = SyntheticDepthFace.signature()
+        let other = SyntheticDepthFace.signature(width: 0.155, noseLength: 0.022)
+        let apart = try #require(other.distance(to: face))
+        let same = try #require(SyntheticDepthFace.signature(turnDegrees: 8).distance(to: face))
+        #expect(apart > same * 3)
+    }
+
+    @Test func aFaceTurnedFarAwayDoesNotCompare() {
+        let face = SyntheticDepthFace.signature()
+        #expect(SyntheticDepthFace.signature(turnDegrees: 60).distance(to: face) == nil)
+    }
+
+    /// Templates from ARKit's face mesh, which had no version, no longer load.
+    @Test func meshSignaturesNoLongerLoad() throws {
+        let old = Data(#"{"points":[0,0,0]}"#.utf8)
+        #expect(throws: DecodingError.self) { try JSONDecoder().decode(DepthSignature.self, from: old) }
+        let current = try JSONEncoder().encode(SyntheticDepthFace.signature())
+        #expect(try JSONDecoder().decode(DepthSignature.self, from: current) == SyntheticDepthFace.signature())
+    }
+}
+
+/// Finding the face on the followed head in a depth map, with no image and no ARKit.
+@Suite struct DepthFaceFinderTests {
+    private let width = 320
+    private let height = 240
+    private let focal = 300.0
+
+    /// A wall at 2 m with `surface` in front of it around the map's center, `distance` away at its nearest.
+    private func map(distance: Float, surface: (Float, Float) -> Float?) -> DepthMap {
+        var meters = [Float](repeating: 2, count: width * height)
+        for row in 0..<height {
+            for column in 0..<width {
+                // Solve for the depth along this pixel's ray, with the surface's own depth at its x and y.
+                var z = distance
+                for _ in 0..<4 {
+                    let x = (Float(column) - Float(width) / 2) * z / Float(focal)
+                    let y = (Float(row) - Float(height) / 2) * z / Float(focal)
+                    guard let behind = surface(x, y) else { z = .nan; break }
+                    z = distance + behind
+                }
+                if z.isFinite { meters[row * width + column] = z }
+            }
         }
-        let face = try #require(DepthSignature(vertices: SyntheticMesh.vertices()))
-        let smiling = try #require(DepthSignature(vertices: vertices))
-        let apart = try #require(face.distance(to: smiling))
-        #expect(apart < 2)
+        return DepthMap(width: width, height: height, meters: meters, focalLength: focal)
     }
 
-    @Test func meshesOfDifferentSizesDoNotCompare() throws {
-        let face = try #require(DepthSignature(vertices: SyntheticMesh.vertices()))
-        let other = try #require(DepthSignature(vertices: SyntheticMesh.vertices(count: 800)))
-        #expect(face.distance(to: other) == nil)
+    private func head(at distance: Double) -> DepthPersonTracker.Person {
+        let radius = 0.12 * focal / distance
+        return DepthPersonTracker.Person(
+            id: UUID(), center: CGPoint(x: 0.5, y: 0.5), distanceMeters: distance,
+            radius: CGSize(width: radius / Double(width), height: radius / Double(height)),
+            confirmedAt: 0, confirmedCenter: CGPoint(x: 0.5, y: 0.5), confirmedDistance: distance, seenAt: 0
+        )
+    }
+
+    @Test func findsTheNoseTipAndTheFaceAroundIt() throws {
+        let depthMap = map(distance: 0.5) { x, y in
+            x * x + y * y <= 0.11 * 0.11 ? SyntheticDepthFace.depth(x: x, y: y, width: 0.14, noseLength: 0.03) : nil
+        }
+        let face = try #require(DepthFaceFinder.find(in: depthMap, head: head(at: 0.52), orientation: .up))
+        #expect(abs(face.nosePoint.x - 0.5) < 0.02)
+        #expect(abs(face.nosePoint.y - 0.5) < 0.02)
+        #expect(abs(face.noseMeters - 0.5) < 0.01)
+        #expect(face.pointCount >= DepthFaceFinder.minimumPoints)
+        #expect(DepthFaceFinder.reliefRange.contains(face.relief))
+    }
+
+    /// A photo is flat: nothing falls away behind its nearest point.
+    @Test func aFlatPictureIsNoFace() {
+        let photo = map(distance: 0.5) { x, y in x * x + y * y <= 0.11 * 0.11 ? 0 : nil }
+        #expect(DepthFaceFinder.find(in: photo, head: head(at: 0.5), orientation: .up) == nil)
+    }
+
+    /// The same face, found by depth, compares as the same face.
+    @Test func aFoundFaceMatchesItsSyntheticSignature() throws {
+        let depthMap = map(distance: 0.5) { x, y in
+            x * x + y * y <= 0.11 * 0.11 ? SyntheticDepthFace.depth(x: x, y: y, width: 0.14, noseLength: 0.03) : nil
+        }
+        let face = try #require(DepthFaceFinder.find(in: depthMap, head: head(at: 0.52), orientation: .up))
+        let same = try #require(DepthSignature(face: face).distance(to: SyntheticDepthFace.signature()))
+        let other = try #require(DepthSignature(face: face).distance(to: SyntheticDepthFace.signature(width: 0.155, noseLength: 0.022)))
+        #expect(same < other)
     }
 }
 
@@ -57,7 +145,7 @@ enum SyntheticMesh {
     private let anna = UUID()
 
     private func signature(width: Float) -> DepthSignature {
-        DepthSignature(vertices: SyntheticMesh.vertices(width: width))!
+        SyntheticDepthFace.signature(width: width)
     }
 
     @Test func scoresOwnAndNearestOther() throws {
@@ -125,7 +213,7 @@ enum SyntheticMesh {
         return service
     }
 
-    private var signature: DepthSignature { DepthSignature(vertices: SyntheticMesh.vertices())! }
+    private var signature: DepthSignature { SyntheticDepthFace.signature() }
 
     /// In light, a confirmed member's signature is kept. A visit is scored only against other visits.
     @Test func keepsTemplatesInLightAndScoresOtherVisits() throws {

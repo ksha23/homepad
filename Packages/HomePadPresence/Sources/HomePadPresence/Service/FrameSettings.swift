@@ -6,6 +6,7 @@ struct FrameSettings {
     var handGestures: Bool
     var motionEvents: Bool
     var useTrueDepth: Bool
+    var recognitionDebug: Bool
 
     @MainActor
     init(_ settings: SettingsStore) {
@@ -13,5 +14,6 @@ struct FrameSettings {
         handGestures = settings[CoreSettings.handGesturesEnabled]
         motionEvents = settings[PresenceSettings.motionEvents]
         useTrueDepth = settings[PresenceSettings.useTrueDepth]
+        recognitionDebug = settings[PresenceSettings.recognitionDebug]
     }
 }

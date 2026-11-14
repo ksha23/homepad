@@ -84,8 +84,6 @@ private final class FrameReceiver: NSObject, ARSessionDelegate, @unchecked Senda
     var orientation: OrientationTracker?
     var deliver: (@MainActor (FrameAnalysis) -> Void)?
     var failed: (@MainActor (String) -> Void)?
-    /// When the last depth signature was taken.
-    private var lastSignatureAt: TimeInterval = -.infinity
 
     init(analyzer: FrameAnalyzer) {
         self.analyzer = analyzer
@@ -115,7 +113,7 @@ private final class FrameReceiver: NSObject, ARSessionDelegate, @unchecked Senda
             arkitAmbientIntensity: frame.lightEstimate.map { Double($0.ambientIntensity) },
             trackedFaces: Self.faces(in: frame),
             faceTrackID: faceTrackID,
-            depthSignature: dueSignature(frame, track: faceTrackID)
+            faceExpression: Self.expression(in: frame)
         )
         let analysis = analyzer.analyze(sensorFrame, backend: .faceTracking)
         Task { @MainActor in deliver(analysis) }
@@ -127,28 +125,16 @@ private final class FrameReceiver: NSObject, ARSessionDelegate, @unchecked Senda
     }
 
 
-    /// A depth signature of the one tracked face, when the analyzer wants one
-    /// and the last is `depthSignatureInterval` old.
-    private func dueSignature(_ frame: ARFrame, track: UUID?) -> DepthSignatureSample? {
-        guard let interval = analyzer.options.depthSignatureInterval, track != nil,
-              frame.timestamp - lastSignatureAt >= interval else { return nil }
+    /// How far from resting the one tracked face's expression is: the
+    /// largest blend shape, the eyes left out, since blinks and glances barely
+    /// change the face's shape. Nil without exactly one tracked face.
+    static func expression(in frame: ARFrame) -> Double? {
         let anchors = frame.anchors.compactMap { $0 as? ARFaceAnchor }.filter(\.isTracked)
-        guard anchors.count == 1, let anchor = anchors.first, let sample = Self.depthSignature(of: anchor) else { return nil }
-        lastSignatureAt = frame.timestamp
-        return sample
-    }
-
-    /// The face mesh as a signature, when the face is near its resting
-    /// expression. The eyes are left out of the expression: blinks and
-    /// glances barely move the mesh.
-    static func depthSignature(of anchor: ARFaceAnchor) -> DepthSignatureSample? {
-        let expression = anchor.blendShapes
+        guard anchors.count == 1, let anchor = anchors.first else { return nil }
+        return anchor.blendShapes
             .filter { !$0.key.rawValue.hasPrefix("eye") }
             .map { $0.value.doubleValue }
             .max() ?? 0
-        guard expression <= DepthSignature.maximumExpression,
-              let signature = DepthSignature(vertices: anchor.geometry.vertices) else { return nil }
-        return DepthSignatureSample(signature: signature, expression: expression)
     }
 
     /// Every tracked face anchor: its position in camera space for the face

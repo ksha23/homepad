@@ -37,6 +37,9 @@ public final class LivePresenceService: PresenceService {
     /// pose wait for them, so no frame stalls on the load, and presence and
     /// distance run from the first frame. The people button shows it.
     public private(set) var isRecognitionStarting = false
+    /// What the camera and depth sensor see, for the recognition debug view.
+    /// Nil while it is off. In memory only.
+    private(set) var debugView: RecognitionDebugState?
     @ObservationIgnored private var faceTrackingFailed = false
     @ObservationIgnored private var lastMotionEvent = Date.distantPast
     /// The settings the per-frame path reads.
@@ -272,6 +275,9 @@ public final class LivePresenceService: PresenceService {
             services.events.post(.gesture(gesture))
         }
         publish(fusion.snapshot)
+        if let debug = analysis.debug {
+            debugView = RecognitionDebugState(frame: debug, lines: debugLines(analysis, frame: debug))
+        }
         // A sighting wakes the full-rate path. A light change may switch between
         // the RGB and depth scans, or between face tracking and the depth scan.
         let lightChanged = selectionLight(at: Date()) != selectedLight
@@ -350,8 +356,10 @@ public final class LivePresenceService: PresenceService {
             embeddingInterval: interval,
             embeddingsNeedDepth: capabilities.hasTrueDepth && settings.useTrueDepth,
             isTracing: PresenceTrace.trace.isEnabled,
-            depthSignatureInterval: recognition.wantsDepthSignatures ? recognition.depthIdentity.policy.sampleInterval : nil
+            depthSignatureInterval: recognition.wantsDepthSignatures ? recognition.depthIdentity.policy.sampleInterval : nil,
+            wantsDebugView: settings.recognitionDebug && mode.usesCamera
         )
+        if !settings.recognitionDebug || !mode.usesCamera, debugView != nil { debugView = nil }
         let cadence = wantsEmbeddings ? "\(purpose) samples every \(PresenceTrace.format(interval)) s"
             : wouldSample ? "recognition waits for its models" : "recognition sampling off"
         PresenceTrace.trace.logIfChanged("cadence", cadence)

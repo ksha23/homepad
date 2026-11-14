@@ -2,10 +2,11 @@ import Foundation
 import HomePadCore
 
 /// A depth signature of the face in view, with how far from resting its
-/// expression was (the largest ARKit blend shape, eyes left out).
+/// expression was (the largest ARKit blend shape, eyes left out), when ARKit
+/// tracked the face. In the dark it does not.
 struct DepthSignatureSample: Sendable {
     var signature: DepthSignature
-    var expression: Double
+    var expression: Double?
 }
 
 /// Depth identity, evaluation only (`DepthIdentityEvaluator`). Nothing here
@@ -33,9 +34,17 @@ extension FaceRecognitionService {
             return
         }
         let names = Dictionary(services.household.members.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
-        depthIdentity.consider(
-            sample.signature, expression: sample.expression, subject: subject, track: track,
-            light: light, names: names, at: time
-        )
+        // Lining a face up with every template is too slow for the main
+        // thread, so the scores are worked out off it.
+        let evaluator = depthIdentity
+        let comparable = evaluator.prepare(track: track)
+        let signature = sample.signature
+        let expression = sample.expression
+        Task.detached(priority: .utility) {
+            let score = DepthIdentityScore.score(signature, member: subject.memberID, templates: comparable)
+            await evaluator.record(
+                score, of: signature, expression: expression, subject: subject, track: track, light: light, names: names, at: time
+            )
+        }
     }
 }

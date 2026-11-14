@@ -23,8 +23,9 @@ struct SensorFrame: @unchecked Sendable {
     /// The unbroken single-face track this frame belongs to (`FaceTrackContinuity`).
     /// Nil unless ARKit tracks exactly one face.
     var faceTrackID: UUID?
-    /// A depth signature of that face, when one was due (`DepthSignature`).
-    var depthSignature: DepthSignatureSample?
+    /// How far from resting that face's expression is, the largest ARKit
+    /// blend shape with the eyes left out. Nil where ARKit tracks no one face.
+    var faceExpression: Double?
 
     /// Focal length in pixels, from the field of view and native width.
     var focalLengthPixels: Double? {

@@ -17,7 +17,7 @@ import HomePadCore
 @MainActor
 final class DepthIdentityEvaluator {
     /// Whose face the signature is, as RGB recognition decided on this look.
-    enum Subject: Equatable {
+    enum Subject: Equatable, Sendable {
         case member(UUID)
         case stranger
         /// Not named or settled yet, as in a dark room, where RGB cannot tell
@@ -31,6 +31,8 @@ final class DepthIdentityEvaluator {
     }
 
     private(set) var templates: [UUID: MemberDepthTemplates] = [:]
+    /// The last score in words, for the recognition debug view.
+    private(set) var lastSummary: String?
     let policy: DepthTemplatePolicy
     private let store: FaceTemplateStore?
     /// The face track the per-track counts below belong to.
@@ -82,21 +84,38 @@ final class DepthIdentityEvaluator {
     /// Scores one signature and traces the result, then keeps it as a
     /// template when the policy allows. `names` are only for the trace.
     func consider(
-        _ signature: DepthSignature, expression: Double, subject: Subject, track newTrack: UUID?,
+        _ signature: DepthSignature, expression: Double?, subject: Subject, track newTrack: UUID?,
         light: AmbientLight?, names: [UUID: String], at time: Date
     ) {
+        let comparable = prepare(track: newTrack)
+        let score = DepthIdentityScore.score(signature, member: subject.memberID, templates: comparable)
+        record(score, of: signature, expression: expression, subject: subject, track: newTrack, light: light, names: names, at: time)
+    }
+
+    /// Starts a new face track when it changed, and returns the templates a
+    /// signature on it is compared with: every member's, less the ones kept on
+    /// this track, so a visit is only ever compared with other visits.
+    func prepare(track newTrack: UUID?) -> [UUID: [DepthSignature]] {
         if newTrack != track { startTrack(newTrack) }
-        let member = subject.memberID
-        let comparable = templates.mapValues { stored in
+        return templates.mapValues { stored in
             stored.templates.filter { !keptThisTrack.contains($0.learnedAt) }.map(\.signature)
         }
-        let score = DepthIdentityScore.score(signature, member: member, templates: comparable)
-        PresenceTrace.trace.log(Self.describe(
-            score, member: member, unnamed: subject == .unnamed, light: light, expression: expression, names: names
-        ))
-        if let member, newTrack != nil, policy.mayKeep(light: light, keptOnTrack: keptOnTrack, lastKeptAt: lastKeptAt, at: time) {
-            keep(signature, for: member, at: time, names: names)
-        }
+    }
+
+    /// Traces a score `DepthIdentityScore.score` worked out for a signature
+    /// on `prepare`'s templates, then keeps the signature as a template when
+    /// the policy allows and the track is still the same.
+    func record(
+        _ score: DepthIdentityScore, of signature: DepthSignature, expression: Double?, subject: Subject,
+        track scoredTrack: UUID?, light: AmbientLight?, names: [UUID: String], at time: Date
+    ) {
+        let member = subject.memberID
+        let line = Self.describe(score, member: member, unnamed: subject == .unnamed, light: light, expression: expression, names: names)
+        PresenceTrace.trace.log(line)
+        lastSummary = String(line.dropFirst("depth identity ".count))
+        guard let member, scoredTrack != nil, scoredTrack == track,
+              policy.mayKeep(light: light, keptOnTrack: keptOnTrack, lastKeptAt: lastKeptAt, at: time) else { return }
+        keep(signature, for: member, at: time, names: names)
     }
 
     private func keep(_ signature: DepthSignature, for member: UUID, at time: Date, names: [UUID: String]) {
@@ -131,12 +150,13 @@ final class DepthIdentityEvaluator {
     /// "depth identity Kyle, light dim, expression 0.12: own 1.42mm nearest of 8,
     /// others 2.95mm nearest of 6 (Sam)". Distances, counts and names only.
     nonisolated static func describe(
-        _ score: DepthIdentityScore, member: UUID?, unnamed: Bool = false, light: AmbientLight?, expression: Double,
+        _ score: DepthIdentityScore, member: UUID?, unnamed: Bool = false, light: AmbientLight?, expression: Double?,
         names: [UUID: String]
     ) -> String {
         let who = member.map { names[$0] ?? "?" } ?? (unnamed ? "unnamed face" : "stranger")
         let lightText = light.map { "\($0)" } ?? "unknown"
-        var text = "depth identity \(who), light \(lightText), expression \(String(format: "%.2f", expression)): "
+        let expressionText = expression.map { String(format: "%.2f", $0) } ?? "-"
+        var text = "depth identity \(who), light \(lightText), expression \(expressionText): "
         if member != nil {
             text += score.own.map { "own \(millimeters($0)) nearest of \(score.ownCount), " } ?? "no own templates yet, "
         }

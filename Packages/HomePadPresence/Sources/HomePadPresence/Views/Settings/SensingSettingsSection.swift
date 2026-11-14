@@ -40,6 +40,14 @@ struct SensingSettingsSection: View {
         } footer: {
             Text("Hold an open palm still toward the iPad for a moment to stop a ringing timer, and, with Palm Plays and Pauses Music on, to play or pause music. With AirPods in, nod to answer yes or shake your head to answer no.")
         }
+
+        Section {
+            Toggle("Show What the Sensors See", isOn: settings.binding(PresenceSettings.recognitionDebug))
+        } header: {
+            Text("Troubleshooting")
+        } footer: {
+            Text("On the face screen, shows what the camera and the Face ID camera's depth see, and what recognition made of it. The pictures stay on this iPad and are never saved.")
+        }
     }
 
     private var sensingFooter: String {

@@ -49,6 +49,7 @@ In a dark room ARKit loses a tracked face on almost half the frames, often for s
 - From then on the head is looked for in each map near where it was, at about the same depth. While most of the head's disk is still at the head's depth, it stays put, so it does not creep onto the body of someone standing still. A head that moved is looked for within how far a person can move between two maps (1.5 m a second, 15 to 60 cm).
 - The room never starts a person, so the walls and furniture a wall-mounted iPad always sees do not count. A person standing still stays followed, since nothing has to move.
 - Something right behind a person, such as a chair back within 15 cm of their head, can take their place when they leave. So a person is let go 30 s after a face on their head, or 20 cm of their own movement, last confirmed them. A face on another head (20 cm away or more) is another person.
+- A face found in the depth map itself confirms them too (`DepthFaceFinder`, see [Depth identity](#depth-identity-evaluation-only)). In a dark room ARKit finds no face, so someone sitting still was let go after 30 s while the depth still showed them.
 - The followed head's depth holds presence (it never starts it, a face or movement does) and is the distance presence reports, ahead of ARKit's face anchor, because ARKit also misjudges how far a face is in the dark. It is depth along the camera axis to the face.
 - Cost: while depth still follows someone who turned away, face tracking keeps running at the active rate, up to 30 s plus the duty cycle's 20 s cooldown.
 
@@ -112,10 +113,12 @@ The trace shows where the grid read: each sample line says `live relief 22mm val
 
 #### Depth identity (evaluation only)
 
-Recognition in the dark should one day come from TrueDepth alone, which needs no light. Before depth may name anyone, the iPad measures how well it would. Depth identity never decides who someone is, never unlocks anything and never changes what recognition decided. Keeping a recognized person recognized through the dark is the depth person tracker's job (see [Presence in the dark](#presence-in-the-dark-following-the-person-through-depth)), not this one's.
+Recognition uses the camera and depth together in light. When it is too dark for the camera, it is to fall back on the dot projector alone: TrueDepth depth, which needs no light. Before depth may name anyone, the iPad measures how well it would. Depth identity never decides who someone is, never unlocks anything and never changes what recognition decided. Keeping a recognized person recognized through the dark is the depth person tracker's job (see [Presence in the dark](#presence-in-the-dark-following-the-person-through-depth)), not this one's.
 
-- **The signature** (`DepthSignature`) is ARKit's face mesh, which ARKit fits to the TrueDepth depth of the face: every third of its 1,220 vertices, in the face's own coordinates and in meters, so it does not change with where the head is or how it is turned, and it works in the dark. It is taken only from a face near its resting expression (no ARKit blend shape above 0.35, the eyes left out). Two signatures are compared by the root mean square distance between matching vertices, over the 70 percent that are closest, in millimeters, so a smile or a raised brow is left out.
-- **When**: every 3 s of an analyzed face tracking frame with exactly one tracked face, while RGB recognition has named the face in view a member, or settled it as a stranger (`DepthIdentityEvaluator`). Reading the mesh costs no extra frames.
+- **The face, from depth alone** (`DepthFaceFinder`): on the followed person's head in the full depth map, the nose tip is the nearest few millimeters (a robust minimum, so a stray pixel does not count), and the face is the surface within 9 cm of it, up to 2,000 points about 3.6 mm apart, the nose tip at the origin and turned upright. It must look like a face: its median depth behind the nose tip between 1.2 and 6 cm, and covering 60 percent or more of the disc within 5 cm of it, seen from the camera. A photo, a wall or a chair back does not. The depth map is searched every 0.5 s while a person is followed.
+- **Why not ARKit's face mesh**: the signature used to be ARKit's face mesh. In a 3 lux room ARKit found no face in 478 frames with the owner looking at the iPad from 0.5 m, so there was no mesh in the one place depth identity is for. Templates of the mesh signature no longer load.
+- **The signature** (`DepthSignature`) is those points. Two are compared by lining one face's points up with the other's surface (`DepthAlignment`): both start with the nose tips together, then each round matches every point to the surface straight behind or in front of it and solves for the small turn and shift that bring the closest 70 percent nearer to the surface's tangent planes. What is left is the root mean square distance of the closest 85 percent, in millimeters. It keeps more than the alignment uses, since trimming as much would leave out the nose, which sets faces apart most. Faces that overlap less than 60 percent, or had to turn more than 30 degrees, do not compare. Where ARKit tracks the face, a signature is skipped when its expression is too far from resting (a blend shape above 0.35, the eyes left out).
+- **When**: every 3 s while a face is on the followed head (`DepthIdentityEvaluator`), when RGB recognition has named it a member, settled it as a stranger, or not decided yet (in the dark it cannot), if anyone has depth templates. Lining a face up with 20 templates is too slow for the main thread, so the scores are worked out off it.
 - **Templates** are the member's own signatures, kept while RGB recognition has confirmed them on the look and the room is not dark (it is most reliable in light): at most 3 per face track, 10 s apart, 20 per member, the oldest rolling out. They are face data, stored like the face templates in `FaceTemplates/Depth/<member>.json`, deleted and moved with the member, and cleared by setting the face up again and by Reset Learned Looks. Nothing of a signature or a template is ever written to a trace or a log.
 - **The evaluation**: each signature is scored before it can become a template, against the member's templates from other visits (the ones kept on this face track are left out, so a visit is never compared with itself) and against every other member's. A stranger's face is scored against every member.
 
@@ -127,6 +130,7 @@ The presence trace logs one line per signature, with distances, counts and names
 depth identity Kyle, light dark, expression 0.08: own 1.42mm nearest of 12, others 2.95mm nearest of 9 (Sam)
 depth identity Kyle, light dim, expression 0.12: no own templates yet, no others
 depth identity stranger, light normal, expression 0.20: others 2.10mm nearest of 21 (Kyle)
+depth identity unnamed face, light dark, expression -: others 1.10mm nearest of 20 (Kyle)
 depth template added for Kyle, 13 of 20
 ```
 
@@ -141,6 +145,10 @@ Depth identity may be allowed to name someone only when the traces show all of t
 3. **The same in the dark**: the own distances in the dark lines lie in the same range as in light. The whole point is the dark.
 
 Even then it would start small: carrying an RGB recognition across a look in the dark, or naming a member while RGB stays undecided in the dark, with Face ID still required for anything sensitive.
+
+#### Seeing what the sensors see
+
+Settings, Presence & Privacy, Show What the Sensors See puts a panel on the face screen: the camera's picture with the faces ARKit or Vision found, the depth map (near in red, far in blue) with the followed head, the nose tip the depth face was found at and its 9 cm reach, and a line per stage: the backend and light, the camera's faces, the depth person, the depth face, the last recognition sample (with its crop's brightness), the last depth identity score, and the session. It is drawn four times a second while on, takes no touches, and lives in memory only: nothing of it is saved, traced or sent anywhere.
 
 #### Each HomePad learns each person itself
 
@@ -339,7 +347,7 @@ Tests (Swift Testing) cover distance and proximity math, fusion, depth registrat
 - Following a person through depth in the dark on both iPads: that `ARCamera.projectPoint` in landscape right lands the face on the face in the depth map (`depth seed missed` lines say it did not), that a person standing still stays followed, and that someone leaving is lost rather than replaced by the wall or chair behind them.
 - The RGB distance constant (0.16 m face width) against a tape measure.
 - EXIF BrightnessValue to lux mapping, and the ARKit intensity fallback, against a lux meter or the iPad's auto-brightness.
-- Depth identity: whether ARKit's face mesh separates household members and strangers at all (the evaluation above), and whether the 0.35 expression cutoff leaves enough signatures.
+- Depth identity: whether the depth map's face separates household members and strangers at all (the evaluation above), in the dark as in light, and whether the finder's nose tip lands on the nose when the head is turned or a hand is near the face.
 - Face recognition thresholds for the household, liveness relief against printed photos and a phone screen, and template protection while the iPad is locked.
 - Hand gesture reliability at 1 to 2.5 m, and head gesture axes on real AirPods (pitch for nodding, yaw for shaking).
 - Sound classification of the actual smoke and CO alarms and doorbell in the home.

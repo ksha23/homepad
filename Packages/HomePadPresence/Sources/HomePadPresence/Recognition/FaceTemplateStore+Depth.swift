@@ -31,7 +31,11 @@ extension FaceTemplateStore {
     func moveDepth(from old: UUID, to new: UUID) throws {
         let url = depthFileURL(for: old)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
-        var templates = try JSONDecoder().decode(MemberDepthTemplates.self, from: Data(contentsOf: url))
+        // Templates of an older signature version no longer load. They are of no use, so they go.
+        guard var templates = try? JSONDecoder().decode(MemberDepthTemplates.self, from: Data(contentsOf: url)) else {
+            try deleteDepth(memberID: old)
+            return
+        }
         templates.memberID = new
         try saveDepth(templates)
         try deleteDepth(memberID: old)

@@ -44,6 +44,8 @@ final class FaceRecognitionService {
     /// What the matcher compares against: each member's enrolled and learned
     /// embeddings together. Rebuilt when either changes.
     @ObservationIgnored private(set) var matchSet: [FaceTemplate] = []
+    /// What became of the last sample, in words, for the recognition debug view.
+    @ObservationIgnored private(set) var lastSampleSummary: String?
     /// Which face track learning may use (`FaceLearningSession`).
     @ObservationIgnored var learning = FaceLearningSession()
     let learningPolicy: FaceLearningPolicy
@@ -203,11 +205,14 @@ final class FaceRecognitionService {
         if looks.noteSample(track: sample.trackID) { lookChanged(at: time) }
         // Too dark to tell anyone apart: neither a match, a stranger nor a lesson.
         if let luma = sample.cropLuma, luma < FaceEmbedder.minimumCropLuma {
+            lastSampleSummary = "too dark to tell" + Self.describeLuma(sample)
             noteSample(nil, at: time)
             PresenceTrace.trace.log("sample skipped: too dark" + Self.describeLuma(sample) + PresenceTrace.describePose(sample))
             return
         }
         if let member = confirmedMemberID {
+            let name = services.household.members.first { $0.id == member }?.name ?? "someone"
+            lastSampleSummary = "\(name) confirmed, sampling to learn" + Self.describeLuma(sample)
             learnIfUseful(sample, of: member, at: time)
             // Samples taken only to learn stay out of the votes.
             guard needsRecheck(at: time) else { return }
@@ -222,12 +227,14 @@ final class FaceRecognitionService {
             if let liveness = sample.liveness {
                 lastLiveAt = liveness.isLive ? time : nil
                 // The depth could not tell a face from a photo: neither a match nor a spoof.
-                if liveness.unsure != nil {
+                if let unsure = liveness.unsure {
+                    lastSampleSummary = "skipped, depth unsure: \(unsure.description)"
                     noteSample(nil, at: time)
                     PresenceTrace.trace.log("sample skipped: \(PresenceTrace.describe(liveness))" + PresenceTrace.describePose(sample))
                     return
                 }
             } else if !hasRecentLiveness(at: time) {
+                lastSampleSummary = "skipped, no depth for the liveness check"
                 noteSample(nil, at: time)
                 PresenceTrace.trace.log("sample skipped: liveness required, no depth\(Self.describeWait(sample))")
                 return
@@ -241,6 +248,8 @@ final class FaceRecognitionService {
             decision = strictness.matcher.match(sample.embedding, against: matchSet)
         }
         lastDecision = decision
+        let summaryNames = Dictionary(services.household.members.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        lastSampleSummary = PresenceTrace.describe(decision, names: summaryNames) + Self.describeLuma(sample)
         noteSample(decision, at: time)
         learning.noteDecision(decision, track: sample.trackID)
         let winner = voter.add(decision, at: time)

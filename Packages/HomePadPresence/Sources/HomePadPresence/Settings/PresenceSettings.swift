@@ -14,6 +14,9 @@ enum PresenceSettings {
     static let useTrueDepth = SettingKey<Bool>("presence.useTrueDepth", default: true)
     /// Post `.motionDetected` events for other modules (Flow face, kiosk wake).
     static let motionEvents = SettingKey<Bool>("presence.motionEvents", default: true)
+    /// Show what the camera and depth sensor see, and what recognition made of
+    /// it, on the face screen (`RecognitionDebugOverlay`).
+    static let recognitionDebug = SettingKey<Bool>("presence.recognitionDebug", default: false)
     /// Listen for AirPods nods and shakes when a yes or no question is likely.
     static let headGestures = SettingKey<Bool>("presence.headGestures", default: true)
     /// Which sound kinds raise alerts, by `SoundAlertKind.rawValue`.

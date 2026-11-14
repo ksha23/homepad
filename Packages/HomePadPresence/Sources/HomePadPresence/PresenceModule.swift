@@ -28,6 +28,9 @@ public enum PresenceModule: HomePadModule {
         registry.register(overlay: OverlayDescriptor(id: "presence.soundAlerts", zIndex: 900) {
             SoundAlertOverlay(sounds: presence.sounds)
         })
+        registry.register(overlay: OverlayDescriptor(id: "presence.recognitionDebug", zIndex: 850) {
+            RecognitionDebugOverlay(presence: presence, settings: services.settings)
+        })
         registry.register(tool: PresenceTools.status(presence: presence, household: services.household))
     }
 
