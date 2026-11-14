@@ -77,8 +77,9 @@ struct DepthTemplatePolicy: Equatable, Sendable {
     var depthWindow = 4
     /// And the nearest other member is at least this many times farther.
     var marginFactor = 1.25
-    /// Seconds between signatures while depth is deciding who it is.
-    var decidingInterval: TimeInterval = 1
+    /// Seconds between signatures while a face just set up is learned
+    /// (`DepthIdentityEvaluator.learnQuickly`).
+    var quickInterval: TimeInterval = 1
 
     /// While a member's face is being set up: more templates from the one
     /// look, closer together.

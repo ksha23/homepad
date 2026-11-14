@@ -12,9 +12,10 @@ import simd
 enum DepthFaceFusion {
     /// 3 mm cells over the 18 cm a face reaches across.
     static let cells = 60
-    /// Faces merged at least, and at most.
+    /// Faces merged at least, and at most: each but the newest costs a
+    /// line-up on the analysis queue, for every signature.
     static let minimumFaces = 3
-    static let maximumFaces = 6
+    static let maximumFaces = 4
 
     /// The merged face's points (`DepthFace.points`): one per grid cell that
     /// any face fell in, the mean of what fell there. Faces that do not line

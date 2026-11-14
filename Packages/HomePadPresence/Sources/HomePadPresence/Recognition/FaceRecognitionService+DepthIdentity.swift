@@ -7,11 +7,6 @@ import HomePadCore
 struct DepthSignatureSample: Sendable {
     var signature: DepthSignature
     var expression: Double?
-    /// The depth person the face was on, which stands for the look in the
-    /// dark, where the camera sees no face.
-    var personID: UUID?
-    /// Depth faces merged into the signature (`DepthFaceFusion`).
-    var faces = 1
 }
 
 /// Depth identity, evaluation only (`DepthIdentityEvaluator`). Nothing here

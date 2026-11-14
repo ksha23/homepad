@@ -370,8 +370,7 @@ public final class LivePresenceService: PresenceService {
             isTracing: PresenceTrace.trace.isEnabled,
             depthSignatureInterval: recognition.wantsDepthSignatures
                 ? recognition.depthSignatureInterval(light: snapshot.ambientLight, at: now) : nil,
-            wantsDebugView: settings.recognitionDebug && mode.usesCamera,
-            depthDeciding: recognition.wantsDepthSignatures && recognition.isDecidingByDepth(light: snapshot.ambientLight, at: now)
+            wantsDebugView: settings.recognitionDebug && mode.usesCamera
         )
         if !settings.recognitionDebug || !mode.usesCamera, debugView != nil { debugView = nil }
         let cadence = wantsEmbeddings ? "\(purpose) samples every \(PresenceTrace.format(interval)) s"

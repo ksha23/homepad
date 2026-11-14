@@ -50,7 +50,12 @@ final class RecognitionDebugRenderer {
     /// The face picture's colors span this much depth behind the nose tip.
     static let faceSpanMeters: Float = 0.08
 
+    /// The last depth face picture is kept up for this long after it was
+    /// found, so a single miss does not make it flicker.
+    static let faceHold: TimeInterval = 1.5
+
     private let context = CIContext(options: [.cacheIntermediates: false])
+    private var lastFace: (image: CGImage, time: TimeInterval)?
     private let palette: [(UInt8, UInt8, UInt8)] = (0..<256).map { index in
         // Red through yellow and green to blue.
         let hue = Double(index) / 255 * 0.66
@@ -59,7 +64,8 @@ final class RecognitionDebugRenderer {
 
     func render(
         frame: SensorFrame, faces: [DetectedFace], map: DepthMap?, person: DepthPersonTracker.Person?,
-        search: DepthFaceFinder.Search?
+        search: DepthFaceFinder.Search?, shaded: (image: CGImage, box: CGRect?)?,
+        source: (width: Int, height: Int, filtered: Bool)?, at time: TimeInterval
     ) -> RecognitionDebugFrame {
         let orientation = frame.depthOrientation ?? frame.orientation
         let face = search?.face
@@ -89,6 +95,19 @@ final class RecognitionDebugRenderer {
                     CGSize(width: pixels / Double(map.width), height: pixels / Double(map.height)), orientation
                 )
             }
+        }
+        if let shaded {
+            result.shaded = upright(shaded.image, orientation: orientation)
+            result.shadedBox = shaded.box.map { Self.upright($0, orientation) }
+        }
+        if let image = result.faceDepth {
+            lastFace = (image, time)
+        } else if let last = lastFace, time - last.time <= Self.faceHold {
+            result.faceDepth = last.image
+            result.faceAgeSeconds = time - last.time
+        }
+        if let source {
+            result.depthSource = "\(source.width)x\(source.height), smoothed by iOS \(source.filtered ? "yes" : "no")"
         }
         return result
     }

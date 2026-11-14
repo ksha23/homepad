@@ -32,7 +32,8 @@ struct TraceNote: Equatable, Sendable {
 ///
 /// Every depth map is read into a coarse map of about 48 columns, a few
 /// thousand reads, for presence and motion. The full map is copied only while
-/// recognition wants samples, for the liveness check.
+/// recognition wants samples, for the liveness check, or a person is
+/// followed, whose face is looked for in it.
 ///
 /// Used on the analysis queue only.
 struct DepthSensing {
@@ -195,20 +196,12 @@ struct DepthSensing {
         return result
     }
 
-    /// The face on the followed person's head in the newest full map, found
-    /// by depth alone (`DepthFaceFinder`), when that map is fresh. A face found
-    /// there confirms the person, as a face from ARKit or Vision does: in the
-    /// dark nothing else did while they sat still, and they were let go after
+    /// A face found in the depth map on the followed person confirms them, as
+    /// a face from ARKit or Vision does (`DepthFaceSampler`). In the dark
+    /// nothing else did while they sat still, and they were let go after
     /// `DepthPersonTracker.Config.holdSeconds`.
-    /// Nil when there is no full map or no followed head in it to look at,
-    /// which is no search at all.
-    mutating func findFace(
-        orientation: CGImagePropertyOrientation, faceBox: CGRect?, at time: TimeInterval
-    ) -> DepthFaceFinder.Search? {
-        guard let full, let person = people.person, full.time - person.seenAt <= 1 else { return nil }
-        let search = DepthFaceFinder.search(in: full.map, head: person, faceBox: faceBox, orientation: orientation)
-        if let face = search.face { people.confirm(face: face.nosePoint, at: full.time) }
-        return search
+    mutating func confirmFace(at point: CGPoint, time: TimeInterval) {
+        people.confirm(face: point, at: time)
     }
 
     /// The followed person, when the depth showed them in the last second.

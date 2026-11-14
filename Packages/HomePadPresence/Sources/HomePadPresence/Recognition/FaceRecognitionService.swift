@@ -58,9 +58,8 @@ final class FaceRecognitionService {
     @ObservationIgnored private var lastSettledAt: Date?
     /// When a sample last passed the depth liveness check, on this look.
     @ObservationIgnored private var lastLiveAt: Date?
-    /// Depth identity's votes on this look, newest last: the member a
-    /// signature came under the limit for, or nil.
-    @ObservationIgnored private(set) var depthVotes: [UUID?] = []
+    /// Depth identity's votes on this look (`DepthVoter`).
+    @ObservationIgnored private var depthVoter = DepthVoter(policy: DepthTemplatePolicy())
     /// True when depth alone named the member on this look.
     @ObservationIgnored private(set) var confirmedByDepth = false
     /// When a camera sample was last too dark to tell anyone apart.
@@ -85,6 +84,7 @@ final class FaceRecognitionService {
         self.store = store
         self.learningPolicy = learningPolicy
         depthIdentity = DepthIdentityEvaluator(store: store)
+        depthVoter = DepthVoter(policy: depthIdentity.policy)
     }
 
     var isEnabled: Bool { services.settings[CoreSettings.faceRecognitionEnabled] }
@@ -364,7 +364,7 @@ final class FaceRecognitionService {
         lastLiveAt = nil
         lastSettledAt = nil
         lookIdentity = .unsure
-        depthVotes.removeAll()
+        depthVoter.reset()
         confirmedByDepth = false
     }
 
@@ -376,57 +376,36 @@ final class FaceRecognitionService {
         light == .dark || lastTooDarkAt.map { time.timeIntervalSince($0) < 5 } == true
     }
 
-    /// True while depth decides who is in view: in the dark, before anyone is
-    /// named, with templates to compare with.
+    /// True while depth decides who is in view alongside the camera: before
+    /// anyone is named, in any light, with templates to compare with. In dim
+    /// light the camera saw the face well enough to try and not well enough
+    /// to be sure, while depth, waiting for the dark, did nothing.
     func isDecidingByDepth(light: AmbientLight?, at time: Date) -> Bool {
         confirmedMemberID == nil && lookIdentity != .stranger && depthIdentity.hasTemplates
-            && isTooDarkForCamera(light: light, at: time)
     }
 
-    /// Seconds between depth signatures: faster while depth is deciding who
-    /// is in view in the dark.
+    /// Seconds between depth signatures (`AnalyzerOptions.depthSignatureInterval`):
+    /// one with every face found while depth decides, faster while a face
+    /// just set up is learned, else `DepthTemplatePolicy.sampleInterval`.
     func depthSignatureInterval(light: AmbientLight?, at time: Date) -> TimeInterval {
         let policy = depthIdentity.policy
-        let deciding = confirmedMemberID == nil && isTooDarkForCamera(light: light, at: time)
-        let learning = depthIdentity.isLearningQuickly(confirmedMemberID, at: time)
-        return deciding || learning ? policy.decidingInterval : policy.sampleInterval
+        if isDecidingByDepth(light: light, at: time) { return 0 }
+        if depthIdentity.isLearningQuickly(confirmedMemberID, at: time) { return policy.quickInterval }
+        return policy.sampleInterval
     }
 
-    /// Depth's vote on a face recognition has not named: in the dark, depth
-    /// alone names a member when `requiredDepthVotes` of the last
-    /// `depthWindow` signatures came under their calibrated limit, with
-    /// every other member clearly farther. In light the camera decides.
+    /// Depth's vote on a face recognition has not named (`DepthVoter`). The
+    /// camera and depth decide together: whichever is sure first names the face.
     func noteDepthScore(_ score: DepthIdentityScore, look: UUID?, light: AmbientLight?, at time: Date) {
         // The look may have changed while the score was worked out.
-        guard look != nil, look == looks.look, confirmedMemberID == nil, lookIdentity != .stranger,
-              isTooDarkForCamera(light: light, at: time) else { return }
-        let policy = depthIdentity.policy
-        var vote: UUID?
-        var reason = "no face to compare with"
-        if let best = score.other, let member = score.otherMember {
-            let distance = String(format: "%.2f mm", best)
-            if let limit = depthIdentity.calibrations[member]?.threshold {
-                let limitText = String(format: "%.2f mm", limit)
-                if best > limit {
-                    reason = "\(memberName(member)) \(distance), over the \(limitText) limit"
-                } else if (score.runnerUp ?? .infinity) < best * policy.marginFactor {
-                    reason = "\(memberName(member)) \(distance), too close to someone else"
-                } else {
-                    vote = member
-                    reason = "\(memberName(member)) \(distance), under the \(limitText) limit"
-                }
-            } else {
-                reason = "\(memberName(member)) \(distance), no limit yet"
-            }
-        }
-        PresenceTrace.trace.log("depth vote: " + reason)
-        depthVotes.append(vote)
-        if depthVotes.count > policy.depthWindow { depthVotes.removeFirst(depthVotes.count - policy.depthWindow) }
-        let counts = Dictionary(depthVotes.compactMap { $0 }.map { ($0, 1) }, uniquingKeysWith: +)
-        guard let (winner, votes) = counts.max(by: { $0.value < $1.value }), votes >= policy.requiredDepthVotes else { return }
+        guard look != nil, look == looks.look, confirmedMemberID == nil, lookIdentity != .stranger else { return }
+        let limits = depthIdentity.calibrations.compactMapValues(\.threshold)
+        let outcome = depthVoter.vote(on: score, limits: limits, name: memberName)
+        PresenceTrace.trace.log("depth vote: " + outcome.reason)
+        guard let winner = outcome.winner else { return }
+        PresenceTrace.trace.log("recognized \(memberName(winner)) by depth: \(outcome.winnerVotes) of the last "
+            + "\(depthVoter.votes.count) depth signatures under its limit")
         lastSettledAt = time
-        PresenceTrace.trace.log("recognized \(memberName(winner)) by depth: \(votes) of the last \(depthVotes.count) "
-            + "depth signatures under its limit")
         lookIdentity = .member(winner)
         confirmedByDepth = true
         onRecognized?(winner)
@@ -436,12 +415,12 @@ final class FaceRecognitionService {
     /// The look the face in view belongs to.
     var currentLook: UUID? { looks.look }
 
-    /// "K K - K, 3 of 4 needed" for the debug view.
+    /// Depth's votes on this look, newest last.
+    var depthVotes: [UUID?] { depthVoter.votes }
+
+    /// "K K - K, 3 of 4 needed", for the debug view.
     func describeDepthVotes() -> String {
-        let policy = depthIdentity.policy
-        let marks = depthVotes.map { vote in vote.map { String(memberName($0).prefix(1)) } ?? "-" }
-        let votes = marks.isEmpty ? "none yet" : marks.joined(separator: " ")
-        return votes + ", \(policy.requiredDepthVotes) of \(policy.depthWindow) needed"
+        depthVoter.describe(name: memberName)
     }
 
     /// True when a recognized face is due to be checked again.

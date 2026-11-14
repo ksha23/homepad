@@ -78,7 +78,7 @@ enum SyntheticDepthFace {
     }
 }
 
-/// Finding the face on the followed head in a depth map, with no image and no ARKit.
+/// Finding the face in a face box of a depth map, with no image and no ARKit.
 @Suite struct DepthFaceFinderTests {
     private let width = 320
     private let height = 240
@@ -103,20 +103,24 @@ enum SyntheticDepthFace {
         return DepthMap(width: width, height: height, meters: meters, focalLength: focal)
     }
 
-    private func head(at distance: Double) -> DepthPersonTracker.Person {
-        let radius = 0.12 * focal / distance
-        return DepthPersonTracker.Person(
-            id: UUID(), center: CGPoint(x: 0.5, y: 0.5), distanceMeters: distance,
-            radius: CGSize(width: radius / Double(width), height: radius / Double(height)),
-            confirmedAt: 0, confirmedCenter: CGPoint(x: 0.5, y: 0.5), confirmedDistance: distance, seenAt: 0
-        )
+    /// A face box around the map's center, as `DepthFaceDetector` gives it,
+    /// for a face about 16 cm across at `distance`.
+    private func faceBox(at distance: Double) -> CGRect {
+        let half = 0.08 * focal / distance
+        let width = 2 * half / Double(self.width)
+        let height = 2 * half / Double(self.height)
+        return CGRect(x: 0.5 - width / 2, y: 0.5 - height / 2, width: width, height: height)
+    }
+
+    private func find(in map: DepthMap, distance: Double) -> DepthFace? {
+        DepthFaceFinder.search(in: map, faceBox: faceBox(at: distance), orientation: .up).face
     }
 
     @Test func findsTheNoseTipAndTheFaceAroundIt() throws {
         let depthMap = map(distance: 0.5) { x, y in
             x * x + y * y <= 0.11 * 0.11 ? SyntheticDepthFace.depth(x: x, y: y, width: 0.14, noseLength: 0.03) : nil
         }
-        let face = try #require(DepthFaceFinder.find(in: depthMap, head: head(at: 0.52), orientation: .up))
+        let face = try #require(find(in: depthMap, distance: 0.5))
         #expect(abs(face.nosePoint.x - 0.5) < 0.02)
         #expect(abs(face.nosePoint.y - 0.5) < 0.02)
         #expect(abs(face.noseMeters - 0.5) < 0.01)
@@ -127,7 +131,7 @@ enum SyntheticDepthFace {
     /// A photo is flat: nothing falls away behind its nearest point.
     @Test func aFlatPictureIsNoFace() {
         let photo = map(distance: 0.5) { x, y in x * x + y * y <= 0.11 * 0.11 ? 0 : nil }
-        #expect(DepthFaceFinder.find(in: photo, head: head(at: 0.5), orientation: .up) == nil)
+        #expect(find(in: photo, distance: 0.5) == nil)
     }
 
     /// The same face, found by depth, compares as the same face.
@@ -135,7 +139,7 @@ enum SyntheticDepthFace {
         let depthMap = map(distance: 0.5) { x, y in
             x * x + y * y <= 0.11 * 0.11 ? SyntheticDepthFace.depth(x: x, y: y, width: 0.14, noseLength: 0.03) : nil
         }
-        let face = try #require(DepthFaceFinder.find(in: depthMap, head: head(at: 0.52), orientation: .up))
+        let face = try #require(find(in: depthMap, distance: 0.5))
         let same = try #require(DepthSignature(face: face).distance(to: SyntheticDepthFace.signature()))
         let other = try #require(DepthSignature(face: face).distance(to: SyntheticDepthFace.signature(width: 0.155, noseLength: 0.022)))
         #expect(same < other)
@@ -397,5 +401,39 @@ private func noisyFace(seed: UInt64, noise: Float = 0.0015, shift: SIMD3<Float> 
         for index in 0..<3 { service.noteDepthScore(score(1.0), look: UUID(), light: .dark, at: t0 + Double(index)) }
         #expect(services.household.session.mode == .guest)
         #expect(service.depthVotes.isEmpty)
+    }
+}
+
+/// Depth's votes in the dark: under the limit, clearly nearer one member than any other.
+@Suite struct DepthVoterTests {
+    private let kyle = UUID()
+    private let sam = UUID()
+
+    private func score(_ best: Double, runnerUp: Double? = nil) -> DepthIdentityScore {
+        var score = DepthIdentityScore()
+        score.other = best
+        score.otherMember = kyle
+        score.runnerUp = runnerUp
+        return score
+    }
+
+    @Test func threeOfFourNameTheMember() {
+        var voter = DepthVoter(policy: DepthTemplatePolicy())
+        let limits = [kyle: 1.5]
+        #expect(voter.vote(on: score(2.0), limits: limits, name: { _ in "Kyle" }).winner == nil)
+        #expect(voter.vote(on: score(1.0), limits: limits, name: { _ in "Kyle" }).winner == nil)
+        #expect(voter.vote(on: score(1.2), limits: limits, name: { _ in "Kyle" }).winner == nil)
+        let outcome = voter.vote(on: score(0.9), limits: limits, name: { _ in "Kyle" })
+        #expect(outcome.winner == kyle)
+        #expect(outcome.reason == "Kyle 0.90 mm, under the 1.50 mm limit")
+        #expect(voter.describe(name: { _ in "Kyle" }) == "- K K K, 3 of 4 needed")
+    }
+
+    @Test func noLimitOrTooCloseToSomeoneElseIsNoVote() {
+        var voter = DepthVoter(policy: DepthTemplatePolicy())
+        #expect(voter.vote(on: score(1.0), limits: [:], name: { _ in "Kyle" }).reason == "Kyle 1.00 mm, no limit yet")
+        let close = voter.vote(on: score(1.0, runnerUp: 1.1), limits: [kyle: 1.5], name: { _ in "Kyle" })
+        #expect(close.vote == nil)
+        #expect(close.reason == "Kyle 1.00 mm, too close to someone else")
     }
 }
