@@ -23,6 +23,9 @@ struct AnalyzerOptions: Equatable, Sendable {
     var depthSignatureInterval: TimeInterval?
     /// Draw what the camera and depth sensor see for the recognition debug view.
     var wantsDebugView = false
+    /// Depth is deciding who is in view (in the dark): a signature from every
+    /// face found, with the faces before it.
+    var depthDeciding = false
 }
 
 /// Everything learned from one frame, delivered to the main actor.
@@ -103,6 +106,14 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// In the dark face tracking delivered about 4 depth maps a second, with
     /// gaps up to 1.9 s, and a 1.2 s burst often came up with 2 faces.
     private let burstSeconds: TimeInterval = 2.5
+    /// Faces found on the followed person while depth decides, newest last,
+    /// and that person. Faces older than `rollingSeconds` drop out.
+    private var recentFaces: [(time: TimeInterval, face: DepthFace)] = []
+    private var recentPerson: UUID?
+    private let rollingSeconds: TimeInterval = 3
+    /// Faces merged per rolling signature: each costs a line-up on the
+    /// analysis queue, for every face found.
+    private let rollingFaces = 4
     /// A depth face found on the followed person stays in view this long, so
     /// a few searches that miss do not end the look and its votes.
     private let depthFaceHold: TimeInterval = 10
@@ -144,6 +155,8 @@ final class FrameAnalyzer: @unchecked Sendable {
         depthFaceFound = nil
         lastDepthFaceMap = -.infinity
         burst = nil
+        recentFaces.removeAll()
+        recentPerson = nil
     }
 
     /// Loads models before anyone arrives, with requests of its own, so it
@@ -217,34 +230,40 @@ final class FrameAnalyzer: @unchecked Sendable {
 
     /// Looks for the face on the followed head in the depth map, every
     /// `depthFaceInterval`. When a depth signature is due, searches every new
-    /// map for about a second and merges what it found into one signature.
+    /// map for a while and merges what it found into one signature. While
+    /// depth decides who is in view (`AnalyzerOptions.depthDeciding`), every
+    /// face found makes a signature with the faces before it, so votes come
+    /// as fast as faces do.
     private func depthFace(in frame: SensorFrame, options: AnalyzerOptions) -> (face: DepthFace?, signature: DepthSignatureSample?) {
         let time = frame.timestamp
         guard frame.source == .trueDepth, let person = depth.people.person else {
             burst = nil
+            recentFaces.removeAll()
             return (nil, nil)
+        }
+        if recentPerson != person.id {
+            recentFaces.removeAll()
+            recentPerson = person.id
+        }
+        if options.depthDeciding {
+            burst = nil
+            guard let face = searchFace(in: frame, person: person, every: 0, options: options) else { return (nil, nil) }
+            recentFaces.append((time, face))
+            recentFaces.removeAll { time - $0.time > rollingSeconds }
+            if recentFaces.count > rollingFaces { recentFaces.removeFirst(recentFaces.count - rollingFaces) }
+            guard recentFaces.count >= DepthFaceFusion.minimumFaces,
+                  let points = DepthFaceFusion.fuse(recentFaces.map(\.face)) else { return (face, nil) }
+            lastDepthSignature = time
+            return (face, DepthSignatureSample(
+                signature: DepthSignature(points: points), expression: frame.faceExpression,
+                personID: person.id, faces: recentFaces.count
+            ))
         }
         if let current = burst, current.person != person.id { burst = nil }
         if burst == nil, let interval = options.depthSignatureInterval, time - lastDepthSignature >= interval {
             burst = (person.id, time, [])
         }
-        guard burst != nil || time - lastDepthFaceSearch >= depthFaceInterval,
-              let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return (nil, nil) }
-        lastDepthFaceMap = mapTime
-        lastDepthFaceSearch = time
-        // A quarter of searches found no new map to look at. Those are no
-        // search, and must not hide the last face from the debug view.
-        guard let search = depth.findFace(orientation: frame.orientation, at: time) else { return (nil, nil) }
-        let face = search.face
-        lastDepthFace = search
-        if face != nil { depthFaceFound = (time, person.id) }
-        if options.isTracing {
-            let text = face.map {
-                String(format: "depth face at %.2fm, %d points, relief %.1f cm, coverage %.2f",
-                       $0.noseMeters, $0.pointCount, $0.relief * 100, $0.coverage)
-            } ?? "depth face not found: \(search.miss ?? "?")"
-            depth.note(TraceNote(key: "depth face", text: text))
-        }
+        let face = searchFace(in: frame, person: person, every: burst == nil ? depthFaceInterval : 0, options: options)
         guard var current = burst else { return (face, nil) }
         // A face far from its resting expression changes shape, where ARKit can tell.
         if let face, (frame.faceExpression ?? 0) <= DepthSignature.maximumExpression {
@@ -268,6 +287,31 @@ final class FrameAnalyzer: @unchecked Sendable {
             personID: person.id, faces: current.faces.count
         )
         return (face, sample)
+    }
+
+    /// Searches the newest depth map for the face, when there is a new map
+    /// and `every` seconds have passed since the last search, and notes the
+    /// result for the debug view and the trace. The face, when found.
+    private func searchFace(
+        in frame: SensorFrame, person: DepthPersonTracker.Person, every interval: TimeInterval, options: AnalyzerOptions
+    ) -> DepthFace? {
+        let time = frame.timestamp
+        guard time - lastDepthFaceSearch >= interval, let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return nil }
+        lastDepthFaceMap = mapTime
+        lastDepthFaceSearch = time
+        // A quarter of searches found no new map to look at. Those are no
+        // search, and must not hide the last face from the debug view.
+        guard let search = depth.findFace(orientation: frame.orientation, at: time) else { return nil }
+        lastDepthFace = search
+        if search.face != nil { depthFaceFound = (time, person.id) }
+        if options.isTracing {
+            let text = search.face.map {
+                String(format: "depth face at %.2fm, %d points, relief %.1f cm, coverage %.2f",
+                       $0.noseMeters, $0.pointCount, $0.relief * 100, $0.coverage)
+            } ?? "depth face not found: \(search.miss ?? "?")"
+            depth.note(TraceNote(key: "depth face", text: text))
+        }
+        return search.face
     }
 
     /// Adds a line for the presence trace, delivered with the next analysis.

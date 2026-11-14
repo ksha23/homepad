@@ -102,14 +102,22 @@ enum DepthFaceFinder {
         guard headPixels.count >= minimumPoints else {
             return Search(miss: "the head shows only \(headPixels.count) depth points")
         }
-        // The nose tip is the nearest point of the surface connected to the
-        // head's nearest point. Stepping to the nearest point around the tip
-        // instead walked off the head onto whatever was nearer, a hand or the
-        // desk. A depth step of more than `surfaceStepMeters` between
-        // neighbors ends the surface, so what is not touching the face is not
-        // part of it, and the head need not be centered on the face.
-        headPixels.sort { $0.z < $1.z }
-        let seed = headPixels[Int(Double(headPixels.count - 1) * nearestFraction)]
+        // The nose tip is the nearest point of the head's own surface: the
+        // surface connected to the point nearest the followed head's center at
+        // the head's depth. Starting from the window's nearest point instead
+        // often started on a hand or whatever else was nearer. A depth step of
+        // more than `surfaceStepMeters` between neighbors ends the surface, so
+        // what is not touching the face is not part of it, and the head need
+        // not be centered on the face.
+        let headDepth = Float(head.distanceMeters)
+        let onHead = headPixels.filter { abs($0.z - headDepth) <= headSeedMeters }
+        let seed: (column: Int, row: Int, z: Float)
+        if let central = onHead.min(by: { centerDistance($0, centerX, centerY) < centerDistance($1, centerX, centerY) }) {
+            seed = central
+        } else {
+            headPixels.sort { $0.z < $1.z }
+            seed = headPixels[Int(Double(headPixels.count - 1) * nearestFraction)]
+        }
         let surface = connectedSurface(in: map, from: seed, focal: focal)
         guard surface.count >= minimumPoints, let candidate = nearestTip(surface, focal: focal) else {
             return Search(miss: "only \(surface.count) points connected to the head's nearest point")
@@ -173,6 +181,15 @@ enum DepthFaceFinder {
             noseMeters: Double(tipZ), points: points, relief: relief, coverage: coverage
         )
         return result
+    }
+
+    /// How far from the followed head's depth its seed point may be, in meters.
+    static let headSeedMeters: Float = 0.08
+
+    private static func centerDistance(_ pixel: (column: Int, row: Int, z: Float), _ x: Double, _ y: Double) -> Double {
+        let dx = Double(pixel.column) - x
+        let dy = Double(pixel.row) - y
+        return dx * dx + dy * dy
     }
 
     /// Depth step between neighboring pixels, in meters, that ends a surface.

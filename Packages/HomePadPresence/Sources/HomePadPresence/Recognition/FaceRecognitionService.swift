@@ -376,6 +376,13 @@ final class FaceRecognitionService {
         light == .dark || lastTooDarkAt.map { time.timeIntervalSince($0) < 5 } == true
     }
 
+    /// True while depth decides who is in view: in the dark, before anyone is
+    /// named, with templates to compare with.
+    func isDecidingByDepth(light: AmbientLight?, at time: Date) -> Bool {
+        confirmedMemberID == nil && lookIdentity != .stranger && depthIdentity.hasTemplates
+            && isTooDarkForCamera(light: light, at: time)
+    }
+
     /// Seconds between depth signatures: faster while depth is deciding who
     /// is in view in the dark.
     func depthSignatureInterval(light: AmbientLight?, at time: Date) -> TimeInterval {
