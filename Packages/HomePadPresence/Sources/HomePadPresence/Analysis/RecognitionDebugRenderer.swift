@@ -17,6 +17,11 @@ struct RecognitionDebugFrame: @unchecked Sendable {
     var faceDepth: CGImage?
     /// How old `faceDepth` is when the last search missed, in seconds.
     var faceAgeSeconds: Double?
+    /// The depth map drawn as a lit surface, upright, which Vision's face
+    /// detector looks at (`DepthFaceDetector`), and the face box it found,
+    /// normalized with a top-left origin.
+    var shaded: CGImage?
+    var shadedBox: CGRect?
     /// Faces in the camera image, normalized with a top-left origin.
     var faceBoxes: [CGRect] = []
     /// The followed head in the depth image, normalized with a top-left origin.
@@ -175,6 +180,19 @@ final class RecognitionDebugRenderer {
               ) else { return nil }
         let upright = CIImage(cgImage: native).oriented(orientation)
         return context.createCGImage(upright, from: upright.extent)
+    }
+
+    /// A native image turned upright.
+    func upright(_ image: CGImage, orientation: CGImagePropertyOrientation) -> CGImage? {
+        let turned = CIImage(cgImage: image).oriented(orientation)
+        return context.createCGImage(turned, from: turned.extent)
+    }
+
+    /// A native rect, normalized with a top-left origin, in the upright image.
+    static func upright(_ rect: CGRect, _ orientation: CGImagePropertyOrientation) -> CGRect {
+        let a = upright(CGPoint(x: rect.minX, y: rect.minY), orientation)
+        let b = upright(CGPoint(x: rect.maxX, y: rect.maxY), orientation)
+        return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
     }
 
     /// A point in the native map, normalized with a top-left origin, in the

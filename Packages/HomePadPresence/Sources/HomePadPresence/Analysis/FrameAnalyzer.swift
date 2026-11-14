@@ -118,6 +118,16 @@ final class FrameAnalyzer: @unchecked Sendable {
     /// a few searches that miss do not end the look and its votes.
     private let depthFaceHold: TimeInterval = 10
     private let debugRenderer = RecognitionDebugRenderer()
+    private let depthFaceDetector = DepthFaceDetector()
+    /// Quarter turns that make each backend's frames stand upright, from faces.
+    private var upright = UprightCalibration()
+    /// The frame being analyzed's backend and orientation before correction.
+    private var uprightBase: (backend: BackendKind, orientation: CGImagePropertyOrientation)?
+    /// The last shaded depth picture and the face box in it, for the debug view.
+    private var lastShadedDepth: (image: CGImage, box: CGRect?)?
+    /// The last face box found in the shaded depth, when, and on whom.
+    private var lastFaceBox: (box: CGRect, time: TimeInterval, person: UUID)?
+    private let faceBoxHold: TimeInterval = 1
     /// The last depth face picture, kept up for `debugFaceHold` after it was
     /// found, so a single miss does not make it flicker.
     private var lastDebugFace: (image: CGImage, time: TimeInterval)?
@@ -299,10 +309,33 @@ final class FrameAnalyzer: @unchecked Sendable {
         guard time - lastDepthFaceSearch >= interval, let mapTime = depth.full?.time, mapTime > lastDepthFaceMap else { return nil }
         lastDepthFaceMap = mapTime
         lastDepthFaceSearch = time
+        // Vision's face detector on the depth map drawn as a lit surface says
+        // where the face is, with no light (`DepthFaceDetector`).
+        let detection = depth.full.map { depthFaceDetector.detect(in: $0.map, orientation: frame.orientation) }
+        lastShadedDepth = detection.flatMap { found in found.shaded.map { ($0, found.face?.box) } }
+        // Only a face box says where the face is. Around the followed head
+        // instead, the crop landed on whatever the person was picked up from
+        // (relief 0.4 to 1 cm), while every crop in a face box was a face
+        // (2.5 cm). Vision misses some maps, so its last box stands in for a second.
+        if let box = detection?.face?.box {
+            lastFaceBox = (box, time, person.id)
+        }
+        if let roll = detection?.face?.rollDegrees { noteUpright(rollDegrees: roll) }
+        guard let box = lastFaceBox.flatMap({ time - $0.time <= faceBoxHold && $0.person == person.id ? $0.box : nil }) else {
+            lastDepthFace = DepthFaceFinder.Search(miss: "no face in the shaded depth")
+            if options.isTracing { depth.note(TraceNote(key: "depth shading", text: "no face in the shaded depth")) }
+            return nil
+        }
         // A quarter of searches found no new map to look at. Those are no
         // search, and must not hide the last face from the debug view.
-        guard let search = depth.findFace(orientation: frame.orientation, at: time) else { return nil }
+        guard let search = depth.findFace(orientation: frame.orientation, faceBox: box, at: time) else { return nil }
         lastDepthFace = search
+        if options.isTracing {
+            let text = detection?.face.map { face in
+                "face found in the shaded depth" + (face.rollDegrees.map { String(format: ", roll %.0f degrees", $0) } ?? "")
+            } ?? "no face in the shaded depth"
+            depth.note(TraceNote(key: "depth shading", text: text))
+        }
         if search.face != nil { depthFaceFound = (time, person.id) }
         if options.isTracing {
             let text = search.face.map {
@@ -314,6 +347,17 @@ final class FrameAnalyzer: @unchecked Sendable {
         return search.face
     }
 
+    /// Feeds a face's roll to `upright`. When the correction changes, what was
+    /// gathered in the old orientation is dropped.
+    private func noteUpright(rollDegrees: Double) {
+        guard let base = uprightBase,
+              let line = upright.note(rollDegrees: rollDegrees, backend: base.backend, base: base.orientation) else { return }
+        depth.note(TraceNote(key: "upright", text: line, repeats: true))
+        recentFaces.removeAll()
+        burst = nil
+        lastFaceBox = nil
+    }
+
     /// Adds a line for the presence trace, delivered with the next analysis.
     func note(_ note: TraceNote) {
         depth.note(note)
@@ -321,6 +365,10 @@ final class FrameAnalyzer: @unchecked Sendable {
 
     func analyze(_ frame: SensorFrame, backend: BackendKind) -> FrameAnalysis {
         let options = self.options
+        let base = frame.orientation
+        var frame = frame
+        frame.orientation = upright.corrected(base, backend: backend)
+        uprightBase = (backend, base)
         let time = frame.timestamp
         motion.pixelDelta = options.sensitivity.motionPixelDelta
         motion.areaFraction = options.sensitivity.motionAreaFraction
@@ -359,6 +407,9 @@ final class FrameAnalyzer: @unchecked Sendable {
         let arkitSeesNoFace = frame.trackedFaces?.isEmpty == true
         let facesWanted = frame.trackedFaces == nil || wantsEmbedding || (arkitSeesNoFace && humansDue)
         let vision = detectors.detect(in: frame, faces: facesWanted, humans: humansDue, hands: handsWanted)
+        if let roll = vision.faces.max(by: { $0.boundingBox.width < $1.boundingBox.width })?.roll {
+            noteUpright(rollDegrees: roll.doubleValue * 180 / .pi)
+        }
 
         var faceTrackID = frame.faceTrackID
         if arkitSeesNoFace && facesWanted {
@@ -432,6 +483,10 @@ final class FrameAnalyzer: @unchecked Sendable {
                 frame: frame, faces: observation.faces, map: full ?? depth.coarse?.map, person: depth.people.person,
                 search: full == nil ? nil : lastDepthFace
             )
+            if let shaded = lastShadedDepth {
+                debug?.shaded = debugRenderer.upright(shaded.image, orientation: frame.orientation)
+                debug?.shadedBox = shaded.box.map { RecognitionDebugRenderer.upright($0, frame.orientation) }
+            }
             if let image = debug?.faceDepth {
                 lastDebugFace = (image, time)
             } else if let last = lastDebugFace, time - last.time <= debugFaceHold {

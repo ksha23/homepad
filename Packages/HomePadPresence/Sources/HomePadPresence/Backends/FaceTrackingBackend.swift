@@ -36,7 +36,10 @@ final class FaceTrackingBackend: SensingBackend {
             return
         }
         if let device = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .front) {
-            receiver.orientation = OrientationTracker(device: device)
+            let tracker = OrientationTracker(device: device)
+            receiver.orientation = tracker
+            PresenceTrace.trace.log("face tracking orientation: coordinator angle \(tracker.angleDegrees), "
+                + "frames turned \(RecognitionDebugRenderer.describe(tracker.orientation)) to stand upright")
         }
         receiver.throttle.setFrameRate(framesPerSecond)
         receiver.deliver = deliver

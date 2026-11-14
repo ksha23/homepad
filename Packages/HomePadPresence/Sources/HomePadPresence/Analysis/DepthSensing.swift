@@ -202,9 +202,11 @@ struct DepthSensing {
     /// `DepthPersonTracker.Config.holdSeconds`.
     /// Nil when there is no full map or no followed head in it to look at,
     /// which is no search at all.
-    mutating func findFace(orientation: CGImagePropertyOrientation, at time: TimeInterval) -> DepthFaceFinder.Search? {
+    mutating func findFace(
+        orientation: CGImagePropertyOrientation, faceBox: CGRect?, at time: TimeInterval
+    ) -> DepthFaceFinder.Search? {
         guard let full, let person = people.person, full.time - person.seenAt <= 1 else { return nil }
-        let search = DepthFaceFinder.search(in: full.map, head: person, orientation: orientation)
+        let search = DepthFaceFinder.search(in: full.map, head: person, faceBox: faceBox, orientation: orientation)
         if let face = search.face { people.confirm(face: face.nosePoint, at: full.time) }
         return search
     }

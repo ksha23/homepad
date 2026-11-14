@@ -70,28 +70,38 @@ enum DepthFaceFinder {
     static let tipRadiusMeters: Float = 0.03
 
     static func find(
-        in map: DepthMap, head: DepthPersonTracker.Person, orientation: CGImagePropertyOrientation
+        in map: DepthMap, head: DepthPersonTracker.Person, faceBox: CGRect? = nil, orientation: CGImagePropertyOrientation
     ) -> DepthFace? {
-        search(in: map, head: head, orientation: orientation).face
+        search(in: map, head: head, faceBox: faceBox, orientation: orientation).face
     }
 
+    /// With `faceBox`, a face `DepthFaceDetector` found in the shaded depth
+    /// (native map, normalized, top-left origin), the face is looked for in
+    /// that box. Without one, around the followed head.
     static func search(
-        in map: DepthMap, head: DepthPersonTracker.Person, orientation: CGImagePropertyOrientation
+        in map: DepthMap, head: DepthPersonTracker.Person, faceBox: CGRect? = nil, orientation: CGImagePropertyOrientation
     ) -> Search {
         let width = map.width
         let height = map.height
         let focal = Float(map.focalLengthOrDefault)
         guard width > 0, height > 0, focal > 0 else { return Search(miss: "no depth map") }
 
-        // The nose tip: the nearest few millimeters of the head, around its nearest point.
-        let centerX = Double(head.center.x) * Double(width)
-        let centerY = Double(head.center.y) * Double(height)
-        let reachX = max(4, Double(head.radius.width) * Double(width) * 1.2)
-        let reachY = max(4, Double(head.radius.height) * Double(height) * 1.2)
+        // Where to look: the face box, or the followed head with some room.
+        let window = faceBox.map { box in
+            CGRect(x: box.midX * Double(width), y: box.midY * Double(height),
+                   width: box.width * Double(width) / 2, height: box.height * Double(height) / 2)
+        } ?? CGRect(x: Double(head.center.x) * Double(width), y: Double(head.center.y) * Double(height),
+                    width: max(4, Double(head.radius.width) * Double(width) * 1.2),
+                    height: max(4, Double(head.radius.height) * Double(height) * 1.2))
+        let centerX = window.minX
+        let centerY = window.minY
+        let reachX = window.width
+        let reachY = window.height
         let columns = clamp(Int(centerX - reachX), width)...clamp(Int(centerX + reachX), width)
         let rows = clamp(Int(centerY - reachY), height)...clamp(Int(centerY + reachY), height)
-        let near = Float(head.distanceMeters - 0.25)
-        let far = Float(head.distanceMeters + 0.15)
+        let headDistance = faceBox == nil ? head.distanceMeters : Double(medianDepth(in: map, columns: columns, rows: rows) ?? Float(head.distanceMeters))
+        let near = Float(headDistance - 0.25)
+        let far = Float(headDistance + 0.15)
         var headPixels: [(column: Int, row: Int, z: Float)] = []
         for row in rows {
             for column in columns {
@@ -113,7 +123,7 @@ enum DepthFaceFinder {
         // its surface was 1 to 18 points, so several are tried, nearest the
         // center first, and the largest surface wins. The head's nearest
         // point is the last resort.
-        let headDepth = Float(head.distanceMeters)
+        let headDepth = Float(headDistance)
         var seeds = headPixels.filter { abs($0.z - headDepth) <= headSeedMeters }
             .sorted { centerDistance($0, centerX, centerY) < centerDistance($1, centerX, centerY) }
         headPixels.sort { $0.z < $1.z }
@@ -123,6 +133,10 @@ enum DepthFaceFinder {
             let found = connectedSurface(in: map, from: seed, focal: focal)
             if found.count > surface.count { surface = found }
             if surface.count >= minimumPoints * 4 { break }
+        }
+        // Inside a face box the nose tip is too: the surface may run on past it.
+        if faceBox != nil {
+            surface = surface.filter { columns.contains($0.column) && rows.contains($0.row) }
         }
         guard surface.count >= minimumPoints, let candidate = nearestTip(surface, focal: focal) else {
             return Search(miss: "only \(surface.count) points on the head's surface")
@@ -186,6 +200,20 @@ enum DepthFaceFinder {
             noseMeters: Double(tipZ), points: points, relief: relief, coverage: coverage
         )
         return result
+    }
+
+    /// The median valid depth in a window, for a face box's distance.
+    private static func medianDepth(in map: DepthMap, columns: ClosedRange<Int>, rows: ClosedRange<Int>) -> Float? {
+        var depths: [Float] = []
+        for row in rows {
+            for column in columns {
+                let z = map.meters[row * map.width + column]
+                if z.isFinite { depths.append(z) }
+            }
+        }
+        guard !depths.isEmpty else { return nil }
+        depths.sort()
+        return depths[depths.count / 2]
     }
 
     /// How far from the followed head's depth its seed points may be, in

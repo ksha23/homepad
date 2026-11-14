@@ -11,7 +11,6 @@ final class OrientationTracker: @unchecked Sendable {
     private var angle: CGFloat
     private let coordinator: AVCaptureDevice.RotationCoordinator
     private var observation: NSKeyValueObservation?
-
     @MainActor
     init(device: AVCaptureDevice) {
         coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
@@ -23,11 +22,16 @@ final class OrientationTracker: @unchecked Sendable {
     }
 
     /// EXIF orientation that rotates the native buffer upright (never mirrored).
+    /// The coordinator's clockwise angle, in degrees, for the trace.
+    var angleDegrees: Int { Int(lock.withLock { angle }.rounded()) }
+
     var orientation: CGImagePropertyOrientation {
         Self.orientation(forRotationAngle: lock.withLock { angle })
     }
 
-    /// Maps a clockwise rotation angle in degrees to the matching EXIF orientation.
+    /// Maps a clockwise rotation angle in degrees to the matching EXIF
+    /// orientation. ARKit's image does not always share the native layout this
+    /// angle is for, so faces correct it (`UprightCalibration`).
     static func orientation(forRotationAngle degrees: CGFloat) -> CGImagePropertyOrientation {
         switch (Int(degrees.rounded()) % 360 + 360) % 360 {
         case 90: .right

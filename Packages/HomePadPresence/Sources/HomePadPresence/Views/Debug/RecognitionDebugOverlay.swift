@@ -30,6 +30,9 @@ private struct RecognitionDebugPanel: View {
             HStack(alignment: .top, spacing: 8) {
                 picture(state.frame.camera, title: "Camera") { size in cameraMarks(size) }
                 picture(state.frame.depth, title: "Depth (near red, far blue)") { size in depthMarks(size) }
+                if let shaded = state.frame.shaded {
+                    picture(shaded, title: "Depth as a lit surface") { size in shadedMarks(size) }
+                }
                 if let face = state.frame.faceDepth {
                     let age = state.frame.faceAgeSeconds.map { String(format: " (%.1f s ago)", $0) } ?? ""
                     picture(face, title: "Face, nose to 8 cm back" + age) { _ in EmptyView() }
@@ -45,7 +48,7 @@ private struct RecognitionDebugPanel: View {
         .foregroundStyle(.white)
         .padding(10)
         .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
-        .frame(maxWidth: 860, alignment: .leading)
+        .frame(maxWidth: 1100, alignment: .leading)
     }
 
     private func picture<Marks: View>(
@@ -64,6 +67,17 @@ private struct RecognitionDebugPanel: View {
                     .frame(width: 210, height: 160)
                     .overlay { Text("nothing yet").font(.caption2) }
             }
+        }
+    }
+
+    /// The face Vision found in the shaded depth.
+    @ViewBuilder
+    private func shadedMarks(_ size: CGSize) -> some View {
+        if let box = state.frame.shadedBox {
+            Rectangle()
+                .stroke(.yellow, lineWidth: 2)
+                .frame(width: box.width * size.width, height: box.height * size.height)
+                .position(x: box.midX * size.width, y: box.midY * size.height)
         }
     }
 
